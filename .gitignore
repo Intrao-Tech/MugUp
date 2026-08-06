@@ -1,0 +1,39 @@
+# --- dependencies ---
+/node_modules
+
+# --- next.js build output ---
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# --- environment / secrets (never commit real keys) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- IDE / editors ---
+.idea/
+.vscode/
+*.swp
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- logs / debug ---
+*.log
+npm-debug.log*
+
+# --- deployment / tooling ---
+.vercel
+.turbo
+supabase/.temp/
+.claude/
+
+# --- client source materials (large binaries; canonical copies stay with the client) ---
+/docs/requirements/client-materials/
+*.pdf

@@ -1,0 +1,79 @@
+import Link from "next/link";
+import type { Metadata } from "next";
+import { getBritishHub, getCommon, getProgrammes } from "@/content";
+import type { Locale, ProgrammeGroup } from "@/content/types";
+import { HeroSection, SectionView } from "@/components/BlockRenderer";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { localeHref } from "@/lib/links";
+import { pageMetadata } from "@/lib/seo";
+
+type Props = { params: Promise<{ locale: Locale }> };
+
+// Presentational group headings; promote to the common dictionary if they
+// ever need to appear anywhere else.
+const GROUP_LABELS: Record<Locale, Record<ProgrammeGroup, string>> = {
+  en: {
+    "education-pathways": "Education Pathways",
+    "english-qualifications": "English Qualifications",
+  },
+  ua: {
+    "education-pathways": "Освітні траєкторії",
+    "english-qualifications": "Кваліфікації з англійської мови",
+  },
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  return pageMetadata(locale, "/pathways/british-education", getBritishHub(locale).meta);
+}
+
+export default async function BritishEducationHub({ params }: Props) {
+  const { locale } = await params;
+  const page = getBritishHub(locale);
+  const dict = getCommon(locale);
+  const programmes = getProgrammes(locale);
+  const groups: ProgrammeGroup[] = ["education-pathways", "english-qualifications"];
+
+  const finalCta = page.sections.find((s) => s.id === "final-cta");
+  const sections = page.sections.filter((s) => s.id !== "final-cta");
+
+  return (
+    <>
+      <Breadcrumbs
+        locale={locale}
+        items={[
+          { label: dict.ui.breadcrumbsHome, href: "/" },
+          { label: dict.nav.pathways },
+          { label: dict.nav.pathwaysBritish },
+        ]}
+      />
+      <HeroSection hero={page.hero} locale={locale} />
+      {sections.map((section) => (
+        <SectionView key={section.id} section={section} locale={locale} />
+      ))}
+      {groups.map((group) => (
+        <section key={group} id={group} className="mx-auto max-w-4xl px-4 py-8">
+          <h2 className="text-2xl font-bold">{GROUP_LABELS[locale][group]}</h2>
+          <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {programmes
+              .filter((p) => p.group === group)
+              .map((p) => (
+                <li key={p.slug} className="border border-neutral-300 p-4">
+                  <h3 className="font-semibold">
+                    <Link
+                      href={localeHref(locale, `/pathways/british-education/${p.slug}`)}
+                      className="hover:underline"
+                    >
+                      {p.cardTitle}
+                    </Link>
+                  </h3>
+                  <p className="mt-2 text-sm text-neutral-700">{p.cardBlurb}</p>
+                </li>
+              ))}
+          </ul>
+        </section>
+      ))}
+      {finalCta && <SectionView section={finalCta} locale={locale} />}
+    </>
+  );
+}

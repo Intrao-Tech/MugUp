@@ -1,0 +1,171 @@
+import Link from "next/link";
+import {
+  LEAD_FORM_LABELS,
+  LEAD_STATUS_LABELS,
+  LEAD_STATUSES,
+  type LeadStatus,
+} from "@/lib/db-types";
+import { hasPerm, requireProfile } from "@/lib/auth-guard";
+import { getData } from "@/lib/data";
+import { updateLeadStatus } from "../actions";
+import { buildQuery, FilterChip, Notice } from "../ui";
+
+export const dynamic = "force-dynamic";
+
+type Search = {
+  status?: string;
+  form?: string;
+  q?: string;
+  sort?: string;
+  error?: string;
+};
+
+export default async function LeadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Search>;
+}) {
+  const profile = await requireProfile("leads.view");
+  const params = await searchParams;
+  const canManage = hasPerm(profile, "leads.manage");
+
+  const status = LEAD_STATUSES.includes(params.status as LeadStatus)
+    ? (params.status as LeadStatus)
+    : undefined;
+  const form = params.form === "booking" || params.form === "contact" ? params.form : undefined;
+  const sort = params.sort === "oldest" ? "oldest" : "newest";
+  const search = params.q?.slice(0, 100);
+
+  const data = await getData();
+  const [leads, ...counts] = await Promise.all([
+    data.leads.list({ status, form, search, sort, limit: 200 }),
+    ...LEAD_STATUSES.map((s) => data.leads.countByStatus(s)),
+  ]);
+  const total = counts.reduce((sum, n) => sum + n, 0);
+
+  const chipHref = (overrides: Record<string, string | undefined>) =>
+    `/admin/leads${buildQuery(params, overrides)}`;
+
+  return (
+    <div>
+      <h1 className="text-2xl font-bold">Enquiries</h1>
+      <p className="mt-1 text-sm text-neutral-500">
+        Everything visitors submit through the site lands here — the Book Assessment form and the
+        Contact form are two different forms, so each enquiry shows its source.
+      </p>
+      {params.error && <Notice tone="error">Could not save the change — try again.</Notice>}
+
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+        <FilterChip label={`All (${total})`} href={chipHref({ status: undefined })} active={!status} />
+        {LEAD_STATUSES.map((s, i) => (
+          <FilterChip
+            key={s}
+            label={`${LEAD_STATUS_LABELS[s]} (${counts[i]})`}
+            href={chipHref({ status: s })}
+            active={status === s}
+          />
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+        <FilterChip label="All forms" href={chipHref({ form: undefined })} active={!form} />
+        <FilterChip
+          label={LEAD_FORM_LABELS.booking}
+          href={chipHref({ form: "booking" })}
+          active={form === "booking"}
+        />
+        <FilterChip
+          label={LEAD_FORM_LABELS.contact}
+          href={chipHref({ form: "contact" })}
+          active={form === "contact"}
+        />
+        <span className="mx-2 text-neutral-300">|</span>
+        <FilterChip label="Newest first" href={chipHref({ sort: undefined })} active={sort === "newest"} />
+        <FilterChip label="Oldest first" href={chipHref({ sort: "oldest" })} active={sort === "oldest"} />
+      </div>
+
+      <form action="/admin/leads" method="get" className="mt-3 flex max-w-md gap-2 text-sm">
+        {status && <input type="hidden" name="status" value={status} />}
+        {form && <input type="hidden" name="form" value={form} />}
+        {sort === "oldest" && <input type="hidden" name="sort" value="oldest" />}
+        <input
+          type="search"
+          name="q"
+          defaultValue={search ?? ""}
+          placeholder="Search by name or email…"
+          className="w-full border border-neutral-400 px-3 py-1.5"
+        />
+        <button type="submit" className="border border-neutral-900 px-4 py-1.5">
+          Search
+        </button>
+        {search && (
+          <Link href={chipHref({ q: undefined })} className="self-center underline">
+            Clear
+          </Link>
+        )}
+      </form>
+
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full border-collapse bg-white text-sm">
+          <thead>
+            <tr className="border-b border-neutral-300 text-left">
+              <th className="p-2">Date</th>
+              <th className="p-2">Source</th>
+              <th className="p-2">Name</th>
+              <th className="p-2">Email</th>
+              <th className="p-2">Interest</th>
+              <th className="p-2">Status</th>
+              <th className="p-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {leads.map((lead) => (
+              <tr key={lead.id} className="border-b border-neutral-200 align-top">
+                <td className="p-2 whitespace-nowrap">
+                  {new Date(lead.created_at).toLocaleString("en-GB", {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}
+                </td>
+                <td className="p-2 whitespace-nowrap">{LEAD_FORM_LABELS[lead.form]}</td>
+                <td className="p-2 font-medium">{lead.full_name}</td>
+                <td className="p-2">{lead.email}</td>
+                <td className="p-2">{lead.pathway_interest ?? lead.subject ?? "—"}</td>
+                <td className="p-2">
+                  {canManage ? (
+                    <form action={updateLeadStatus} className="flex items-center gap-1">
+                      <input type="hidden" name="id" value={lead.id} />
+                      <select name="status" defaultValue={lead.status} className="border border-neutral-300 p-1">
+                        {LEAD_STATUSES.map((s) => (
+                          <option key={s} value={s}>
+                            {LEAD_STATUS_LABELS[s]}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="submit" className="underline">
+                        Save
+                      </button>
+                    </form>
+                  ) : (
+                    LEAD_STATUS_LABELS[lead.status]
+                  )}
+                </td>
+                <td className="p-2">
+                  <Link href={`/admin/leads/${lead.id}`} className="underline">
+                    Open
+                  </Link>
+                </td>
+              </tr>
+            ))}
+            {leads.length === 0 && (
+              <tr>
+                <td colSpan={7} className="p-4 text-neutral-500">
+                  No enquiries match this filter.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
