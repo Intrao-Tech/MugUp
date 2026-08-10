@@ -100,10 +100,9 @@ working previews, use a Vercel *Preview*-scoped env set that omits
 1. Create the client-owned Supabase project (**London / eu-west-2**).
 2. Apply the schema: `supabase/migrations/0001_init.sql`, via the dashboard
    SQL editor or `supabase db push`. This creates the tables, the `has_perm()`
-   function and every RLS policy.
-3. Create the two storage buckets — `lead-files`, `post-images`
-   (`src/lib/data/supabase/config.ts`).
-4. Add to Vercel (Settings → API in Supabase):
+   function, every RLS policy **and both storage buckets** (`lead-files`,
+   `post-images`) — no manual bucket creation needed.
+3. Add to Vercel (Settings → API in Supabase):
 
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
@@ -113,17 +112,64 @@ working previews, use a Vercel *Preview*-scoped env set that omits
 
    Mark `SUPABASE_SERVICE_ROLE_KEY` as **Sensitive**. It must never appear in
    a `NEXT_PUBLIC_*` variable.
-5. First administrator: Supabase → Authentication → **Add user**, then run
-   `supabase/seed_admin.sql` against the project to grant the flags.
-6. Configure SMTP in Supabase (Authentication → Emails) so team invites
+4. First administrator: Supabase → Authentication → **Add user** (tick *Auto
+   confirm user*), then edit the email in `supabase/seed_admin.sql` and run it
+   against the project to grant the permission flags.
+5. Configure SMTP in Supabase (Authentication → Emails) so team invites
    actually send.
-7. Lead notification emails (optional): create a Resend API key, verify the
+6. Lead notification emails (optional): create a Resend API key, verify the
    sender domain, then add `RESEND_API_KEY`, `LEADS_NOTIFY_EMAIL`,
    `LEADS_NOTIFY_FROM`. Without them submissions still save — only the email
    step is skipped.
-8. Redeploy and verify: forms accept submissions, `/admin` on the admin host
+7. Redeploy and verify: forms accept submissions, `/admin` on the admin host
    reaches the login page, Insights posts published from admin appear on the
    public site (ISR + `revalidatePath`).
+
+---
+
+## Client-test deployment (no production domain yet)
+
+To let the client exercise the *whole* product — working forms and a working
+admin panel — on `*.vercel.app`, before the real domain exists.
+
+**Do not wait for the client's production Supabase project.** Use a free
+throwaway project; at go-live you swap three env vars and point at their
+London one. Test data is disposable.
+
+### Admin needs its own hostname
+
+`ADMIN_HOST` serves nothing but the panel: if you point it at the public
+`*.vercel.app` URL, middleware redirects the entire public site into `/admin`.
+So claim a second `*.vercel.app` name on the **same project** (Settings →
+Domains) — e.g. `mug-up-admin.vercel.app`.
+
+### Env vars for the test deploy
+
+```
+ADMIN_HOST=mug-up-admin.vercel.app
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR-TEST-PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...          # mark Sensitive
+```
+
+Leave **`PUBLIC_HOST` unset** (otherwise the public `*.vercel.app` URL 404s)
+and **`ADMIN_IP_ALLOWLIST` unset** (otherwise the client gets a 404 instead of
+a login page).
+
+### Then
+
+Apply the migration, add the first admin user (Stage C steps 2 and 4 above),
+redeploy, and verify:
+
+- `mug-up.vercel.app/en` → public site, forms now **enabled**
+- `mug-up-admin.vercel.app` → redirects to `/admin`, shows the login page
+- `mug-up.vercel.app/admin` → still **404** (admin is not on the public host)
+
+> The test URL is indexable — it is a production deployment, so Vercel's
+> automatic preview-noindex does not apply, and `robots.txt` allows all.
+> Canonicals point at `mugupstudio.com`, which limits the damage, but do not
+> leave it crawlable for months. Stage B resolves it permanently.
+
 
 ---
 
