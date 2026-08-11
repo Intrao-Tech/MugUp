@@ -64,11 +64,14 @@ export type Block =
   | { type: "faq"; items: { question: string; answer: string }[] }
   | { type: "team"; members: TeamMember[] }
   | { type: "image"; alt: string; src?: string }
-  | { type: "cta"; title: string; body?: string; note?: string; cta: Cta };
+  | { type: "cta"; title: string; body?: string; note?: string; cta: Cta }
+  | { type: "buttons"; ctas: Cta[] };
 
 export interface Section {
   /** Stable anchor id, kebab-case, same in both locales. */
   id: string;
+  /** Small uppercase kicker above the H2 (e.g. "How It Works"). */
+  eyebrow?: string;
   /** Rendered as H2. */
   title?: string;
   intro?: string;
@@ -108,6 +111,25 @@ export interface ProgrammePage extends Page {
   cardTitle: string;
   cardBlurb: string;
   atAGlance: { label: string; value: string }[];
+}
+
+/* ---------- Global Integration language sub-pages ---------- */
+
+export const LANGUAGE_SLUGS = [
+  "spanish",
+  "french",
+  "german",
+  "italian",
+  "portuguese",
+  "ukrainian",
+] as const;
+
+export type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
+
+export interface LanguagePage extends Page {
+  slug: LanguageSlug;
+  /** Short name for hub cards / breadcrumbs, e.g. "Spain · Spanish". */
+  cardTitle: string;
 }
 
 /* ---------- Forms (structure only for now; wired to Supabase later) ---------- */

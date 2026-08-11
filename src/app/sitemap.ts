@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import type { Locale } from "@/content/types";
-import { PROGRAMME_SLUGS } from "@/content/types";
+import { LANGUAGE_SLUGS, PROGRAMME_SLUGS } from "@/content/types";
 import { getPublishedSlugSets } from "@/lib/insights";
 import { SITE_URL } from "@/lib/site";
 
@@ -14,6 +14,7 @@ const STATIC_PATHS = [
   "/pathways/british-education",
   ...PROGRAMME_SLUGS.map((slug) => `/pathways/british-education/${slug}`),
   "/pathways/global-integration",
+  ...LANGUAGE_SLUGS.map((slug) => `/pathways/global-integration/${slug}`),
   "/insights",
   "/book-assessment",
   "/contact",

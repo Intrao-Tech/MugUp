@@ -164,6 +164,20 @@ export function BlockView({ block, locale }: { block: Block; locale: Locale }) {
       ) : (
         <ImagePlaceholder alt={block.alt} />
       );
+    case "buttons":
+      return (
+        <p className="flex flex-wrap gap-3">
+          {block.ctas.map((cta) => (
+            <Link
+              key={cta.href + cta.label}
+              href={localeHref(locale, cta.href)}
+              className="inline-block border border-neutral-900 px-5 py-2 font-medium"
+            >
+              {cta.label}
+            </Link>
+          ))}
+        </p>
+      );
     case "cta":
       return (
         <aside className="border border-neutral-900 p-6">
@@ -186,6 +200,9 @@ export function BlockView({ block, locale }: { block: Block; locale: Locale }) {
 export function SectionView({ section, locale }: { section: Section; locale: Locale }) {
   return (
     <section id={section.id} className="mx-auto max-w-4xl px-4 py-8">
+      {section.eyebrow && (
+        <p className="text-sm uppercase tracking-wide text-neutral-500">{section.eyebrow}</p>
+      )}
       {section.title && <h2 className="text-2xl font-bold">{section.title}</h2>}
       {section.intro && <p className="mt-2 text-neutral-700">{section.intro}</p>}
       <div className="mt-4 space-y-6">
