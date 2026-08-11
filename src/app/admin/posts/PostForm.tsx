@@ -1,5 +1,5 @@
 import type { CategoryRow, PostRow } from "@/lib/db-types";
-import { savePost } from "../actions";
+import { savePost, savePostDraft, savePostPublish } from "../actions";
 import { PostBuilder } from "./PostBuilder";
 
 // Shared by /admin/posts/new and /admin/posts/[id]. The block builder
@@ -90,20 +90,17 @@ export function PostForm({
           <PostBuilder initialMarkdown={post?.body_md ?? ""} />
         </div>
       </div>
+      {/* Per-button formAction: React drops a submitter's own name/value for
+          function actions, so a shared action can't tell the buttons apart —
+          submitting via `name="intent"` silently saved publishes as drafts. */}
       <div className="flex gap-3">
-        <button
-          type="submit"
-          name="intent"
-          value="draft"
-          className="border border-neutral-900 px-4 py-2"
-        >
+        <button type="submit" formAction={savePostDraft} className="border border-neutral-900 px-4 py-2">
           Save draft
         </button>
         {canPublish && (
           <button
             type="submit"
-            name="intent"
-            value="publish"
+            formAction={savePostPublish}
             className="border border-neutral-900 bg-neutral-900 px-4 py-2 font-medium text-white"
           >
             {post?.status === "published" ? "Update & keep published" : "Publish to site"}

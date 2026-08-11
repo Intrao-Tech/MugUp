@@ -1,11 +1,13 @@
 import "server-only";
 
+import { LEAD_FORM_LABELS, type LeadForm } from "@/lib/db-types";
+
 // New-lead email notification via Resend's REST API (no SDK needed).
 // Fully env-gated: without RESEND_API_KEY + LEADS_NOTIFY_EMAIL it's a no-op,
 // and a notification failure must never break the visitor's submission.
 
 export async function notifyNewLead(lead: {
-  form: "booking" | "contact";
+  form: LeadForm;
   locale: "en" | "ua";
   fullName: string;
   email: string;
@@ -18,7 +20,7 @@ export async function notifyNewLead(lead: {
   const to = process.env.LEADS_NOTIFY_EMAIL;
   if (!apiKey || !to) return;
 
-  const kind = lead.form === "booking" ? "Book Assessment" : "Contact";
+  const kind = LEAD_FORM_LABELS[lead.form];
   const lines = [
     `Form: ${kind} (${lead.locale.toUpperCase()} site)`,
     `Name: ${lead.fullName}`,

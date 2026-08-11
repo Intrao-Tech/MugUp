@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { CategoryRow, LeadRow, PostRow, ProfileRow, ReviewRow } from "@/lib/db-types";
-import type { DataBackend, Result } from "@/lib/data/ports";
+import type {
+  ActivityRow,
+  CategoryRow,
+  LeadRow,
+  PostRow,
+  ProfileRow,
+  ReviewRow,
+} from "@/lib/db-types";
+import type { DataBackend, FeaturedReview, LeadStatsRow, Result } from "@/lib/data/ports";
 import { createAnonClient, createServiceClient, createUserClient } from "./clients";
 import { LEAD_FILES_BUCKET, POST_IMAGES_BUCKET } from "./config";
 
@@ -141,8 +148,28 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         return (data as LeadRow | null) ?? null;
       },
       countByStatus: async (status) => countRows(await user(), "leads", "status", status),
-      async updateStatus(id, status) {
-        const { error } = await (await user()).from("leads").update({ status }).eq("id", id);
+      async updateStatus(id, status, lost) {
+        const { error } = await (await user())
+          .from("leads")
+          .update({
+            status,
+            lost_reason: status === "lost" ? (lost?.reason ?? null) : null,
+            lost_reason_note: status === "lost" ? (lost?.note ?? "") : "",
+          })
+          .eq("id", id);
+        return toResult(error);
+      },
+      async updateDetails(id, details) {
+        const { error } = await (await user())
+          .from("leads")
+          .update({
+            programme: details.programme,
+            source: details.source,
+            owner_id: details.ownerId,
+            next_action: details.nextAction,
+            next_action_date: details.nextActionDate,
+          })
+          .eq("id", id);
         return toResult(error);
       },
       async updateNotes(id, notes) {
@@ -163,8 +190,19 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           subject: lead.subject,
           message: lead.message,
           file_path: lead.filePath,
+          source: lead.source,
         });
         return toResult(error);
+      },
+      // Aggregate-only projection (no PII columns); the service client keeps
+      // the dashboard available to analytics.view holders without leads.view.
+      async statsRows() {
+        const { data } = await createServiceClient()
+          .from("leads")
+          .select("created_at, status, source, pathway_interest, next_action_date")
+          .order("created_at", { ascending: false })
+          .limit(5000);
+        return (data ?? []) as LeadStatsRow[];
       },
     },
 
@@ -177,10 +215,16 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         return (data ?? []) as ReviewRow[];
       },
       countByStatus: async (status) => countRows(await user(), "reviews", "status", status),
-      async add({ authorName, authorTag, quote, source, rating }) {
-        const { error } = await (await user())
-          .from("reviews")
-          .insert({ author_name: authorName, author_tag: authorTag, quote, source, rating });
+      async add({ authorName, authorTag, quote, source, rating, programme, audience }) {
+        const { error } = await (await user()).from("reviews").insert({
+          author_name: authorName,
+          author_tag: authorTag,
+          quote,
+          source,
+          rating,
+          programme,
+          audience,
+        });
         return toResult(error);
       },
       async submitPublic({ authorName, authorTag, quote, rating }) {
@@ -201,6 +245,24 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           .update({ status, moderated_by: moderatorId, moderated_at: new Date().toISOString() })
           .eq("id", id);
         return toResult(error);
+      },
+      async updateMeta(id, { programme, audience, featured }) {
+        const { error } = await (await user())
+          .from("reviews")
+          .update({ programme, audience, featured })
+          .eq("id", id);
+        return toResult(error);
+      },
+      // Public read: cookie-less anon client keeps ISR pages static; RLS
+      // exposes approved rows only.
+      async listFeatured() {
+        const { data } = await createAnonClient()
+          .from("reviews")
+          .select("author_name, author_tag, quote, rating, programme, audience")
+          .eq("status", "approved")
+          .eq("featured", true)
+          .order("created_at", { ascending: false });
+        return (data ?? []) as FeaturedReview[];
       },
     },
 
@@ -239,11 +301,13 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         return toResult(error);
       },
       // Public reads: cookie-less anon client keeps ISR pages static.
+      // "Live" = published + scheduled posts whose time has passed (the RLS
+      // policy mirrors this condition, so anon can actually read them).
       async listPublished(locale) {
         const { data } = await createAnonClient()
           .from("posts")
           .select("*")
-          .eq("status", "published")
+          .or(livePostsFilter())
           .eq("locale", locale)
           .order("published_at", { ascending: false });
         return (data ?? []) as PostRow[];
@@ -252,7 +316,7 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         const { data } = await createAnonClient()
           .from("posts")
           .select("*")
-          .eq("status", "published")
+          .or(livePostsFilter())
           .eq("locale", locale)
           .eq("slug", slug)
           .maybeSingle();
@@ -277,6 +341,34 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           .delete()
           .eq("slug", slug);
         return toResult(error);
+      },
+    },
+
+    activity: {
+      // Append-only via the service role: team accounts cannot write (or
+      // tamper with) audit entries directly. Failures are swallowed — the
+      // audit trail must never break the action it documents.
+      async record(entry) {
+        try {
+          await createServiceClient().from("activity_log").insert({
+            actor_id: entry.actorId,
+            actor_email: entry.actorEmail,
+            action: entry.action,
+            entity: entry.entity ?? "",
+            entity_id: entry.entityId ?? "",
+            detail: entry.detail ?? "",
+          });
+        } catch {
+          // ignore — see above
+        }
+      },
+      async list(limit = 200) {
+        const { data } = await (await user())
+          .from("activity_log")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        return (data ?? []) as ActivityRow[];
       },
     },
 
@@ -307,6 +399,11 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
   };
 }
 
+/** Anon "or" filter matching the public RLS policy for live posts. */
+function livePostsFilter(): string {
+  return `status.eq.published,and(status.eq.scheduled,published_at.lte.${new Date().toISOString()})`;
+}
+
 function toPostColumns(input: {
   slug: string;
   locale: string;
@@ -316,6 +413,11 @@ function toPostColumns(input: {
   bodyMd: string;
   status: string;
   publishedAt?: string | null;
+  author: string;
+  heroImageUrl: string | null;
+  heroImageAlt: string;
+  ctaLabel: string;
+  ctaUrl: string;
 }) {
   return {
     slug: input.slug,
@@ -325,6 +427,11 @@ function toPostColumns(input: {
     description: input.description,
     body_md: input.bodyMd,
     status: input.status,
+    author: input.author,
+    hero_image_url: input.heroImageUrl,
+    hero_image_alt: input.heroImageAlt,
+    cta_label: input.ctaLabel,
+    cta_url: input.ctaUrl,
     // undefined = leave the stored publication date untouched.
     ...(input.publishedAt !== undefined ? { published_at: input.publishedAt } : {}),
   };

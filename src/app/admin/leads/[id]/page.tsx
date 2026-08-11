@@ -41,7 +41,7 @@ export default async function LeadDetailPage({
   if (!lead) notFound();
 
   let fileUrl: string | null = null;
-  if (lead.file_path && hasPerm(profile, "files.view")) {
+  if (lead.file_path && hasPerm(profile, "leads.pii")) {
     fileUrl = await data.files.getLeadFileUrl(lead.file_path, 600);
   }
 

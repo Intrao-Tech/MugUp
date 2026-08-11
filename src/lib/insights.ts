@@ -21,6 +21,14 @@ export interface PublicPost {
   blocks: Block[] | null;
   /** ...database posts carry Markdown. */
   bodyMd: string | null;
+  /** Byline ("" = publish as the studio, no personal byline). */
+  author: string;
+  /** Featured image; alt is always set whenever the URL is. */
+  heroImageUrl: string | null;
+  heroImageAlt: string;
+  /** End-of-article call to action ("" = no CTA block). */
+  ctaLabel: string;
+  ctaUrl: string;
 }
 
 export interface PublicCategory {
@@ -61,6 +69,11 @@ function fromRow(row: PostRow): PublicPost {
     sample: false,
     blocks: null,
     bodyMd: row.body_md,
+    author: row.author,
+    heroImageUrl: row.hero_image_url,
+    heroImageAlt: row.hero_image_alt,
+    ctaLabel: row.cta_label,
+    ctaUrl: row.cta_url,
   };
 }
 
@@ -74,6 +87,11 @@ function fromStatic(post: InsightPost): PublicPost {
     sample: true,
     blocks: post.body,
     bodyMd: null,
+    author: "",
+    heroImageUrl: null,
+    heroImageAlt: "",
+    ctaLabel: "",
+    ctaUrl: "",
   };
 }
 
