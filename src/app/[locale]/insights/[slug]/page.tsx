@@ -6,6 +6,7 @@ import { BlockView } from "@/components/BlockRenderer";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { Markdown } from "@/components/Markdown";
+import { PostBody } from "@/components/PostBody";
 import { getPublicCategories, getPublicPost } from "@/lib/insights";
 import { pageMetadata } from "@/lib/seo";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
@@ -45,9 +46,12 @@ export default async function InsightPostPage({ params }: Props) {
     description: post.description,
     datePublished: post.date,
     inLanguage: locale === "ua" ? "uk" : "en-GB",
-    author: { "@type": "Organization", name: SITE_NAME },
+    author: post.author
+      ? { "@type": "Person", name: post.author }
+      : { "@type": "Organization", name: SITE_NAME },
     publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
     mainEntityOfPage: `${SITE_URL}/${locale}/insights/${slug}`,
+    ...(post.heroImageUrl ? { image: post.heroImageUrl } : {}),
   };
 
   return (
@@ -61,29 +65,55 @@ export default async function InsightPostPage({ params }: Props) {
           { label: post.title },
         ]}
       />
-      <article className="mx-auto max-w-3xl px-4 py-8">
-        {post.sample && (
-          <p className="mb-4 border border-amber-400 bg-amber-50 p-3 text-sm text-amber-900">
-            {dict.ui.samplePostNotice}
-          </p>
-        )}
-        <header>
-          <p className="text-sm text-neutral-500">
-            {new Date(post.date).toLocaleDateString(locale === "ua" ? "uk-UA" : "en-GB")}
-            {category && (
-              <>
-                {" · "}
-                {dict.ui.postedIn} {category.label}
-              </>
+      {/* The body container is deliberately unconstrained: builder-v2 blocks
+          carry their own width wrappers (normal / wide / full-bleed). */}
+      <article className="py-8">
+        <div className="mx-auto max-w-3xl px-4">
+          {post.sample && (
+            <p className="mb-4 border border-amber-400 bg-amber-50 p-3 text-sm text-amber-900">
+              {dict.ui.samplePostNotice}
+            </p>
+          )}
+          <header>
+            <p className="text-sm text-neutral-500">
+              {new Date(post.date).toLocaleDateString(locale === "ua" ? "uk-UA" : "en-GB")}
+              {category && (
+                <>
+                  {" · "}
+                  {dict.ui.postedIn} {category.label}
+                </>
+              )}
+              {post.author && <> · {post.author}</>}
+            </p>
+            <h1 className="mt-2 text-3xl font-bold">{post.title}</h1>
+          </header>
+          {post.heroImageUrl && (
+            <img src={post.heroImageUrl} alt={post.heroImageAlt} className="mt-6 w-full" />
+          )}
+        </div>
+        {post.bodyBlocks ? (
+          <div className="mt-6">
+            <PostBody blocks={post.bodyBlocks} />
+          </div>
+        ) : (
+          <div className="mx-auto mt-6 max-w-3xl space-y-4 px-4">
+            {post.bodyMd !== null ? (
+              <Markdown source={post.bodyMd} />
+            ) : (
+              post.blocks?.map((block, i) => <BlockView key={i} block={block} locale={locale} />)
             )}
-          </p>
-          <h1 className="mt-2 text-3xl font-bold">{post.title}</h1>
-        </header>
-        <div className="mt-6 space-y-4">
-          {post.bodyMd !== null ? (
-            <Markdown source={post.bodyMd} />
-          ) : (
-            post.blocks?.map((block, i) => <BlockView key={i} block={block} locale={locale} />)
+          </div>
+        )}
+        <div className="mx-auto max-w-3xl px-4">
+          {post.ctaLabel && post.ctaUrl && (
+            <aside className="mt-8 border border-neutral-900 p-6 text-center">
+              <a
+                href={post.ctaUrl.startsWith("http") ? post.ctaUrl : `/${locale}${post.ctaUrl}`}
+                className="inline-block border border-neutral-900 px-6 py-2 font-medium"
+              >
+                {post.ctaLabel}
+              </a>
+            </aside>
           )}
         </div>
       </article>

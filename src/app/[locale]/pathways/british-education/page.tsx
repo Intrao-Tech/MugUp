@@ -11,7 +11,11 @@ type Props = { params: Promise<{ locale: Locale }> };
 
 // Presentational group headings; promote to the common dictionary if they
 // ever need to appear anywhere else.
-const GROUP_LABELS: Record<Locale, Record<ProgrammeGroup, string>> = {
+// International qualifications are not rendered here — they live under
+// Global Integration (final client doc, Aug 2026).
+const HUB_GROUPS = ["education-pathways", "english-qualifications"] as const satisfies readonly ProgrammeGroup[];
+
+const GROUP_LABELS: Record<Locale, Record<(typeof HUB_GROUPS)[number], string>> = {
   en: {
     "education-pathways": "Education Pathways",
     "english-qualifications": "English Qualifications",
@@ -32,7 +36,7 @@ export default async function BritishEducationHub({ params }: Props) {
   const page = getBritishHub(locale);
   const dict = getCommon(locale);
   const programmes = getProgrammes(locale);
-  const groups: ProgrammeGroup[] = ["education-pathways", "english-qualifications"];
+  const groups = HUB_GROUPS;
 
   const finalCta = page.sections.find((s) => s.id === "final-cta");
   const sections = page.sections.filter((s) => s.id !== "final-cta");

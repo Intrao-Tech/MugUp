@@ -239,6 +239,54 @@ export const page: Page = {
       ],
     },
     {
+      id: "international-language-qualifications",
+      eyebrow: "Qualifications for Global Opportunities",
+      title: "International Language Qualifications",
+      intro:
+        "Preparation for internationally recognised language qualifications for education, work, migration requirements and international mobility.",
+      blocks: [
+        {
+          type: "paragraph",
+          text: "IELTS · Cambridge English · LanguageCert · DELE · SIELE · DELF · DALF · TCF · Goethe-Zertifikat · telc Deutsch · TestDaF · CILS · CELI · PLIDA · CAPLE",
+        },
+        {
+          type: "buttons",
+          ctas: [
+            {
+              label: "Explore International Language Qualifications",
+              href: "/pathways/global-integration/qualifications",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "international-education",
+      title: "International Education & Study Abroad",
+      intro:
+        "Supporting international learners and families as they explore globally recognised education pathways, international schools and study opportunities in the UK and beyond.",
+      blocks: [
+        {
+          type: "cards",
+          cards: [
+            {
+              title: "International Baccalaureate (IB)",
+              eyebrow: "Ages 3–19",
+              body: "Personalised academic support for learners studying within the International Baccalaureate continuum, from the early years through to university preparation.",
+              items: ["PYP", "MYP", "Diploma Programme", "Career-related Programme"],
+            },
+            {
+              title: "British Boarding Schools for International Students",
+              eyebrow: "A British Education with Global Opportunities",
+              body: "Guidance and academic preparation for international families considering boarding education in the UK, from exploring school options and understanding entry requirements to preparing for admissions, interviews and the transition into British education.",
+              href: "/pathways/global-integration/boarding-schools",
+              linkLabel: "Explore British Boarding Schools",
+            },
+          ],
+        },
+      ],
+    },
+    {
       id: "final-cta",
       title: "Your Language. Your Destination. Your Future.",
       blocks: [

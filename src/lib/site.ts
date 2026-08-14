@@ -58,6 +58,7 @@ export const SOCIALS = {
   shared: [
     { label: "TikTok", href: "https://www.tiktok.com/@mug.up.global" },
     { label: "Telegram", href: "https://t.me/LS_MugUp" },
-    { label: "WhatsApp", href: "https://wa.me/message/4D2LX776BI4JC1" },
+    // New WhatsApp Business account (decoded from the client's QR, 14 Aug 2026).
+    { label: "WhatsApp", href: "https://wa.me/message/PR7BAKHTTTFWK1" },
   ],
 } as const;

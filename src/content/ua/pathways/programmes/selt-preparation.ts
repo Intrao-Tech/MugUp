@@ -3,7 +3,7 @@ import type { ProgrammePage } from "@/content/types";
 // Українська версія сторінки "SELT Preparation" (джерело: "British Education Pathways.docx", Page 9).
 export const page: ProgrammePage = {
   slug: "selt-preparation",
-  group: "english-qualifications",
+  group: "international-qualifications",
   cardTitle: "Підготовка до SELT",
   cardBlurb:
     "Підготовка до схвалених UKVI іспитів LanguageCert SELT для заяв на візу, постійне проживання та громадянство.",

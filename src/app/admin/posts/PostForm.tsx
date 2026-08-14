@@ -1,5 +1,8 @@
 import type { CategoryRow, PostRow } from "@/lib/db-types";
-import { savePost, savePostDraft, savePostPublish } from "../actions";
+import { sanitizePostBlocks } from "@/lib/post-blocks";
+import { isoToUkWallTime } from "@/lib/uk-time";
+import { savePost, savePostDraft, savePostPublish, savePostSchedule } from "../actions";
+import { HeroImageField } from "./HeroImageField";
 import { PostBuilder } from "./PostBuilder";
 
 // Shared by /admin/posts/new and /admin/posts/[id]. The block builder
@@ -15,8 +18,11 @@ export function PostForm({
 }) {
   const inputCls = "mt-1 w-full border border-neutral-400 px-3 py-2";
   return (
-    <form action={savePost} className="max-w-2xl space-y-4">
+    // The metadata fields sit in a narrow column; the content builder below
+    // uses the full admin width (columns and wide blocks need the room).
+    <form action={savePost} className="space-y-4">
       {post && <input type="hidden" name="id" value={post.id} />}
+      <div className="max-w-2xl space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="locale" className="block text-sm font-medium">
@@ -82,18 +88,72 @@ export function PostForm({
         />
       </div>
       <div>
-        <span className="block text-sm font-medium">Content</span>
+        <label htmlFor="author" className="block text-sm font-medium">
+          Author{" "}
+          <span className="font-normal text-neutral-500">
+            (shown as the byline; adds educational expertise for readers and Google)
+          </span>
+        </label>
+        <input id="author" name="author" defaultValue={post?.author} className={inputCls} />
+      </div>
+      <div>
+        <span className="block text-sm font-medium">Featured image</span>
         <p className="text-xs text-neutral-500">
-          Build the article from blocks — add as many as you need, reorder with the arrows.
+          Shown at the top of the article and in social previews.
         </p>
         <div className="mt-2">
-          <PostBuilder initialMarkdown={post?.body_md ?? ""} />
+          <HeroImageField initialUrl={post?.hero_image_url ?? null} initialAlt={post?.hero_image_alt ?? ""} />
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="cta_label" className="block text-sm font-medium">
+            End-of-article CTA — button text
+          </label>
+          <input
+            id="cta_label"
+            name="cta_label"
+            placeholder="e.g. Explore British Education"
+            defaultValue={post?.cta_label}
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <label htmlFor="cta_url" className="block text-sm font-medium">
+            CTA — link
+          </label>
+          <input
+            id="cta_url"
+            name="cta_url"
+            placeholder="/pathways/british-education"
+            defaultValue={post?.cta_url}
+            className={inputCls}
+          />
+        </div>
+      </div>
+      <p className="-mt-2 text-xs text-neutral-500">
+        The CTA hands the reader on to a programme (fill both fields or neither).
+      </p>
+      </div>
+      <div>
+        <span className="block text-sm font-medium">Content</span>
+        <p className="text-xs text-neutral-500">
+          Build the article from blocks: drag them by the ⠿ handle to any position, insert at
+          any point, set each block&apos;s width (standard / wide / full) and alignment, put two
+          blocks side by side with “◫ with next” (and break columns apart with “Unstack”), and
+          check the result with the preview button below.
+        </p>
+        <div className="mt-2">
+          <PostBuilder
+            initialMarkdown={post?.body_md ?? ""}
+            initialBlocks={post?.body_blocks ? sanitizePostBlocks(post.body_blocks) : null}
+          />
         </div>
       </div>
       {/* Per-button formAction: React drops a submitter's own name/value for
           function actions, so a shared action can't tell the buttons apart —
           submitting via `name="intent"` silently saved publishes as drafts. */}
-      <div className="flex gap-3">
+      <div className="flex flex-wrap items-end gap-3">
         <button type="submit" formAction={savePostDraft} className="border border-neutral-900 px-4 py-2">
           Save draft
         </button>
@@ -106,10 +166,33 @@ export function PostForm({
             {post?.status === "published" ? "Update & keep published" : "Publish to site"}
           </button>
         )}
+        {canPublish && (
+          <div className="flex items-end gap-2">
+            <div>
+              <label htmlFor="publish_at" className="block text-xs font-medium text-neutral-600">
+                Go live at (UK time)
+              </label>
+              <input
+                id="publish_at"
+                name="publish_at"
+                type="datetime-local"
+                defaultValue={
+                  post?.status === "scheduled" && post.published_at
+                    ? isoToUkWallTime(post.published_at)
+                    : ""
+                }
+                className="mt-1 border border-neutral-400 px-2 py-1.5 text-sm"
+              />
+            </div>
+            <button type="submit" formAction={savePostSchedule} className="border border-neutral-900 px-4 py-2">
+              Schedule
+            </button>
+          </div>
+        )}
       </div>
       <p className="text-sm text-neutral-500">
         Drafts are visible only here in the admin. Publishing puts the article on the live site
-        within seconds — at /{post?.locale ?? "en"}/insights/&lt;slug&gt;.
+        within seconds; scheduling publishes it automatically at the chosen UK time.
         {post?.status === "published" && " “Save draft” takes a published article OFF the site."}
       </p>
     </form>

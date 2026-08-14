@@ -109,6 +109,22 @@ export const page: Page = {
       ],
     },
     {
+      id: "boarding-crosslink",
+      blocks: [
+        {
+          type: "cards",
+          cards: [
+            {
+              title: "British Boarding Schools for International Students",
+              body: "Супровід вступу та академічна підготовка для міжнародних родин, які розглядають пансіонну освіту у Великій Британії.",
+              href: "/pathways/global-integration/boarding-schools",
+              linkLabel: "Переглянути British Boarding Schools",
+            },
+          ],
+        },
+      ],
+    },
+    {
       id: "final-cta",
       blocks: [
         {

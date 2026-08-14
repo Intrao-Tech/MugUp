@@ -4,19 +4,24 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getData } from "@/lib/data";
 import { requireProfile } from "@/lib/auth-guard";
-import { isPermission, ROLE_PRESETS, type Permission, type Role } from "@/lib/permissions";
+import { isPermission, ROLE_PRESETS, type BuiltInRole, type Permission } from "@/lib/permissions";
 import {
   LEAD_SOURCES,
   LEAD_STATUSES,
   LEAD_STATUS_LABELS,
   LOST_REASONS,
+  NOTIFICATION_EVENTS,
   REVIEW_AUDIENCES,
   type LeadSource,
   type LeadStatus,
   type LostReason,
+  type NotificationEvent,
   type ProfileRow,
   type ReviewAudience,
 } from "@/lib/db-types";
+import { notifyPostPublished } from "@/lib/notify";
+import { isStrongPassword } from "@/lib/password";
+import { parsePostBlocksJson, sanitizePostBlocks, type PostBlock } from "@/lib/post-blocks";
 import { slugify } from "@/lib/slugify";
 import { adminSiteOrigin } from "@/lib/site";
 import { ukWallTimeToIso } from "@/lib/uk-time";
@@ -122,15 +127,26 @@ export async function updateLeadDetails(formData: FormData): Promise<void> {
     : null;
   const rawOwner = String(formData.get("owner_id") ?? "");
   if (rawOwner && !UUID_RE.test(rawOwner)) redirect(`/admin/leads/${id}?error=input`);
-  const rawDate = String(formData.get("next_action_date") ?? "");
-  if (rawDate && !DATE_RE.test(rawDate)) redirect(`/admin/leads/${id}?error=input`);
 
   const data = await getData();
+  const existing = await data.leads.get(id);
+  if (!existing) redirect("/admin/leads?error=input");
+
+  // The next-action fields are hidden for closed/lost enquiries — an absent
+  // field keeps the stored value instead of silently clearing it.
+  const rawNextAction = formData.get("next_action");
+  const rawNextDate = formData.get("next_action_date");
+  const rawDate = rawNextDate === null ? (existing.next_action_date ?? "") : String(rawNextDate);
+  if (rawDate && !DATE_RE.test(rawDate)) redirect(`/admin/leads/${id}?error=input`);
+
   const { error } = await data.leads.updateDetails(id, {
     programme: String(formData.get("programme") ?? "").trim().slice(0, 200),
     source,
     ownerId: rawOwner || null,
-    nextAction: String(formData.get("next_action") ?? "").trim().slice(0, 300),
+    nextAction:
+      rawNextAction === null
+        ? existing.next_action
+        : String(rawNextAction).trim().slice(0, 300),
     nextActionDate: rawDate || null,
   });
   if (error) redirect(`/admin/leads/${id}?error=save`);
@@ -231,6 +247,88 @@ export async function updateReviewMeta(formData: FormData): Promise<void> {
   redirect(`/admin/reviews${error ? "?error=save" : "?saved=1"}`);
 }
 
+export async function deleteReview(formData: FormData): Promise<void> {
+  const profile = await requireProfile("reviews.moderate");
+  const id = requireId(formData, "/admin/reviews");
+  const data = await getData();
+  // Fetched first so the activity log keeps a trace of what was removed.
+  const review = (await data.reviews.listAll()).find((r) => r.id === id);
+  const { error } = await data.reviews.delete(id);
+  if (!error) {
+    await logActivity(
+      profile,
+      "review.delete",
+      "review",
+      id,
+      review ? `${review.author_name}: “${review.quote.slice(0, 80)}”` : "deleted",
+    );
+    // A featured review may have been on the homepage.
+    revalidateHome();
+  }
+  redirect(`/admin/reviews${error ? "?error=save" : "?deleted=1"}`);
+}
+
+/* ---------- notification centre ---------- */
+
+function notificationEventsFromForm(formData: FormData): NotificationEvent[] {
+  const chosen = formData.getAll("events").map(String);
+  return NOTIFICATION_EVENTS.filter((event) => chosen.includes(event));
+}
+
+/** A member picks which events THEY see. */
+export async function saveOwnNotificationEvents(formData: FormData): Promise<void> {
+  const me = await requireProfile();
+  const data = await getData();
+  const { error } = await data.notifications.setSubscription(
+    me.id,
+    notificationEventsFromForm(formData),
+  );
+  redirect(`/admin/notifications${error ? "?error=save" : "?saved=1"}`);
+}
+
+/** A team manager configures what another member sees. */
+export async function saveMemberNotificationEvents(formData: FormData): Promise<void> {
+  const me = await requireProfile("users.manage");
+  const profileId = String(formData.get("profile_id") ?? "");
+  if (!UUID_RE.test(profileId)) redirect("/admin/notifications?error=input");
+  const events = notificationEventsFromForm(formData);
+  const data = await getData();
+  const { error } = await data.notifications.setSubscription(profileId, events);
+  if (!error) {
+    await logActivity(
+      me,
+      "notification.subscription",
+      "user",
+      profileId,
+      events.join(", ") || "(no events)",
+    );
+  }
+  redirect(`/admin/notifications${error ? "?error=save" : "?saved=1"}`);
+}
+
+export async function markNotificationsSeen(): Promise<void> {
+  const me = await requireProfile();
+  const data = await getData();
+  await data.notifications.markSeen(me.id);
+  redirect("/admin/notifications");
+}
+
+/* ---------- admin settings ---------- */
+
+export async function updateSessionTimeout(formData: FormData): Promise<void> {
+  const me = await requireProfile("users.manage");
+  const minutes = Number(String(formData.get("minutes") ?? ""));
+  if (!Number.isInteger(minutes) || minutes < 5 || minutes > 480) {
+    redirect("/admin/account?error=timeout");
+  }
+  const data = await getData();
+  const { error } = await data.settings.set("session_timeout_minutes", String(minutes));
+  if (!error) {
+    await logActivity(me, "settings.session-timeout", "settings", "", `${minutes} minutes`);
+  }
+  redirect(`/admin/account${error ? "?error=save" : "?saved-timeout=1"}`);
+}
+
 /* ---------- posts ---------- */
 
 /** Published content changed — refresh the public pages immediately. */
@@ -300,6 +398,19 @@ export async function savePost(formData: FormData): Promise<void> {
     return raw === null ? stored : String(raw).trim().slice(0, max);
   };
 
+  // Layout blocks (builder v2). Absent field = older form → keep the stored
+  // value; present but invalid = reject (the builder always emits valid JSON,
+  // so a failure means tampering or corruption, not user error).
+  const rawBlocks = formData.get("body_blocks");
+  let bodyBlocks: PostBlock[] | null;
+  if (rawBlocks === null) {
+    bodyBlocks = existing?.body_blocks ? sanitizePostBlocks(existing.body_blocks) : null;
+  } else {
+    const trimmed = String(rawBlocks).trim();
+    bodyBlocks = trimmed && trimmed !== "[]" ? parsePostBlocksJson(trimmed) : null;
+    if (trimmed && trimmed !== "[]" && !bodyBlocks) redirect(`${backTo}?error=blocks`);
+  }
+
   const title = String(formData.get("title") ?? "").trim();
   const rawSlug = String(formData.get("slug") ?? "").trim().toLowerCase();
   const rawHeroUrl = formData.get("hero_image_url");
@@ -316,6 +427,7 @@ export async function savePost(formData: FormData): Promise<void> {
     title,
     description: String(formData.get("description") ?? "").trim(),
     bodyMd: String(formData.get("body_md") ?? ""),
+    bodyBlocks,
     author: textField("author", existing?.author ?? "", 120),
     heroImageUrl,
     heroImageAlt,
@@ -362,6 +474,9 @@ export async function savePost(formData: FormData): Promise<void> {
     // Un-publishing / re-scheduling also has to refresh the site.
     if (status !== "draft" || existing?.status !== "draft") revalidatePublicInsights(input.slug);
     await logActivity(profile, `post.${intent}`, "post", id, input.title);
+    if (status !== "draft") {
+      await notifyPostPublished({ title: input.title, status, actorEmail: profile.email });
+    }
     redirect("/admin/posts?saved=1");
   } else {
     const { error } = await data.posts.create(
@@ -375,6 +490,9 @@ export async function savePost(formData: FormData): Promise<void> {
     if (error) redirect(`${backTo}?error=save`);
     if (status !== "draft") revalidatePublicInsights(input.slug);
     await logActivity(profile, `post.${intent}`, "post", input.slug, input.title);
+    if (status !== "draft") {
+      await notifyPostPublished({ title: input.title, status, actorEmail: profile.email });
+    }
     redirect("/admin/posts?saved=1");
   }
 }
@@ -431,28 +549,20 @@ export async function uploadPostImage(
 
 /* ---------- passwords ---------- */
 
-const MIN_PASSWORD_LENGTH = 6;
 
 export async function changeOwnPassword(formData: FormData): Promise<void> {
   await requireProfile();
+  const current = String(formData.get("current") ?? "");
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirm") ?? "");
-  if (password.length < MIN_PASSWORD_LENGTH) redirect("/admin/account?error=short");
+  if (!isStrongPassword(password)) redirect("/admin/account?error=weak");
   if (password !== confirm) redirect("/admin/account?error=mismatch");
   const data = await getData();
+  // Proving the current password stops a walk-up attacker with an unlocked
+  // screen from silently taking over the account.
+  if (!(await data.auth.verifyOwnPassword(current))) redirect("/admin/account?error=wrong-current");
   const { error } = await data.auth.updateOwnPassword(password);
   redirect(`/admin/account${error ? "?error=save" : "?saved=1"}`);
-}
-
-export async function issueTeamPassword(formData: FormData): Promise<void> {
-  const me = await requireProfile("users.manage");
-  const id = requireId(formData, "/admin/users");
-  const password = String(formData.get("password") ?? "");
-  if (password.length < MIN_PASSWORD_LENGTH) redirect("/admin/users?error=short-password");
-  const data = await getData();
-  const { error } = await data.team.setPassword(id, password);
-  if (!error) await logActivity(me, "user.password", "user", id, "new password issued");
-  redirect(`/admin/users${error ? "?error=save" : "?password-issued=1"}`);
 }
 
 /* ---------- team ---------- */
@@ -461,58 +571,91 @@ function permsFromForm(formData: FormData): Permission[] {
   return formData.getAll("permissions").map(String).filter(isPermission);
 }
 
-export async function createTeamUser(formData: FormData): Promise<void> {
-  const me = await requireProfile("users.manage");
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const fullName = String(formData.get("full_name") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-  const role = String(formData.get("role") ?? "editor") as Role;
-  if (
-    !email.includes("@") ||
-    !fullName ||
-    password.length < MIN_PASSWORD_LENGTH ||
-    !(role in ROLE_PRESETS)
-  ) {
-    redirect("/admin/users?error=input");
-  }
+/** Permission preset for a role slug — built-in or custom; null = unknown role. */
+async function resolveRolePreset(role: string): Promise<Permission[] | null> {
+  if (role in ROLE_PRESETS) return ROLE_PRESETS[role as BuiltInRole];
   const data = await getData();
-  const { error } = await data.team.createAccount({
-    email,
-    fullName,
-    password,
-    role,
-    permissions: ROLE_PRESETS[role],
-  });
-  if (!error) await logActivity(me, "user.create", "user", email, `role: ${role}`);
-  redirect(`/admin/users${error ? "?error=create" : "?saved=1"}`);
+  const custom = (await data.team.listCustomRoles()).find((r) => r.slug === role);
+  return custom ? custom.permissions : null;
 }
 
 export async function inviteTeamUser(formData: FormData): Promise<void> {
   const me = await requireProfile("users.manage");
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const fullName = String(formData.get("full_name") ?? "").trim();
-  const role = String(formData.get("role") ?? "editor") as Role;
-  if (!email.includes("@") || !fullName || !(role in ROLE_PRESETS)) {
-    redirect("/admin/users?error=input");
-  }
+  const role = String(formData.get("role") ?? "editor");
+  if (!email.includes("@") || !fullName) redirect("/admin/users?error=input");
+  const preset = await resolveRolePreset(role);
+  if (!preset) redirect("/admin/users?error=input");
   const data = await getData();
   const { error } = await data.team.inviteAccount({
     email,
     fullName,
     role,
-    permissions: ROLE_PRESETS[role],
+    permissions: preset,
     redirectOrigin: adminSiteOrigin(),
   });
   if (!error) await logActivity(me, "user.invite", "user", email, `role: ${role}`);
   redirect(`/admin/users${error ? "?error=invite" : "?invited=1"}`);
 }
 
+export async function sendPasswordResetEmail(formData: FormData): Promise<void> {
+  const me = await requireProfile("users.manage");
+  const id = requireId(formData, "/admin/users");
+  const data = await getData();
+  const target = await data.team.getProfile(id);
+  if (!target) redirect("/admin/users?error=input");
+  const { error } = await data.team.sendPasswordReset(target.email, adminSiteOrigin());
+  if (!error) await logActivity(me, "user.password-reset", "user", id, `reset email to ${target.email}`);
+  redirect(`/admin/users${error ? "?error=save" : "?reset-sent=1"}`);
+}
+
+export async function deleteTeamUser(formData: FormData): Promise<void> {
+  const me = await requireProfile("users.manage");
+  const id = requireId(formData, "/admin/users");
+  // Deleting your own signed-in account would strand the session mid-request.
+  if (id === me.id) redirect("/admin/users?error=self-delete");
+  const data = await getData();
+  const target = await data.team.getProfile(id);
+  const { error } = await data.team.deleteAccount(id);
+  if (!error) await logActivity(me, "user.delete", "user", id, target?.email ?? "");
+  redirect(`/admin/users${error ? "?error=save" : "?removed=1"}`);
+}
+
+export async function addCustomRole(formData: FormData): Promise<void> {
+  const me = await requireProfile("users.manage");
+  const name = String(formData.get("name") ?? "").trim().slice(0, 60);
+  const permissions = permsFromForm(formData);
+  const slug = slugify(name);
+  // Built-in slugs stay reserved so a custom role can never shadow one.
+  if (!name || !slug || slug in ROLE_PRESETS) redirect("/admin/users?error=role-input");
+  const data = await getData();
+  const { error } = await data.team.addCustomRole({ slug, name, permissions });
+  if (!error) {
+    await logActivity(me, "role.create", "role", slug, permissions.join(", ") || "(no access)");
+  }
+  redirect(`/admin/users${error ? "?error=role-save" : "?role-saved=1"}`);
+}
+
+export async function deleteCustomRole(formData: FormData): Promise<void> {
+  const me = await requireProfile("users.manage");
+  const slug = String(formData.get("slug") ?? "");
+  if (!/^[a-z0-9-]+$/.test(slug)) redirect("/admin/users?error=role-input");
+  const data = await getData();
+  // Keep accounts consistent: a role in use cannot be deleted.
+  const inUse = (await data.team.listProfiles()).some((p) => p.role === slug);
+  if (inUse) redirect("/admin/users?error=role-in-use");
+  const { error } = await data.team.deleteCustomRole(slug);
+  if (!error) await logActivity(me, "role.delete", "role", slug, "");
+  redirect(`/admin/users${error ? "?error=role-save" : "?role-deleted=1"}`);
+}
+
 export async function updateTeamUser(formData: FormData): Promise<void> {
   const me = await requireProfile("users.manage");
   const id = requireId(formData, "/admin/users");
-  const role = String(formData.get("role") ?? "editor") as Role;
+  const role = String(formData.get("role") ?? "editor");
   const permissions = permsFromForm(formData);
-  if (!(role in ROLE_PRESETS)) redirect("/admin/users?error=input");
+  if (!(await resolveRolePreset(role))) redirect("/admin/users?error=input");
   // Never let an account lock itself out of user management.
   if (id === me.id && !permissions.includes("users.manage")) {
     redirect("/admin/users?error=self-lockout");

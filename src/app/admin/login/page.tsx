@@ -14,9 +14,11 @@ export default async function LoginPage({
         <Notice tone="error">
           {error === "invalid"
             ? "Wrong email or password."
-            : error === "no-profile"
-              ? "Your account has no team profile yet — ask an administrator to set it up."
-              : "Enter email and password."}
+            : error === "expired"
+              ? "You were signed out after a period of inactivity — sign in again."
+              : error === "no-profile"
+                ? "Your account has no team profile yet — ask an administrator to set it up."
+                : "Enter email and password."}
         </Notice>
       )}
       <form action={signIn} className="mt-6 space-y-4">
@@ -50,9 +52,6 @@ export default async function LoginPage({
           Sign in
         </button>
       </form>
-      <p className="mt-4 text-sm text-neutral-500">
-        Accounts are created by an administrator — there is no self-registration.
-      </p>
     </div>
   );
 }

@@ -63,8 +63,27 @@ Component inventory:
 
 - Client copy & assets: `docs/requirements/client-materials/` (teacher photos,
   logo variants incl. EPS sources).
-- Intent & reference sites (Crimson Education, Kaplan, Preply, Coursera,
-  MasterClass): `docs/requirements/Mug.Up Web site structure v2.pdf`.
+- **Design reference sites** (client, 14 Aug 2026 — from
+  `docs/requirements/updates-2026-08/Mug.Up Web site structure (links only).pdf`;
+  the client says the STRUCTURE in that PDF is outdated, only these links
+  matter):
+  - Home page: crimsoneducation.org/uk · kaplaninternational.com ·
+    kaptest.com · preply.com · nordangliaeducation.com · generalassemb.ly
+  - About: crimsoneducation.org/uk
+  - Pathways: coursera.org (category navigation) · masterclass.com (clean,
+    visual product segmentation)
+  - Results/Insights: britishcouncil.org/school-resources ·
+    soliddigital.com/blog/best-of-web-case-studies-success-stories
+  - Footer: apple.com
+
+  Structural read of the two key references (checked Aug 2026): Coursera's
+  pattern = a catalogue grouped by explorable categories — our `/courses`
+  page already mirrors that at Mug.Up's scale (grouped card grids); take the
+  visual treatment, not more IA. Crimson's pattern = results-first
+  storytelling (big numbers, admit rates, named students high on the page) —
+  our Home section order is fixed by the signed TZ, but the DESIGN of the
+  Results section should borrow Crimson's number-forward, proof-heavy
+  presentation.
 - Signed structure: `docs/requirements/MugUp_Technical_Specification_TZ.pdf`.
 
 ## Definition of done

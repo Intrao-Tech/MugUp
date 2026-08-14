@@ -97,7 +97,14 @@ export async function middleware(request: NextRequest) {
   // /admin/welcome completes email invites client-side (tokens arrive in the
   // URL fragment, invisible to the server) — it must stay reachable signed out.
   const openPaths = ["/admin/login", "/admin/welcome"];
-  const { response, isAuthenticated } = await refreshAdminSession(request);
+  const { response, isAuthenticated, timedOut } = await refreshAdminSession(request);
+  if (timedOut) {
+    // The redirect must carry the sign-out cookie deletions, or the login
+    // page would still see a session and bounce straight back.
+    const redirect = NextResponse.redirect(new URL("/admin/login?error=expired", request.url));
+    for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+    return redirect;
+  }
   if (!isAuthenticated && !openPaths.includes(pathname)) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }

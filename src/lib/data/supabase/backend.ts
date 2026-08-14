@@ -2,12 +2,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   ActivityRow,
   CategoryRow,
+  CustomRoleRow,
   LeadRow,
+  NotificationRow,
+  NotificationSubscriptionRow,
   PostRow,
   ProfileRow,
   ReviewRow,
 } from "@/lib/db-types";
 import type { DataBackend, FeaturedReview, LeadStatsRow, Result } from "@/lib/data/ports";
+import { isEmailConfigured, sendEmail } from "@/lib/email";
 import { createAnonClient, createServiceClient, createUserClient } from "./clients";
 import { LEAD_FILES_BUCKET, POST_IMAGES_BUCKET } from "./config";
 
@@ -61,6 +65,19 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         const { error } = await (await user()).auth.updateUser({ password: newPassword });
         return toResult(error);
       },
+      async verifyOwnPassword(password) {
+        const {
+          data: { user: authUser },
+        } = await (await user()).auth.getUser();
+        if (!authUser?.email) return false;
+        // Probe sign-in on the cookie-less anon client: proves the password
+        // without touching the real session cookies.
+        const { error } = await createAnonClient().auth.signInWithPassword({
+          email: authUser.email,
+          password,
+        });
+        return !error;
+      },
     },
 
     team: {
@@ -86,39 +103,102 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           .eq("id", userId);
         return toResult(error);
       },
-      async createAccount({ email, fullName, password, role, permissions }) {
+      async inviteAccount({ email, fullName, role, permissions, redirectOrigin }) {
         const service = createServiceClient();
-        const { data, error } = await service.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-        });
-        if (error || !data.user) return { error: error?.message ?? "create failed" };
-        // The on_auth_user_created trigger has already inserted the profile row.
+        const redirectTo = `${redirectOrigin}/admin/welcome`;
+        let userId: string;
+        if (isEmailConfigured()) {
+          // App-owned email channel (src/lib/email.ts): Supabase only mints
+          // the invite link; the letter goes out from OUR sender address, so
+          // it reaches real inboxes even on the local stack.
+          const { data, error } = await service.auth.admin.generateLink({
+            type: "invite",
+            email,
+            options: { redirectTo },
+          });
+          if (error || !data.user) return { error: error?.message ?? "invite failed" };
+          userId = data.user.id;
+          const sent = await sendEmail({
+            to: email,
+            subject: "You are invited to Mug.Up Admin",
+            text: [
+              `Hello ${fullName},`,
+              "",
+              "You have been given access to the Mug.Up Studio admin panel.",
+              "Open the link below and choose your password:",
+              "",
+              data.properties.action_link,
+              "",
+              "The link can be used once. If you were not expecting this email, ignore it.",
+            ].join("\n"),
+          });
+          if (!sent) return { error: "invite email could not be sent" };
+        } else {
+          // Fallback: Supabase Auth sends the letter (Mailpit on the local stack).
+          const { data, error } = await service.auth.admin.inviteUserByEmail(email, {
+            redirectTo,
+          });
+          if (error || !data.user) return { error: error?.message ?? "invite failed" };
+          userId = data.user.id;
+        }
         const { error: profileError } = await service
           .from("profiles")
           .update({ full_name: fullName, role, permissions })
-          .eq("id", data.user.id);
+          .eq("id", userId);
         return toResult(profileError);
       },
-      async setPassword(userId, newPassword) {
-        const service = createServiceClient();
-        const { error } = await service.auth.admin.updateUserById(userId, {
-          password: newPassword,
+      async deleteAccount(userId) {
+        // profiles(id) references auth.users on delete cascade.
+        const { error } = await createServiceClient().auth.admin.deleteUser(userId);
+        return toResult(error);
+      },
+      async sendPasswordReset(email, redirectOrigin) {
+        const redirectTo = `${redirectOrigin}/admin/welcome`;
+        if (isEmailConfigured()) {
+          // Same app-owned channel as invites: mint the recovery link, send
+          // the letter ourselves.
+          const { data, error } = await createServiceClient().auth.admin.generateLink({
+            type: "recovery",
+            email,
+            options: { redirectTo },
+          });
+          if (error) return { error: error.message };
+          const sent = await sendEmail({
+            to: email,
+            subject: "Reset your Mug.Up Admin password",
+            text: [
+              "A password reset was requested for your Mug.Up Admin account.",
+              "Open the link below and choose a new password:",
+              "",
+              data.properties.action_link,
+              "",
+              "The link can be used once. If you did not request this, ignore it.",
+            ].join("\n"),
+          });
+          return sent ? {} : { error: "reset email could not be sent" };
+        }
+        // Fallback: Supabase Auth sends the letter (Mailpit on the local stack).
+        const { error } = await createAnonClient().auth.resetPasswordForEmail(email, {
+          redirectTo,
         });
         return toResult(error);
       },
-      async inviteAccount({ email, fullName, role, permissions, redirectOrigin }) {
-        const service = createServiceClient();
-        const { data, error } = await service.auth.admin.inviteUserByEmail(email, {
-          redirectTo: `${redirectOrigin}/admin/welcome`,
-        });
-        if (error || !data.user) return { error: error?.message ?? "invite failed" };
-        const { error: profileError } = await service
-          .from("profiles")
-          .update({ full_name: fullName, role, permissions })
-          .eq("id", data.user.id);
-        return toResult(profileError);
+      async listCustomRoles() {
+        const { data } = await (await user())
+          .from("custom_roles")
+          .select("*")
+          .order("name", { ascending: true });
+        return (data ?? []) as CustomRoleRow[];
+      },
+      async addCustomRole({ slug, name, permissions }) {
+        const { error } = await (await user())
+          .from("custom_roles")
+          .insert({ slug, name, permissions });
+        return toResult(error);
+      },
+      async deleteCustomRole(slug) {
+        const { error } = await (await user()).from("custom_roles").delete().eq("slug", slug);
+        return toResult(error);
       },
     },
 
@@ -253,6 +333,10 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           .eq("id", id);
         return toResult(error);
       },
+      async delete(id) {
+        const { error } = await (await user()).from("reviews").delete().eq("id", id);
+        return toResult(error);
+      },
       // Public read: cookie-less anon client keeps ISR pages static; RLS
       // exposes approved rows only.
       async listFeatured() {
@@ -362,13 +446,86 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           // ignore — see above
         }
       },
-      async list(limit = 200) {
-        const { data } = await (await user())
+      async list({ limit = 200, from, to } = {}) {
+        let query = (await user())
           .from("activity_log")
           .select("*")
           .order("created_at", { ascending: false })
           .limit(limit);
+        if (from) query = query.gte("created_at", from);
+        if (to) query = query.lt("created_at", to);
+        const { data } = await query;
         return (data ?? []) as ActivityRow[];
+      },
+    },
+
+    notifications: {
+      async feed(events, limit = 100) {
+        if (!events.length) return [];
+        const { data } = await (await user())
+          .from("notifications")
+          .select("*")
+          .in("event", events)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        return (data ?? []) as NotificationRow[];
+      },
+      // Service role: called from public form actions (no user session) and
+      // admin actions alike. Failures are swallowed — a notification must
+      // never break the action it announces. Old rows are pruned in passing.
+      async record(event, title, detail = "") {
+        try {
+          const service = createServiceClient();
+          await service.from("notifications").insert({ event, title, detail });
+          await service
+            .from("notifications")
+            .delete()
+            .lt("created_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
+        } catch {
+          // ignore — see above
+        }
+      },
+      async listSubscriptions() {
+        const { data } = await (await user()).from("notification_subscriptions").select("*");
+        return (data ?? []) as NotificationSubscriptionRow[];
+      },
+      async getSubscription(profileId) {
+        const { data } = await (await user())
+          .from("notification_subscriptions")
+          .select("*")
+          .eq("profile_id", profileId)
+          .maybeSingle();
+        return (data as NotificationSubscriptionRow | null) ?? null;
+      },
+      async setSubscription(profileId, events) {
+        const { error } = await (await user())
+          .from("notification_subscriptions")
+          .upsert({ profile_id: profileId, events });
+        return toResult(error);
+      },
+      async markSeen(profileId) {
+        const { error } = await (await user())
+          .from("notification_subscriptions")
+          .update({ last_seen: new Date().toISOString() })
+          .eq("profile_id", profileId);
+        return toResult(error);
+      },
+    },
+
+    settings: {
+      async get(key) {
+        const { data } = await (await user())
+          .from("admin_settings")
+          .select("value")
+          .eq("key", key)
+          .maybeSingle();
+        return (data as { value: string } | null)?.value ?? null;
+      },
+      async set(key, value) {
+        const { error } = await (await user())
+          .from("admin_settings")
+          .upsert({ key, value });
+        return toResult(error);
       },
     },
 
@@ -411,6 +568,7 @@ function toPostColumns(input: {
   title: string;
   description: string;
   bodyMd: string;
+  bodyBlocks: unknown;
   status: string;
   publishedAt?: string | null;
   author: string;
@@ -426,6 +584,7 @@ function toPostColumns(input: {
     title: input.title,
     description: input.description,
     body_md: input.bodyMd,
+    body_blocks: input.bodyBlocks,
     status: input.status,
     author: input.author,
     hero_image_url: input.heroImageUrl,

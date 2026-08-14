@@ -4,6 +4,7 @@ import { getData } from "@/lib/data";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { deletePost } from "../../actions";
 import { PostForm } from "../PostForm";
+import { POST_FORM_ERRORS } from "../errors";
 import { Notice } from "../../ui";
 
 export const dynamic = "force-dynamic";
@@ -31,15 +32,7 @@ export default async function EditPostPage({
         Status: {post.status}
         {post.published_at && ` · published ${new Date(post.published_at).toLocaleDateString("en-GB")}`}
       </p>
-      {error && (
-        <Notice tone="error">
-          {error === "publish-denied"
-            ? "You do not have the publish permission — nothing was saved. Ask an administrator."
-            : error === "input"
-              ? "Check the slug (kebab-case), title and category."
-              : "Could not save — the slug may already exist for this language."}
-        </Notice>
-      )}
+      {error && <Notice tone="error">{POST_FORM_ERRORS[error] ?? POST_FORM_ERRORS.save}</Notice>}
       <div className="mt-6">
         <PostForm post={post} canPublish={hasPerm(profile, "posts.publish")} categories={categories} />
       </div>

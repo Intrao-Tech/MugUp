@@ -14,7 +14,6 @@ export function generateStaticParams() {
   return LANGUAGE_SLUGS.map((language) => ({ language }));
 }
 
-export const dynamicParams = false;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, language } = await params;

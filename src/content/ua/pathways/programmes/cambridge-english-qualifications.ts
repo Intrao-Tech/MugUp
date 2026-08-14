@@ -3,7 +3,7 @@ import type { ProgrammePage } from "@/content/types";
 // Переклад сторінки "Cambridge English Qualifications" (British_Education_Pathways.docx, Page 7).
 export const page: ProgrammePage = {
   slug: "cambridge-english-qualifications",
-  group: "english-qualifications",
+  group: "international-qualifications",
   cardTitle: "Cambridge English",
   cardBlurb:
     "Міжнародно визнані іспити Cambridge English від A2 Key до C2 Proficiency — кваліфікації для освіти, роботи та життя.",

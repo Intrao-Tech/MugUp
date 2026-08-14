@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/data/supabase/browser";
+import { isStrongPassword, PASSWORD_RULES_TEXT } from "@/lib/password";
+import { PasswordRuleChecklist } from "../PasswordChecklist";
 
 type State = "checking" | "ready" | "invalid" | "done";
 
-// Landing page for the invite email: the link carries session tokens, the
-// invitee sets their password here and goes straight into the panel.
+// Landing page for BOTH invite and password-reset emails: the link carries
+// session tokens in the URL fragment, the person sets a password here and
+// goes straight into the panel.
 export default function WelcomePage() {
   const [state, setState] = useState<State>("checking");
   const [error, setError] = useState<string | null>(null);
@@ -40,8 +43,8 @@ export default function WelcomePage() {
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
-    if (password.length < 6) {
-      setError("The password must be at least 6 characters.");
+    if (!isStrongPassword(password)) {
+      setError(PASSWORD_RULES_TEXT);
       return;
     }
     if (password !== confirm) {
@@ -60,18 +63,18 @@ export default function WelcomePage() {
 
   return (
     <div className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-bold">Welcome to Mug.Up Admin</h1>
-      {state === "checking" && <p className="mt-4 text-neutral-600">Checking your invite…</p>}
+      <h1 className="text-2xl font-bold">Mug.Up Admin — set your password</h1>
+      {state === "checking" && <p className="mt-4 text-neutral-600">Checking your link…</p>}
       {state === "invalid" && (
         <p className="mt-4 border border-red-400 bg-red-50 p-3 text-sm text-red-800">
-          This invite link is invalid or has expired. Ask an administrator to send a new one.
+          This link is invalid or has expired. Ask an administrator to send a new one.
         </p>
       )}
       {state === "done" && <p className="mt-4 text-neutral-600">Password set — signing you in…</p>}
       {state === "ready" && (
         <>
           <p className="mt-2 text-sm text-neutral-600">
-            Set a password for your account to finish signing up.
+            Choose a new password for your account to continue.
           </p>
           {error && (
             <p className="mt-3 border border-red-400 bg-red-50 p-3 text-sm text-red-800">{error}</p>
@@ -79,7 +82,7 @@ export default function WelcomePage() {
           <form onSubmit={submit} className="mt-4 space-y-3">
             <div>
               <label htmlFor="password" className="block text-sm font-medium">
-                Password (6+ characters)
+                Password
               </label>
               <input
                 id="password"
@@ -87,7 +90,7 @@ export default function WelcomePage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 autoComplete="new-password"
                 className="mt-1 w-full border border-neutral-400 px-3 py-2"
               />
@@ -102,11 +105,12 @@ export default function WelcomePage() {
                 value={confirm}
                 onChange={(event) => setConfirm(event.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 autoComplete="new-password"
                 className="mt-1 w-full border border-neutral-400 px-3 py-2"
               />
             </div>
+            <PasswordRuleChecklist password={password} confirm={confirm} />
             <button type="submit" className="border border-neutral-900 px-4 py-2 font-medium">
               Set password & enter
             </button>

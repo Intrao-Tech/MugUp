@@ -5,6 +5,7 @@ import type { Locale } from "@/content/types";
 import { HeroSection, SectionView } from "@/components/BlockRenderer";
 import { localeHref } from "@/lib/links";
 import { getPublicPosts } from "@/lib/insights";
+import { getFeaturedReviews } from "@/lib/reviews";
 import { pageMetadata } from "@/lib/seo";
 
 type Props = { params: Promise<{ locale: Locale }> };
@@ -21,10 +22,54 @@ export default async function HomePage({ params }: Props) {
   const { locale } = await params;
   const page = getHome(locale);
   const dict = getCommon(locale);
-  const posts = (await getPublicPosts(locale)).slice(0, 3);
+  const [posts, featured] = await Promise.all([getPublicPosts(locale), getFeaturedReviews()]);
 
-  const finalCta = page.sections.find((s) => s.id === "final-cta");
-  const sections = page.sections.filter((s) => s.id !== "final-cta");
+  // Marketing-picked (approved + featured) reviews replace the static
+  // testimonials; with none picked, the client-supplied quotes stay. The team
+  // preview is trimmed to photo/name/role (client, Aug 2026) — full details
+  // stay on the About page.
+  const withFeatured = page.sections.map((section) => {
+    if (section.id === "results" && featured.length > 0) {
+      return {
+        ...section,
+        blocks: section.blocks.map((block) =>
+          block.type === "testimonials"
+            ? {
+                type: "testimonials" as const,
+                items: featured.map((review) => ({
+                  quote: review.quote,
+                  author: review.author_name,
+                  tag: review.author_tag || review.programme || undefined,
+                })),
+              }
+            : block,
+        ),
+      };
+    }
+    if (section.id === "meet-our-team") {
+      return {
+        ...section,
+        blocks: [
+          ...section.blocks.map((block) =>
+            block.type === "team"
+              ? {
+                  type: "team" as const,
+                  members: block.members.map(({ name, role, photo }) => ({ name, role, photo })),
+                }
+              : block,
+          ),
+          {
+            type: "buttons" as const,
+            ctas: [{ label: dict.ui.meetFullTeam, href: "/about#our-educators" }],
+          },
+        ],
+      };
+    }
+    return section;
+  });
+
+  const finalCta = withFeatured.find((s) => s.id === "final-cta");
+  const sections = withFeatured.filter((s) => s.id !== "final-cta");
 
   return (
     <>

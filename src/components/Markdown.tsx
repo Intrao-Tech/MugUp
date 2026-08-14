@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 
 const INLINE_RE = /(\*\*[^*]+\*\*|\[[^\]]+\]\([^\s)]+\))/g;
 
-function renderInline(text: string): ReactNode[] {
+export function renderInline(text: string): ReactNode[] {
   return text.split(INLINE_RE).map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={i}>{part.slice(2, -2)}</strong>;

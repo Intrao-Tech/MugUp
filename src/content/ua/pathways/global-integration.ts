@@ -234,6 +234,54 @@ export const page: Page = {
       ],
     },
     {
+      id: "international-language-qualifications",
+      eyebrow: "Кваліфікації для глобальних можливостей",
+      title: "Міжнародні мовні кваліфікації",
+      intro:
+        "Підготовка до міжнародно визнаних мовних кваліфікацій для освіти, роботи, міграційних вимог та міжнародної мобільності.",
+      blocks: [
+        {
+          type: "paragraph",
+          text: "IELTS · Cambridge English · LanguageCert · DELE · SIELE · DELF · DALF · TCF · Goethe-Zertifikat · telc Deutsch · TestDaF · CILS · CELI · PLIDA · CAPLE",
+        },
+        {
+          type: "buttons",
+          ctas: [
+            {
+              label: "Переглянути міжнародні мовні кваліфікації",
+              href: "/pathways/global-integration/qualifications",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "international-education",
+      title: "Міжнародна освіта та навчання за кордоном",
+      intro:
+        "Підтримуємо міжнародних учнів і родини, які досліджують всесвітньо визнані освітні траєкторії, міжнародні школи та можливості навчання у Великій Британії й поза нею.",
+      blocks: [
+        {
+          type: "cards",
+          cards: [
+            {
+              title: "International Baccalaureate (IB)",
+              eyebrow: "Вік 3–19",
+              body: "Персоналізована академічна підтримка для учнів, які навчаються за програмами International Baccalaureate — від ранніх років до підготовки до університету.",
+              items: ["PYP", "MYP", "Diploma Programme", "Career-related Programme"],
+            },
+            {
+              title: "British Boarding Schools for International Students",
+              eyebrow: "Британська освіта з глобальними можливостями",
+              body: "Супровід та академічна підготовка для міжнародних родин, які розглядають пансіонну освіту у Великій Британії: від вибору шкіл і розуміння вимог до підготовки до вступу, співбесід і переходу в британську освіту.",
+              href: "/pathways/global-integration/boarding-schools",
+              linkLabel: "Переглянути British Boarding Schools",
+            },
+          ],
+        },
+      ],
+    },
+    {
       id: "final-cta",
       title: "Ваша мова. Ваш напрямок. Ваше майбутнє.",
       blocks: [

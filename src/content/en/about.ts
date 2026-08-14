@@ -245,6 +245,22 @@ export const page: Page = {
               bio: "Saffron is a qualified primary school teacher specialising in Primary English and Maths, 11+ preparation, and Spanish GCSE. As a fluent Spanish speaker, she combines strong subject knowledge with a supportive and engaging teaching style.",
               photo: "/images/team/saffron.jpeg",
             },
+            {
+              name: "Djennè Stephens",
+              photo: "/images/team/djenne.jpg",
+              role: "GCSE English | Functional Skills | ESOL",
+              credentials:
+                "Qualified Further Education English Lecturer | CELTA Qualified | PGCE in Progress",
+              bio: "Djennè specialises in GCSE English, Functional Skills English and ESOL, working with children, young people and adults. She holds a First Class BA (Hons) in Childhood and Youth Studies with Psychology and has experience supporting learners with SEND, GCSE resits and English as an additional language. Her teaching combines academic progress with confidence-building through engaging, personalised lessons.",
+            },
+            {
+              name: "Tetiana Krytsun",
+              photo: "/images/team/tetiana.jpg",
+              role: "Manager of Mug.Up Studio | Educational Consultant",
+              credentials:
+                "Master of Arts in Laws, Master of Arts in International Criminology | PhD candidate",
+              bio: "Tetiana is the Manager of Mug.Up Studio, overseeing operations and strategic development. As an Educational Consultant, she supports students and families in making confident academic choices and achieving their goals. With advanced degrees in Law and International Criminology and pursuing a PhD, Tetiana combines analytical expertise, leadership and a passion for education to help students succeed.",
+            },
           ],
         },
       ],

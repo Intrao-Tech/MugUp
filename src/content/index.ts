@@ -33,6 +33,10 @@ import { page as enBritishHub } from "./en/pathways/british-education";
 import { page as uaBritishHub } from "./ua/pathways/british-education";
 import { page as enGlobal } from "./en/pathways/global-integration";
 import { page as uaGlobal } from "./ua/pathways/global-integration";
+import { page as enIntQuals } from "./en/pathways/international-qualifications";
+import { page as uaIntQuals } from "./ua/pathways/international-qualifications";
+import { page as enBoarding } from "./en/pathways/boarding-schools";
+import { page as uaBoarding } from "./ua/pathways/boarding-schools";
 import { pages as enLanguages } from "./en/pathways/global-integration-languages";
 import { pages as uaLanguages } from "./ua/pathways/global-integration-languages";
 
@@ -86,6 +90,10 @@ export const getBritishHub = (locale: Locale): Page =>
   locale === "ua" ? uaBritishHub : enBritishHub;
 export const getGlobalIntegration = (locale: Locale): Page =>
   locale === "ua" ? uaGlobal : enGlobal;
+export const getInternationalQualsHub = (locale: Locale): Page =>
+  locale === "ua" ? uaIntQuals : enIntQuals;
+export const getBoardingSchools = (locale: Locale): Page =>
+  locale === "ua" ? uaBoarding : enBoarding;
 
 export const getProgrammes = (locale: Locale): ProgrammePage[] => PROGRAMMES[locale];
 

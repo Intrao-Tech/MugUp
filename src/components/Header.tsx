@@ -15,30 +15,27 @@ export function Header({ locale, dict }: { locale: Locale; dict: CommonDict }) {
           <img src="/images/logo.png" alt="" className="h-8 w-auto" />
           <span>{dict.siteName}</span>
         </Link>
+        {/* Nav per the final client doc (Aug 2026) + Insights kept for the
+            SEO funnel; labels may still shift with the design round. */}
         <nav aria-label="Main" className="flex flex-wrap items-center gap-1">
           <Link href={`/${locale}`} className={item}>
             {nav.home}
           </Link>
+          <Link href={localeHref(locale, "/pathways/british-education")} className={item}>
+            {nav.pathwaysBritish}
+          </Link>
+          <Link href={localeHref(locale, "/pathways/global-integration")} className={item}>
+            {nav.pathwaysGlobal}
+          </Link>
+          <Link href={localeHref(locale, "/courses")} className={item}>
+            {nav.courses}
+          </Link>
           <Link href={localeHref(locale, "/about")} className={item}>
             {nav.about}
           </Link>
-          <details className="group relative">
-            <summary className={`${item} cursor-pointer list-none select-none`}>
-              {nav.pathways} ▾
-            </summary>
-            <div className="absolute left-0 z-10 mt-1 flex min-w-56 flex-col border border-neutral-300 bg-white p-2">
-              <Link href={localeHref(locale, "/pathways/british-education")} className={item}>
-                {nav.pathwaysBritish}
-              </Link>
-              <Link href={localeHref(locale, "/pathways/global-integration")} className={item}>
-                {nav.pathwaysGlobal}
-              </Link>
-            </div>
-          </details>
           <Link href={localeHref(locale, "/insights")} className={item}>
             {nav.insights}
           </Link>
-          {/* Contact is not in the TZ's nav list, restored per client request. */}
           <Link href={localeHref(locale, "/contact")} className={item}>
             {nav.contact}
           </Link>

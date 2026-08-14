@@ -9,6 +9,14 @@ export interface ProfileRow {
   created_at: string;
 }
 
+/** Admin-defined role preset (next to the built-in admin/manager/editor). */
+export interface CustomRoleRow {
+  slug: string;
+  name: string;
+  permissions: Permission[];
+  created_at: string;
+}
+
 /* ---------- Leads (enquiries) ---------- */
 
 /** Pipeline order — the dashboard treats later stages as "reached earlier ones". */
@@ -227,6 +235,9 @@ export interface PostRow {
   title: string;
   description: string;
   body_md: string;
+  /** Layout-aware body (builder v2), jsonb; null = legacy post → render body_md.
+   *  Validate through sanitizePostBlocks() before rendering — jsonb is untyped. */
+  body_blocks: unknown | null;
   status: PostStatus;
   /** For scheduled posts: the moment the article goes live. */
   published_at: string | null;
@@ -236,6 +247,47 @@ export interface PostRow {
   hero_image_alt: string;
   cta_label: string;
   cta_url: string;
+}
+
+/* ---------- Notification centre (in-admin feed) ---------- */
+
+export type NotificationEvent =
+  | "lead_booking"
+  | "lead_contact"
+  | "lead_partnership"
+  | "review_new"
+  | "post_published";
+
+export const NOTIFICATION_EVENTS: NotificationEvent[] = [
+  "lead_booking",
+  "lead_contact",
+  "lead_partnership",
+  "review_new",
+  "post_published",
+];
+
+export const NOTIFICATION_EVENT_LABELS: Record<NotificationEvent, string> = {
+  lead_booking: "New Book Assessment enquiry",
+  lead_contact: "New Contact form enquiry",
+  lead_partnership: "New Partnership enquiry",
+  review_new: "New review awaiting moderation",
+  post_published: "Post published or scheduled",
+};
+
+/** One feed entry, shown in the admin Notifications section. */
+export interface NotificationRow {
+  id: string;
+  created_at: string;
+  event: NotificationEvent;
+  title: string;
+  detail: string;
+}
+
+/** Which events a team member sees; last_seen powers the NEW badge. */
+export interface NotificationSubscriptionRow {
+  profile_id: string;
+  events: NotificationEvent[];
+  last_seen: string;
 }
 
 /* ---------- Activity log ---------- */

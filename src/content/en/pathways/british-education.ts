@@ -109,6 +109,24 @@ export const page: Page = {
       ],
     },
     {
+      // Contextual link ONLY — the full page lives under Global Integration
+      // (final doc §4: one boarding page, no duplicate copy).
+      id: "boarding-crosslink",
+      blocks: [
+        {
+          type: "cards",
+          cards: [
+            {
+              title: "British Boarding Schools for International Students",
+              body: "Admissions guidance and academic preparation for international families considering boarding education in the UK.",
+              href: "/pathways/global-integration/boarding-schools",
+              linkLabel: "Explore British Boarding Schools",
+            },
+          ],
+        },
+      ],
+    },
+    {
       id: "final-cta",
       blocks: [
         {

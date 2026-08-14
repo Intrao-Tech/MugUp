@@ -95,7 +95,8 @@ when no backend is configured (and are noindexed).
 /pathways/british-education/<slug>      slugs listed in src/content/types.ts
 /pathways/global-integration            Stage-1 hero landing
 /insights               listing; DB categories; ISR 300s
-/insights/<slug>        article (Markdown from DB), Article JSON-LD
+/insights/<slug>        article (layout blocks or legacy Markdown from DB),
+                        Article JSON-LD
 /book-assessment        content + booking form + FAQ (FAQPage JSON-LD)
 /contact                contact details + enquiry form
 /review                 public "leave a review" form (3rd form, added beyond
@@ -117,8 +118,12 @@ Known deliberate deviation from the TZ: `Contact` appears in the header nav
   website|google|other (google = manually imported real reviews), optional
   1–5 `rating`. Public form always inserts pending. Approved reviews are NOT
   yet rendered on the public site (next step if requested).
-- `posts` — Insights articles: slug+locale unique, Markdown body, draft →
-  published with stable `published_at`; FK to `post_categories`.
+- `posts` — Insights articles: slug+locale unique, draft → published with
+  stable `published_at`; FK to `post_categories`. Body is stored twice:
+  `body_blocks` (jsonb, layout-aware builder-v2 blocks — the render source;
+  see `src/lib/post-blocks.ts` for the schema and validation) and `body_md`
+  (flattened Markdown mirror; the only body for pre-v2 posts, and the
+  fallback whenever `body_blocks` is null).
 - `post_categories` — admin-managed (slug + label_en + label_ua + sort); the
   TZ's five are seeded; delete restricted while posts reference it.
 - Storage: `lead-files` (private, signed URLs for `files.view` holders),
@@ -126,17 +131,39 @@ Known deliberate deviation from the TZ: `Contact` appears in the header nav
 
 ## 8. Admin panel modules
 
-Dashboard (counts + plain-language role summary) · Enquiries (status/source
-chips with counts, name/email search, newest/oldest sort, detail with notes,
-status, signed file link) · Reviews (pending queue first, approve/reject,
-manual add with source+rating) · Insights (block-based post builder — text /
-heading / subheading / list / quote / image blocks serialize to the stored
-Markdown; image upload to `post-images`; auto-slug from title with UA
-transliteration; category management; draft/publish/unpublish/delete with
-`revalidatePath` so the public site updates in seconds) · Team (invite by
-email → `/admin/welcome` set-password page; or create with temp password;
-per-user role preset + flag checkboxes; issue password; self-lockout guard) ·
-My account (change own password).
+Dashboard (counts + plain-language role summary) · Enquiries (labelled filter
+panel — status/form/sort chips with counts, name/email search, CSV export; a
+6-column table that fits without horizontal scroll, name links to the detail
+page) · Reviews (pending queue first, approve/reject; "All reviews"
+management list with status filter, per-card Edit details / Delete; manual
+add with source+rating) · Insights (layout-aware post builder v2 — text /
+heading / subheading / list / quote / image+caption / button / divider /
+spacer / 2–3 columns; per-block width standard|wide|full and alignment;
+insert-anywhere, duplicate, live preview through the same PostBody renderer
+the site uses; serializes to `body_blocks` JSON + a `body_md` mirror; image
+upload to `post-images`; auto-slug from title with UA transliteration;
+category management; draft/publish/unpublish/delete with `revalidatePath` so
+the public site updates in seconds) · Team (invite by email is the single
+way to add accounts → `/admin/welcome` set-password page; per-user role
+preset + flag checkboxes; one-click "Send password reset email" (recovery
+link lands on the same welcome page); member deletion with confirm
+(self-delete blocked); custom roles — admin-defined named permission presets
+in `custom_roles`, offered in every role dropdown, deletable only while
+unused; self-lockout guard) ·
+Notifications (in-admin notification centre: events — new booking / contact /
+partnership enquiry, new review, post published/scheduled — land in the
+`notifications` feed; each member subscribes to event types
+(`notification_subscriptions`, self-service + manager-configurable), NEW
+badge via `last_seen`, mark-all-as-read; optional email copy of
+enquiry/review events via env — docs/EMAIL-SETUP.md) · Activity (range chips
+today/7d/30d/all + custom from–to dates, stats: totals, per-module, top
+actors, busiest day) · Settings (account info + change own password requiring
+the current password; Security card for managers — idle session timeout,
+stored in `admin_settings`, enforced by the middleware, default 15 min).
+
+Password policy everywhere a password is set (`src/lib/password.ts`): min 8
+chars with upper + lower + digit; enforced server-side and hinted client-side
+(the seeded `admin123` predates the policy and is dev-only).
 
 Flows that send email: team invites (Supabase Auth SMTP; Mailpit locally) and
 new-lead notifications (`src/lib/notify.ts`, Resend REST; enabled only when

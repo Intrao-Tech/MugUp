@@ -47,6 +47,25 @@ for (const user of USERS) {
   console.log(profileError ? `! ${user.email}: ${profileError.message}` : `+ ${user.email} (${user.role})`);
 }
 
+// Every seeded account sees every notification type (subscriptions are
+// re-applied on reseed, so this also works on an already-seeded database).
+const NOTIFICATION_EVENTS = [
+  "lead_booking", "lead_contact", "lead_partnership", "review_new", "post_published",
+];
+{
+  const { data: profileRows } = await service
+    .from("profiles")
+    .select("id, email")
+    .in("email", USERS.map((u) => u.email));
+  for (const row of profileRows ?? []) {
+    const { error } = await service
+      .from("notification_subscriptions")
+      .upsert({ profile_id: row.id, events: NOTIFICATION_EVENTS });
+    if (error) console.log(`! subscription ${row.email}: ${error.message}`);
+  }
+  console.log(`+ notification subscriptions for ${(profileRows ?? []).length} accounts`);
+}
+
 // Dates relative to "now" so the dashboard demo always has data this month.
 const today = new Date().toISOString().slice(0, 10);
 const DEMO_LEADS = [
@@ -239,6 +258,47 @@ const ARTICLES = [
     body_md: "## Draft\n\nEdit this draft in the admin panel and publish it to see the full flow: draft → publish → live on the site within seconds.",
   },
   {
+    // Builder v2 demo: layout blocks (body_blocks) drive the rendering —
+    // wide/full widths, columns, buttons, captions. body_md is the flat mirror.
+    slug: "layout-showcase-what-the-builder-can-do", locale: "en", category: "integration-uk",
+    status: "published", published_at: now,
+    author: "Demo Author, Education Lead",
+    title: "Layout showcase: what the post builder can do",
+    description: "A demo article using the layout builder: wide and full-width blocks, side-by-side columns, buttons, captions and dividers.",
+    body_blocks: [
+      { kind: "p", text: "This article is built with the layout constructor: every block chooses its own width and alignment, and content can sit side by side in columns. Edit it in the admin panel to see how each piece is assembled." },
+      { kind: "h2", text: "A wide, centered heading", width: "wide", align: "center" },
+      { kind: "p", text: "The heading above uses the wide width; this paragraph is the standard reading column. Mixing widths gives articles rhythm without any custom code.", },
+      { kind: "columns", width: "wide", columns: [
+        [
+          { kind: "h3", text: "Left column" },
+          { kind: "p", text: "Columns hold any simple blocks: text, headings, lists, quotes, images and buttons. On phones they stack vertically." },
+          { kind: "ul", items: ["Two or three columns", "Per-block alignment", "Stacks on mobile"] },
+        ],
+        [
+          { kind: "quote", text: "Put a testimonial next to the argument it supports — the reader sees both at once." },
+          { kind: "button", label: "Book a free assessment", href: "/en/book-assessment", align: "center" },
+        ],
+      ] },
+      { kind: "divider", width: "wide" },
+      { kind: "p", text: "**Full-width blocks** run edge to edge — useful for panoramic images or a visual break between chapters.", align: "center" },
+      { kind: "spacer", size: "m" },
+      { kind: "p", text: "And when the article is done, the end-of-article CTA hands the reader to a programme page as usual." },
+    ],
+    body_md: [
+      "This article is built with the layout constructor: every block chooses its own width and alignment, and content can sit side by side in columns. Edit it in the admin panel to see how each piece is assembled.",
+      "## A wide, centered heading",
+      "The heading above uses the wide width; this paragraph is the standard reading column. Mixing widths gives articles rhythm without any custom code.",
+      "### Left column",
+      "Columns hold any simple blocks: text, headings, lists, quotes, images and buttons. On phones they stack vertically.",
+      "- Two or three columns\n- Per-block alignment\n- Stacks on mobile",
+      "> Put a testimonial next to the argument it supports — the reader sees both at once.",
+      "[Book a free assessment](/en/book-assessment)",
+      "**Full-width blocks** run edge to edge — useful for panoramic images or a visual break between chapters.",
+      "And when the article is done, the end-of-article CTA hands the reader to a programme page as usual.",
+    ].join("\n\n"),
+  },
+  {
     // Scheduled demo: goes live by itself once the time passes (ISR).
     slug: "scheduled-post-demo", locale: "en", category: "boarding-schools",
     status: "scheduled",
@@ -258,6 +318,6 @@ for (const article of ARTICLES) {
   if (error) console.log(`! post ${article.slug}/${article.locale}: ${error.message}`);
   else seeded += 1;
 }
-console.log(`+ ${seeded} posts (6 published EN/UA + 1 draft + 1 scheduled)`);
+console.log(`+ ${seeded} posts (6 published EN/UA + 1 layout demo + 1 draft + 1 scheduled)`);
 
 console.log("\nDone. Sign in at /admin with e.g. admin@mugup.local / " + PASSWORD);

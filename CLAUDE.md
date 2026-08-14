@@ -17,6 +17,8 @@ npm run seed:dev   # test accounts + demo data (local only, guarded)
 ```
 
 Local test logins (password `admin123`): `admin@` / `manager@` / `editor@mugup.local`.
+(Seed-only password — every password set through the UI must pass
+`src/lib/password.ts`: 8+ chars, upper + lower + digit.)
 Local emails (invites) land in Mailpit: http://localhost:54324. DB GUI: :54323.
 
 ## Architecture in one breath

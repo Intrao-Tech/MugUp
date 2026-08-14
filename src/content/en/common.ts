@@ -8,6 +8,7 @@ export const common: CommonDict = {
     pathways: "Pathways",
     pathwaysBritish: "British Education",
     pathwaysGlobal: "Global Integration",
+    courses: "Courses & Programmes",
     insights: "Insights",
     bookAssessment: "Book Assessment",
     contact: "Contact",
@@ -66,5 +67,6 @@ export const common: CommonDict = {
     stage2Notice: "Full programme pages arrive in Stage 2.",
     formSent: "Thank you — your message has been sent. We will get back to you shortly.",
     formError: "Something went wrong and the message was not sent. Please check the fields and try again.",
+    meetFullTeam: "Meet the full team on the About page",
   },
 };

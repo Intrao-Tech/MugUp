@@ -3,7 +3,7 @@ import type { ProgrammePage } from "@/content/types";
 // Copy source: client doc "British Education Pathways.docx", Page 9 (verbatim where provided).
 export const page: ProgrammePage = {
   slug: "selt-preparation",
-  group: "english-qualifications",
+  group: "international-qualifications",
   cardTitle: "SELT Preparation",
   cardBlurb:
     "UKVI-approved LanguageCert SELT preparation for UK visa, settlement, and citizenship applications.",

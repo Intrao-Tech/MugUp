@@ -8,11 +8,15 @@
 import type {
   ActivityRow,
   CategoryRow,
+  CustomRoleRow,
   LeadForm,
   LeadRow,
   LeadSource,
   LeadStatus,
   LostReason,
+  NotificationEvent,
+  NotificationRow,
+  NotificationSubscriptionRow,
   PostRow,
   PostStatus,
   ProfileRow,
@@ -21,6 +25,7 @@ import type {
   ReviewStatus,
 } from "@/lib/db-types";
 import type { Permission, Role } from "@/lib/permissions";
+import type { PostBlock } from "@/lib/post-blocks";
 
 /** Uniform outcome for writes: empty object = success. */
 export interface Result {
@@ -34,22 +39,14 @@ export interface AuthPort {
   signOut(): Promise<void>;
   /** Change the signed-in user's own password. */
   updateOwnPassword(newPassword: string): Promise<Result>;
+  /** True if `password` matches the signed-in user's current password. */
+  verifyOwnPassword(password: string): Promise<boolean>;
 }
 
 export interface TeamPort {
   getProfile(userId: string): Promise<ProfileRow | null>;
   listProfiles(): Promise<ProfileRow[]>;
   updateAccess(userId: string, role: Role, permissions: Permission[]): Promise<Result>;
-  /** Privileged: creates the login + its profile. No self-registration exists. */
-  createAccount(input: {
-    email: string;
-    fullName: string;
-    password: string;
-    role: Role;
-    permissions: Permission[];
-  }): Promise<Result>;
-  /** Privileged: an administrator issues a new password to a team member. */
-  setPassword(userId: string, newPassword: string): Promise<Result>;
   /**
    * Privileged: invite a team member by email. The invite letter links to
    * `${redirectOrigin}/admin/welcome`, where the invitee sets a password.
@@ -61,6 +58,14 @@ export interface TeamPort {
     permissions: Permission[];
     redirectOrigin: string;
   }): Promise<Result>;
+  /** Privileged: removes the login and (via cascade) its profile. */
+  deleteAccount(userId: string): Promise<Result>;
+  /** Emails a password-reset link that lands on `${redirectOrigin}/admin/welcome`. */
+  sendPasswordReset(email: string, redirectOrigin: string): Promise<Result>;
+  /* Custom role presets (built-ins live in src/lib/permissions.ts). */
+  listCustomRoles(): Promise<CustomRoleRow[]>;
+  addCustomRole(input: { slug: string; name: string; permissions: Permission[] }): Promise<Result>;
+  deleteCustomRole(slug: string): Promise<Result>;
 }
 
 export interface NewLead {
@@ -163,6 +168,8 @@ export interface ReviewsPort {
     id: string,
     meta: { programme: string; audience: ReviewAudience | null; featured: boolean },
   ): Promise<Result>;
+  /** Permanent removal (moderators only — RLS enforces the permission). */
+  delete(id: string): Promise<Result>;
   /** Public site: approved + featured reviews, newest first (anonymous). */
   listFeatured(): Promise<FeaturedReview[]>;
 }
@@ -174,6 +181,8 @@ export interface PostSaveInput {
   title: string;
   description: string;
   bodyMd: string;
+  /** Validated layout blocks (builder v2); null clears → legacy Markdown rendering. */
+  bodyBlocks: PostBlock[] | null;
   status: PostStatus;
   /** undefined = keep the stored value untouched. */
   publishedAt?: string | null;
@@ -213,6 +222,27 @@ export interface FileStoragePort {
   uploadPostImage(path: string, file: File): Promise<{ url?: string; error?: string }>;
 }
 
+export interface NotificationsPort {
+  /** Feed entries for the given events, newest first (empty events = []). */
+  feed(events: NotificationEvent[], limit?: number): Promise<NotificationRow[]>;
+  /** Privileged append (public form actions have no session); never throws. */
+  record(event: NotificationEvent, title: string, detail?: string): Promise<void>;
+  /** All members' subscriptions (managers; RLS narrows others to their own row). */
+  listSubscriptions(): Promise<NotificationSubscriptionRow[]>;
+  getSubscription(profileId: string): Promise<NotificationSubscriptionRow | null>;
+  /** Upsert events for a member (own row, or any row for managers). */
+  setSubscription(profileId: string, events: NotificationEvent[]): Promise<Result>;
+  /** Reset the member's NEW badge. */
+  markSeen(profileId: string): Promise<Result>;
+}
+
+export interface SettingsPort {
+  /** Team-readable global setting, or null when unset. */
+  get(key: string): Promise<string | null>;
+  /** users.manage only (RLS-enforced). */
+  set(key: string, value: string): Promise<Result>;
+}
+
 export interface ActivityEntry {
   actorId: string | null;
   actorEmail: string;
@@ -229,7 +259,8 @@ export interface ActivityPort {
    * not break the action it documents).
    */
   record(entry: ActivityEntry): Promise<void>;
-  list(limit?: number): Promise<ActivityRow[]>;
+  /** Newest first; from/to are ISO timestamps (from inclusive, to exclusive). */
+  list(options?: { limit?: number; from?: string; to?: string }): Promise<ActivityRow[]>;
 }
 
 export interface DataBackend {
@@ -240,4 +271,6 @@ export interface DataBackend {
   posts: PostsPort;
   files: FileStoragePort;
   activity: ActivityPort;
+  notifications: NotificationsPort;
+  settings: SettingsPort;
 }

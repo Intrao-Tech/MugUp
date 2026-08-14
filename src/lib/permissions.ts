@@ -15,9 +15,13 @@ export const PERMISSIONS = [
 
 export type Permission = (typeof PERMISSIONS)[number];
 
-export type Role = "admin" | "manager" | "editor";
+/** The fixed presets that ship with the panel. */
+export type BuiltInRole = "admin" | "manager" | "editor";
 
-export const ROLE_PRESETS: Record<Role, Permission[]> = {
+/** A profile's role: a built-in slug or a custom role slug (custom_roles). */
+export type Role = string;
+
+export const ROLE_PRESETS: Record<BuiltInRole, Permission[]> = {
   // Full access, including team account management.
   admin: [...PERMISSIONS],
   // Studio administrator: the enquiry pipeline end to end.
@@ -39,8 +43,8 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   "users.manage": "Manage users: accounts, roles, permissions",
 };
 
-/** Plain-language summary of each preset, shown wherever a role is picked. */
-export const ROLE_DESCRIPTIONS: Record<Role, string> = {
+/** Plain-language summary of each built-in preset. */
+export const ROLE_DESCRIPTIONS: Record<BuiltInRole, string> = {
   admin: "Admin — full access to everything, including the team",
   manager: "Manager — enquiries, personal data, exports and the dashboard",
   editor: "Editor — articles and reviews, no access to enquiries",

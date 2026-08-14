@@ -86,7 +86,11 @@ export interface Page {
 
 /* ---------- Programmes (Pathways sub-pages) ---------- */
 
-export type ProgrammeGroup = "education-pathways" | "english-qualifications";
+export type ProgrammeGroup =
+  | "education-pathways"
+  | "english-qualifications"
+  // Per the final client doc (Aug 2026) these live under Global Integration.
+  | "international-qualifications";
 
 export const PROGRAMME_SLUGS = [
   "sats-preparation",
@@ -197,6 +201,7 @@ export interface NavDict {
   pathways: string;
   pathwaysBritish: string;
   pathwaysGlobal: string;
+  courses: string;
   insights: string;
   bookAssessment: string;
   contact: string;
@@ -226,6 +231,7 @@ export interface UiDict {
   stage2Notice: string;
   formSent: string;
   formError: string;
+  meetFullTeam: string;
 }
 
 export interface CommonDict {
