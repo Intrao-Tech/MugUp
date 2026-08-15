@@ -50,7 +50,12 @@ export function HeroSection({
         aria-hidden="true"
         className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-teal-100/70 blur-3xl"
       />
-      <Container className="relative grid gap-10 py-14 sm:py-20 lg:grid-cols-12 lg:items-center lg:py-24">
+      <Container
+        className={cx(
+          "relative py-14 sm:py-20 lg:py-24",
+          visual && "grid gap-10 lg:grid-cols-12 lg:items-center",
+        )}
+      >
         <div className={cx("max-w-3xl", visual && "lg:col-span-7")}>
           {hero.eyebrow && <Eyebrow className="mb-4">{hero.eyebrow}</Eyebrow>}
           <h1 id="page-title" className="text-display text-balance text-ink">
