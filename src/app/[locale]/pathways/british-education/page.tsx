@@ -56,7 +56,7 @@ export default async function BritishEducationHub({ params }: Props) {
         <SectionView key={section.id} section={section} locale={locale} />
       ))}
       {groups.map((group) => (
-        <section key={group} id={group} className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <section key={group} id={group} className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
           <h2 className="text-h2 text-ink">{GROUP_LABELS[locale][group]}</h2>
           <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {programmes

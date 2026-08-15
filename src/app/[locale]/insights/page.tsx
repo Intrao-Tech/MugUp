@@ -53,7 +53,7 @@ export default async function InsightsPage({ params }: Props) {
       {categories.map((cat) => {
         const catPosts = posts.filter((p) => p.category === cat.id);
         return (
-          <section key={cat.id} id={`category-${cat.id}`} className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+          <section key={cat.id} id={`category-${cat.id}`} className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
             <h2 className="text-h2 text-ink">{cat.label}</h2>
             {cat.blurb && <p className="mt-1 text-body">{cat.blurb}</p>}
             {catPosts.length > 0 ? (

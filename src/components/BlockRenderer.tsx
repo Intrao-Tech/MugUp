@@ -52,8 +52,8 @@ export function HeroSection({
       />
       <Container
         className={cx(
-          "relative py-14 sm:py-20 lg:py-24",
-          visual && "grid gap-10 lg:grid-cols-12 lg:items-center",
+          "relative py-12 sm:py-16",
+          visual ? "grid gap-10 lg:grid-cols-12 lg:items-center lg:py-24" : "lg:py-20",
         )}
       >
         <div className={cx("max-w-3xl", visual && "lg:col-span-7")}>
@@ -351,6 +351,8 @@ export function BlockView({
 
 /* -------------------------------- Sections ------------------------------- */
 
+const TEXT_BLOCKS = new Set<Block["type"]>(["lead", "paragraph", "list"]);
+
 /** Closing band: one CTA, centred, big. Same DOM as the inline `cta` block. */
 function ClosingCta({ block, locale }: { block: Extract<Block, { type: "cta" }>; locale: Locale }) {
   return (
@@ -384,14 +386,21 @@ export function SectionView({
   return (
     <Section id={section.id} tone={t} className="overflow-hidden">
       <SectionHeading eyebrow={section.eyebrow} title={section.title} intro={section.intro} />
-      <div className={cx(section.title || section.intro ? "mt-10" : undefined, "space-y-10")}>
-        {section.blocks.map((block, i) =>
-          closing && block.type === "cta" ? (
-            <ClosingCta key={`${section.id}-${i}`} block={block} locale={locale} />
-          ) : (
-            <BlockView key={`${section.id}-${i}`} block={block} locale={locale} />
-          ),
-        )}
+      <div className={cx(section.title || section.intro ? "mt-8" : undefined)}>
+        {section.blocks.map((block, i) => {
+          // Prose blocks that follow prose blocks read as one text: paragraph gap.
+          const prev = section.blocks[i - 1];
+          const flowing = i > 0 && TEXT_BLOCKS.has(block.type) && TEXT_BLOCKS.has(prev.type);
+          return (
+            <div key={`${section.id}-${i}`} className={cx(i > 0 && (flowing ? "mt-4" : "mt-8"))}>
+              {closing && block.type === "cta" ? (
+                <ClosingCta block={block} locale={locale} />
+              ) : (
+                <BlockView block={block} locale={locale} />
+              )}
+            </div>
+          );
+        })}
       </div>
     </Section>
   );

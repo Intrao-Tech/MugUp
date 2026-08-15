@@ -18,9 +18,9 @@ const TONE_BG: Record<SectionTone, string> = {
 };
 
 const PAD = {
-  sm: "py-10 sm:py-12",
-  md: "py-14 sm:py-20",
-  lg: "py-20 sm:py-28",
+  sm: "py-8 sm:py-10",
+  md: "py-12 sm:py-16",
+  lg: "py-16 sm:py-24",
 } as const;
 
 export function Section({

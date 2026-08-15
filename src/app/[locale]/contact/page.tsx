@@ -29,7 +29,7 @@ export default async function ContactPage({ params }: Props) {
       />
       <HeroSection hero={page.hero} locale={locale} />
       <PageSections sections={page.sections} locale={locale} />
-      <section id="contact-form" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      <section id="contact-form" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <FormRenderer
           form={page.form}
           formKind="contact"

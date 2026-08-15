@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PrivacyPolicyPage({ params }: Props) {
   const { locale } = await params;
   return (
-    <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <h1 className="text-display text-ink">{COPY[locale].title}</h1>
       <p className="mt-4 text-body">{COPY[locale].body}</p>
     </div>

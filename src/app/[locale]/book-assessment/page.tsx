@@ -52,7 +52,7 @@ export default async function BookAssessmentPage({ params }: Props) {
       {sections.map((section) => (
         <SectionView key={section.id} section={section} locale={locale} />
       ))}
-      <section id="booking-form" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      <section id="booking-form" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <FormRenderer
           form={page.form}
           formKind="booking"

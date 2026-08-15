@@ -40,7 +40,7 @@ export default async function InternationalQualificationsPage({ params }: Props)
         ]}
       />
       <HeroSection hero={page.hero} locale={locale} />
-      <section id="programmes" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      <section id="programmes" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {programmes.map((p) => (
             <li key={p.slug} className="rounded-card border border-line bg-surface p-6 shadow-card">

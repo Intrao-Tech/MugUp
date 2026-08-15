@@ -87,7 +87,7 @@ export default async function ReviewPage({ params }: Props) {
         locale={locale}
         items={[{ label: dict.ui.breadcrumbsHome, href: "/" }, { label: copy.title }]}
       />
-      <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <h1 className="text-display text-ink">{copy.title}</h1>
         <p className="mt-3 text-body">{copy.intro}</p>
         <p className="mt-1 text-sm text-muted">{copy.moderation}</p>
