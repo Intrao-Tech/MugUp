@@ -3,6 +3,10 @@ import type { Metadata } from "next";
 import { getCommon, getHome } from "@/content";
 import type { Locale } from "@/content/types";
 import { HeroSection, SectionView } from "@/components/BlockRenderer";
+import { Card, STRETCHED_LINK } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
+import { SectionHeading } from "@/components/ui/Heading";
+import { Section } from "@/components/ui/Section";
 import { localeHref } from "@/lib/links";
 import { getPublicPosts } from "@/lib/insights";
 import { getFeaturedReviews } from "@/lib/reviews";
@@ -73,28 +77,28 @@ export default async function HomePage({ params }: Props) {
 
   return (
     <>
-      <HeroSection hero={page.hero} locale={locale} />
+      <HeroSection hero={page.hero} locale={locale} visual="owl" />
       {sections.map((section) => (
         <SectionView key={section.id} section={section} locale={locale} />
       ))}
-      <section id="insights-preview" className="mx-auto max-w-4xl px-4 py-8">
-        <h2 className="text-2xl font-bold">{dict.nav.insights}</h2>
-        <ul className="mt-4 grid gap-4 sm:grid-cols-3">
+      <Section id="insights-preview" tone="cream">
+        <SectionHeading title={dict.nav.insights} />
+        <ul className="mt-10 grid gap-6 sm:grid-cols-3">
           {posts.map((post) => (
-            <li key={post.slug} className="border border-neutral-300 p-4">
-              <p className="text-xs uppercase tracking-wide text-neutral-500">
-                {new Date(post.date).toLocaleDateString(locale === "ua" ? "uk-UA" : "en-GB")}
+            <Card as="li" key={post.slug} interactive className="h-full">
+              <p>
+                <Chip>{new Date(post.date).toLocaleDateString(locale === "ua" ? "uk-UA" : "en-GB")}</Chip>
               </p>
-              <h3 className="mt-1 font-semibold">
-                <Link href={localeHref(locale, `/insights/${post.slug}`)} className="hover:underline">
+              <h3 className="text-h3 mt-4 text-ink">
+                <Link href={localeHref(locale, `/insights/${post.slug}`)} className={STRETCHED_LINK}>
                   {post.title}
                 </Link>
               </h3>
-              <p className="mt-2 text-sm text-neutral-700">{post.description}</p>
-            </li>
+              <p className="mt-2 text-sm">{post.description}</p>
+            </Card>
           ))}
         </ul>
-      </section>
+      </Section>
       {finalCta && <SectionView section={finalCta} locale={locale} />}
     </>
   );

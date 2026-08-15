@@ -124,19 +124,19 @@ export function Markdown({ source }: { source: string }) {
         switch (block.kind) {
           case "h2":
             return (
-              <h2 key={i} className="mt-6 text-2xl font-bold">
+              <h2 key={i} className="mt-6 text-h2 text-ink">
                 {renderInline(block.text)}
               </h2>
             );
           case "h3":
             return (
-              <h3 key={i} className="mt-4 text-xl font-semibold">
+              <h3 key={i} className="mt-4 text-h3 text-ink">
                 {renderInline(block.text)}
               </h3>
             );
           case "ul":
             return (
-              <ul key={i} className="list-disc space-y-1 pl-5 text-neutral-700">
+              <ul key={i} className="list-disc space-y-1 pl-5 text-body">
                 {block.items.map((item, j) => (
                   <li key={j}>{renderInline(item)}</li>
                 ))}
@@ -146,7 +146,7 @@ export function Markdown({ source }: { source: string }) {
             return (
               <blockquote
                 key={i}
-                className="border-l-4 border-neutral-300 pl-4 text-neutral-600 italic"
+                className="border-l-4 border-line pl-4 text-muted italic"
               >
                 {renderInline(block.text)}
               </blockquote>
@@ -157,7 +157,7 @@ export function Markdown({ source }: { source: string }) {
             );
           default:
             return (
-              <p key={i} className="text-neutral-700">
+              <p key={i} className="text-body">
                 {renderInline(block.text)}
               </p>
             );

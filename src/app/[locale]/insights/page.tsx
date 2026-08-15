@@ -38,11 +38,11 @@ export default async function InsightsPage({ params }: Props) {
         ]}
       />
       <HeroSection hero={page.hero} locale={locale} />
-      <nav aria-label={dict.ui.allCategories} className="mx-auto max-w-4xl px-4">
+      <nav aria-label={dict.ui.allCategories} className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <ul className="flex flex-wrap gap-3 text-sm">
           {categories.map((cat) => (
             <li key={cat.id}>
-              <a href={`#category-${cat.id}`} className="border border-neutral-300 px-3 py-1 hover:underline">
+              <a href={`#category-${cat.id}`} className="rounded-full border border-line bg-surface px-3 py-1 text-sm font-semibold text-ink hover:border-brand">
                 {cat.label}
               </a>
             </li>
@@ -53,14 +53,14 @@ export default async function InsightsPage({ params }: Props) {
       {categories.map((cat) => {
         const catPosts = posts.filter((p) => p.category === cat.id);
         return (
-          <section key={cat.id} id={`category-${cat.id}`} className="mx-auto max-w-4xl px-4 py-8">
-            <h2 className="text-2xl font-bold">{cat.label}</h2>
-            {cat.blurb && <p className="mt-1 text-neutral-700">{cat.blurb}</p>}
+          <section key={cat.id} id={`category-${cat.id}`} className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+            <h2 className="text-h2 text-ink">{cat.label}</h2>
+            {cat.blurb && <p className="mt-1 text-body">{cat.blurb}</p>}
             {catPosts.length > 0 ? (
               <ul className="mt-4 grid gap-4 sm:grid-cols-2">
                 {catPosts.map((post) => (
-                  <li key={post.slug} className="border border-neutral-300 p-4">
-                    <p className="text-xs uppercase tracking-wide text-neutral-500">
+                  <li key={post.slug} className="rounded-card border border-line bg-surface p-6 shadow-card">
+                    <p className="text-eyebrow uppercase text-muted">
                       {new Date(post.date).toLocaleDateString(locale === "ua" ? "uk-UA" : "en-GB")}
                     </p>
                     <h3 className="mt-1 font-semibold">
@@ -71,12 +71,12 @@ export default async function InsightsPage({ params }: Props) {
                         {post.title}
                       </Link>
                     </h3>
-                    <p className="mt-2 text-sm text-neutral-700">{post.description}</p>
+                    <p className="mt-2 text-sm text-body">{post.description}</p>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="mt-3 text-sm text-neutral-500">—</p>
+              <p className="mt-3 text-sm text-muted">—</p>
             )}
           </section>
         );

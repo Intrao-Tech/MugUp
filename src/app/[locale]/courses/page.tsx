@@ -75,13 +75,13 @@ function CardLink({
   locale: Locale;
 }) {
   return (
-    <li className="border border-neutral-300 p-4">
+    <li className="rounded-card border border-line bg-surface p-6 shadow-card">
       <h3 className="font-semibold">
         <Link href={localeHref(locale, href)} className="hover:underline">
           {title}
         </Link>
       </h3>
-      {blurb && <p className="mt-2 text-sm text-neutral-700">{blurb}</p>}
+      {blurb && <p className="mt-2 text-sm text-body">{blurb}</p>}
     </li>
   );
 }
@@ -104,13 +104,13 @@ export default async function CoursesPage({ params }: Props) {
         locale={locale}
         items={[{ label: dict.ui.breadcrumbsHome, href: "/" }, { label: copy.title }]}
       />
-      <header className="mx-auto max-w-4xl px-4 py-12">
-        <h1 className="text-3xl font-bold">{copy.title}</h1>
-        <p className="mt-3 text-neutral-700">{copy.intro}</p>
+      <header className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
+        <h1 className="text-display text-ink">{copy.title}</h1>
+        <p className="mt-3 text-body">{copy.intro}</p>
       </header>
       {groups.map((group) => (
-        <section key={group} id={group} className="mx-auto max-w-4xl px-4 py-6">
-          <h2 className="text-2xl font-bold">{copy.groups[group]}</h2>
+        <section key={group} id={group} className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+          <h2 className="text-h2 text-ink">{copy.groups[group]}</h2>
           <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {programmes
               .filter((p) => p.group === group)
@@ -126,8 +126,8 @@ export default async function CoursesPage({ params }: Props) {
           </ul>
         </section>
       ))}
-      <section id="languages" className="mx-auto max-w-4xl px-4 py-6">
-        <h2 className="text-2xl font-bold">{copy.languages}</h2>
+      <section id="languages" className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+        <h2 className="text-h2 text-ink">{copy.languages}</h2>
         <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {languages.map((language) => (
             <CardLink
@@ -139,8 +139,8 @@ export default async function CoursesPage({ params }: Props) {
           ))}
         </ul>
       </section>
-      <section id="international-education" className="mx-auto max-w-4xl px-4 py-6 pb-12">
-        <h2 className="text-2xl font-bold">{copy.internationalEducation}</h2>
+      <section id="international-education" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+        <h2 className="text-h2 text-ink">{copy.internationalEducation}</h2>
         <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <CardLink
             href="/pathways/global-integration/boarding-schools"

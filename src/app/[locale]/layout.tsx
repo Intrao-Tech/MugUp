@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { brandFont } from "@/lib/fonts";
 import { ORGANIZATION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -45,11 +46,11 @@ export default async function LocaleLayout({
   const typedLocale = locale as Locale;
   const dict = getCommon(typedLocale);
   return (
-    <html lang={HTML_LANG[typedLocale]}>
-      <body className="text-neutral-900 antialiased">
+    <html lang={HTML_LANG[typedLocale]} className={brandFont.variable}>
+      <body className="flex min-h-screen flex-col antialiased">
         <a
           href="#content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:bg-white focus:p-2"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-3 focus:py-2 focus:font-bold focus:text-ink"
         >
           {dict.ui.skipToContent}
         </a>
@@ -58,7 +59,7 @@ export default async function LocaleLayout({
           <ScrollToTop />
         </Suspense>
         <Header locale={typedLocale} dict={dict} />
-        <main id="content">{children}</main>
+        <main id="content" className="flex-1">{children}</main>
         <Footer locale={typedLocale} dict={dict} />
       </body>
     </html>

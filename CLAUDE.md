@@ -3,7 +3,8 @@
 Bilingual (EN/UA) marketing site + hidden admin panel for Mug.Up Language
 Studio. Next.js 15 App Router, TypeScript strict, Tailwind v4, Supabase behind
 a vendor-neutral port layer. Full spec: `docs/SPEC.md`. Design handoff:
-`docs/HANDOFF-DESIGN.md`. SEO invariants: `docs/SEO-REQUIREMENTS.md`.
+`docs/HANDOFF-DESIGN.md`. Design system (tokens, primitives, rules):
+`docs/DESIGN-SYSTEM.md`. SEO invariants: `docs/SEO-REQUIREMENTS.md`.
 
 ## Commands
 
@@ -42,6 +43,9 @@ Local emails (invites) land in Mailpit: http://localhost:54324. DB GUI: :54323.
 - Never hardcode copy in components; edit `src/content/{en,ua}` (keep section
   ids and hrefs identical across locales).
 - Never import a vendor SDK outside `src/lib/data/supabase/`.
+- Visual layer: only semantic tokens + `src/components/ui` primitives
+  (`docs/DESIGN-SYSTEM.md`); no `neutral-*`/hex/arbitrary colours, no ad-hoc
+  `max-w-*` wrappers, every CTA is `<Button>`.
 - Keep SEO invariants (`docs/SEO-REQUIREMENTS.md`): one H1 per page, unique
   meta, canonical + hreflang, JSON-LD, real 404s, readable slugs.
 - Images: client-provided assets or the grey `ImagePlaceholder` — never

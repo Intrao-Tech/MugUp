@@ -19,6 +19,12 @@ articles). If you want live data, follow README → "Run (local full stack)".
 The admin panel (http://admin.localhost:3000, login in README) uses the same
 primitives; styling it is welcome but secondary.
 
+> **Status (15 Aug 2026):** the first design pass is implemented on branch
+> `feature/landing-design` — tokens, primitives, header/footer, every block
+> type, Home treated per the client references. Read `docs/DESIGN-SYSTEM.md`
+> before changing anything visual; the rest of this file describes the
+> invariants and the reference material.
+
 ## Where the design lives
 
 Everything visual is in `src/components` (+ `src/app/globals.css`, currently

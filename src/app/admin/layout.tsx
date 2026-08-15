@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { brandFont } from "@/lib/fonts";
 import type { Metadata } from "next";
 import Link from "next/link";
 import "../globals.css";
@@ -27,7 +28,7 @@ const NAV: { href: string; label: string; perm?: Permission }[] = [
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const profile = await getCurrentProfile();
   return (
-    <html lang="en">
+    <html lang="en" className={brandFont.variable}>
       <body className="min-h-screen bg-neutral-50 text-neutral-900 antialiased">
         <Suspense fallback={null}>
           <ScrollToTop />

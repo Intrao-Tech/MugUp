@@ -78,7 +78,8 @@ export default async function ReviewPage({ params }: Props) {
   const copy = COPY[locale];
   const dict = getCommon(locale);
   const enabled = canAcceptSubmissions();
-  const inputCls = "mt-1 w-full border border-neutral-400 px-3 py-2";
+  const inputCls =
+    "mt-1.5 w-full rounded-lg border border-ink-300 bg-surface px-3.5 py-2.5 text-base text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30";
 
   return (
     <>
@@ -86,10 +87,10 @@ export default async function ReviewPage({ params }: Props) {
         locale={locale}
         items={[{ label: dict.ui.breadcrumbsHome, href: "/" }, { label: copy.title }]}
       />
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="text-3xl font-bold">{copy.title}</h1>
-        <p className="mt-3 text-neutral-700">{copy.intro}</p>
-        <p className="mt-1 text-sm text-neutral-500">{copy.moderation}</p>
+      <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <h1 className="text-display text-ink">{copy.title}</h1>
+        <p className="mt-3 text-body">{copy.intro}</p>
+        <p className="mt-1 text-sm text-muted">{copy.moderation}</p>
         <form action={enabled ? submitReview : undefined} className="mt-6 space-y-4">
           <Suspense fallback={null}>
             <FormStatusBanner sentText={dict.ui.formSent} errorText={dict.ui.formError} />
@@ -110,7 +111,7 @@ export default async function ReviewPage({ params }: Props) {
               {copy.tag}
             </label>
             <input id="authorTag" name="authorTag" className={inputCls} />
-            <p className="mt-1 text-xs text-neutral-500">{copy.tagHint}</p>
+            <p className="mt-1 text-sm text-muted">{copy.tagHint}</p>
           </div>
           <div>
             <label htmlFor="rating" className="block text-sm font-medium">
@@ -138,11 +139,11 @@ export default async function ReviewPage({ params }: Props) {
           <button
             type="submit"
             disabled={!enabled}
-            className="border border-neutral-900 px-5 py-2 font-medium disabled:opacity-50"
+            className="inline-flex min-h-11 items-center rounded-full bg-primary px-6 py-2.5 font-bold text-on-primary hover:bg-primary-hover disabled:opacity-50"
           >
             {copy.submit}
           </button>
-          {!enabled && <p className="text-sm text-neutral-500">{dict.ui.formNotWired}</p>}
+          {!enabled && <p className="text-sm text-muted">{dict.ui.formNotWired}</p>}
         </form>
       </div>
     </>

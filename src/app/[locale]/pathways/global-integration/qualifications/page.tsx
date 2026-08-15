@@ -40,10 +40,10 @@ export default async function InternationalQualificationsPage({ params }: Props)
         ]}
       />
       <HeroSection hero={page.hero} locale={locale} />
-      <section id="programmes" className="mx-auto max-w-4xl px-4 py-8">
+      <section id="programmes" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {programmes.map((p) => (
-            <li key={p.slug} className="border border-neutral-300 p-4">
+            <li key={p.slug} className="rounded-card border border-line bg-surface p-6 shadow-card">
               <h2 className="font-semibold">
                 <Link
                   href={localeHref(locale, programmePath(p.group, p.slug))}
@@ -52,7 +52,7 @@ export default async function InternationalQualificationsPage({ params }: Props)
                   {p.cardTitle}
                 </Link>
               </h2>
-              <p className="mt-2 text-sm text-neutral-700">{p.cardBlurb}</p>
+              <p className="mt-2 text-sm text-body">{p.cardBlurb}</p>
             </li>
           ))}
         </ul>
