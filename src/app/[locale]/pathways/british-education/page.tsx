@@ -47,7 +47,6 @@ export default async function BritishEducationHub({ params }: Props) {
         locale={locale}
         items={[
           { label: dict.ui.breadcrumbsHome, href: "/" },
-          { label: dict.nav.pathways },
           { label: dict.nav.pathwaysBritish },
         ]}
       />
