@@ -42,7 +42,8 @@ Component inventory:
 | `ImagePlaceholder.tsx` | grey-X stand-in for images the client hasn't supplied |
 | `FormRenderer.tsx` | booking + contact forms |
 | `FormStatusBanner.tsx` | sent/error message after submit |
-| `Markdown.tsx` | article body (headings, lists, quotes, images, links) |
+| `PostBody.tsx` | article body for builder-made posts (per-block width standard/wide/full, alignment, 2–3 columns, buttons, captions) — also the admin builder's live preview, so restyle carefully |
+| `Markdown.tsx` | article body for legacy Markdown posts (headings, lists, quotes, images, links) |
 | `Breadcrumbs.tsx` | breadcrumb nav (also emits JSON-LD — keep the component) |
 | `LocaleSwitcher.tsx` / `ScrollToTop.tsx` | behaviour helpers |
 | `src/app/admin/ui.tsx` | admin notices + filter chips |

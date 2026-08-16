@@ -49,7 +49,7 @@ export async function submitLead(formData: FormData): Promise<void> {
   // A Contact submission about partnership is its own enquiry type.
   const form = formKind === "contact" && isPartnershipSubject(subject) ? "partnership" : formKind;
 
-  const { error } = await data.leads.submit({
+  const { error, id } = await data.leads.submit({
     form,
     locale,
     fullName,
@@ -73,6 +73,7 @@ export async function submitLead(formData: FormData): Promise<void> {
       subject,
       message,
       hasFile: Boolean(filePath),
+      leadId: id,
     });
   }
   redirect(`${backUrl}${error ? "?error=1" : "?sent=1"}`);

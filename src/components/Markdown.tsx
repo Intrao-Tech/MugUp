@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 
-// Minimal, dependency-free renderer for the Markdown subset the admin editor
-// supports: ## / ### headings, "- " lists, "> " quotes, ![alt](url) images,
+// Minimal, dependency-free renderer for the Markdown subset legacy posts
+// store: ## / ### headings, "- " lists, "> " quotes, ![alt](url) images,
 // blank-line paragraphs, **bold**, [text](url). Everything renders through
 // React (auto-escaped), so post content from the database can never inject
-// HTML. The same parser feeds the admin post builder.
+// HTML. parseMarkdown also feeds src/lib/post-blocks.ts, which imports
+// legacy bodies into the layout builder.
 
 const INLINE_RE = /(\*\*[^*]+\*\*|\[[^\]]+\]\([^\s)]+\))/g;
 
@@ -92,29 +93,6 @@ export function parseMarkdown(source: string): MdBlock[] {
   }
   flushAll();
   return blocks;
-}
-
-/** Serialize builder blocks back to the stored Markdown. */
-export function blocksToMarkdown(blocks: MdBlock[]): string {
-  return blocks
-    .map((block) => {
-      switch (block.kind) {
-        case "h2":
-          return `## ${block.text}`;
-        case "h3":
-          return `### ${block.text}`;
-        case "ul":
-          return block.items.map((item) => `- ${item}`).join("\n");
-        case "quote":
-          return `> ${block.text}`;
-        case "img":
-          return `![${block.alt}](${block.url})`;
-        default:
-          return block.text;
-      }
-    })
-    .filter((chunk) => chunk.trim())
-    .join("\n\n");
 }
 
 export function Markdown({ source }: { source: string }) {

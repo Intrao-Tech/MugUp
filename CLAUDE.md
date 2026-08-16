@@ -5,6 +5,7 @@ Studio. Next.js 15 App Router, TypeScript strict, Tailwind v4, Supabase behind
 a vendor-neutral port layer. Full spec: `docs/SPEC.md`. Design handoff:
 `docs/HANDOFF-DESIGN.md`. Design system (tokens, primitives, rules):
 `docs/DESIGN-SYSTEM.md`. SEO invariants: `docs/SEO-REQUIREMENTS.md`.
+Email setup: `docs/EMAIL-SETUP.md`. Deploy: `docs/DEPLOY.md`.
 
 ## Commands
 
@@ -20,7 +21,9 @@ npm run seed:dev   # test accounts + demo data (local only, guarded)
 Local test logins (password `admin123`): `admin@` / `manager@` / `editor@mugup.local`.
 (Seed-only password — every password set through the UI must pass
 `src/lib/password.ts`: 8+ chars, upper + lower + digit.)
-Local emails (invites) land in Mailpit: http://localhost:54324. DB GUI: :54323.
+Email: one app-owned channel (`src/lib/email.ts`, SMTP or Resend via env —
+`.env.local` may carry real test SMTP creds). Without a transport, auth
+letters land in Mailpit: http://localhost:54324. DB GUI: :54323.
 
 ## Architecture in one breath
 
@@ -36,7 +39,13 @@ Local emails (invites) land in Mailpit: http://localhost:54324. DB GUI: :54323.
   (`src/lib/auth-guard.ts`) → actions → Postgres RLS (`supabase/migrations`).
 - Insights posts/categories/reviews are database-driven; public pages use ISR
   + `revalidatePath` from admin actions. Static content in `src/content` is
-  the no-backend fallback.
+  the no-backend fallback. Post bodies are layout blocks
+  (`src/lib/post-blocks.ts`, rendered by `PostBody`); `body_md` is the
+  legacy/fallback format.
+- Admin notifications are IN-APP (feed + per-member subscriptions +
+  per-entry read state); email is an optional copy through
+  `src/lib/email.ts`. Invited/reset accounts get generated temporary
+  passwords and must set their own on first sign-in.
 
 ## Rules
 

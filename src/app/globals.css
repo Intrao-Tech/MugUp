@@ -171,3 +171,15 @@
     color: var(--color-ink-900);
   }
 }
+
+/* 4. Article columns (PostBody + the admin builder's editing grid): the
+      column count is data-driven (--cols, any 2–6), which Tailwind's static
+      classes cannot express. Stacks to one column on phones. */
+.post-columns {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 640px) {
+  .post-columns {
+    grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+  }
+}

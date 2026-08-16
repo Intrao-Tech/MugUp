@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { PostBody } from "@/components/PostBody";
 import {
+  MAX_COLUMNS,
   postBlocksFromMarkdown,
   postBlocksToMarkdown,
   type PostBlock,
@@ -82,18 +83,15 @@ function emptyInner(kind: InnerKind): BInner {
   }
 }
 
-function emptyBlock(kind: TopKind, columnCount: 2 | 3 = 2): BBlock {
+function emptyBlock(kind: TopKind): BBlock {
   switch (kind) {
     case "divider":
       return { uid: uid(), kind };
     case "spacer":
       return { uid: uid(), kind, size: "m" };
     case "columns":
-      return {
-        uid: uid(),
-        kind,
-        columns: Array.from({ length: columnCount }, () => [emptyInner("p")]),
-      };
+      // Rows start at 2; the count (2–6) is changed in the row's toolbar.
+      return { uid: uid(), kind, columns: [[emptyInner("p")], [emptyInner("p")]] };
     default:
       return emptyInner(kind);
   }
@@ -263,6 +261,21 @@ function BlockEditor({
   }
 }
 
+/** The block-type buttons, shared by the insert lines and the always-visible
+ *  "Add a block" bar at the bottom. A single "+ Columns" button — the row
+ *  starts at 2 and the count (2–6) is changed right in the row's toolbar. */
+function KindPalette({ onInsert }: { onInsert: (kind: TopKind) => void }) {
+  return (
+    <>
+      {(Object.keys(KIND_LABEL) as TopKind[]).map((kind) => (
+        <button key={kind} type="button" onClick={() => onInsert(kind)} className={btnCls}>
+          + {KIND_LABEL[kind]}
+        </button>
+      ))}
+    </>
+  );
+}
+
 /** "+ Add a block here" — appears between blocks and at the end, so content
  *  can be inserted at any point, not only appended. Doubles as the drop zone
  *  while a block is being dragged. */
@@ -275,7 +288,7 @@ function InsertPoint({
 }: {
   open: boolean;
   onToggle: () => void;
-  onInsert: (kind: TopKind, columnCount?: 2 | 3) => void;
+  onInsert: (kind: TopKind) => void;
   dragActive: boolean;
   onDropBlock: () => void;
 }) {
@@ -292,19 +305,7 @@ function InsertPoint({
     >
       {open ? (
         <div className="flex flex-wrap items-center gap-2 border border-dashed border-neutral-400 bg-neutral-50 p-2 text-sm">
-          {(Object.keys(KIND_LABEL) as TopKind[])
-            .filter((kind) => kind !== "columns")
-            .map((kind) => (
-              <button key={kind} type="button" onClick={() => onInsert(kind)} className={btnCls}>
-                + {KIND_LABEL[kind]}
-              </button>
-            ))}
-          <button type="button" onClick={() => onInsert("columns", 2)} className={btnCls}>
-            + 2 columns
-          </button>
-          <button type="button" onClick={() => onInsert("columns", 3)} className={btnCls}>
-            + 3 columns
-          </button>
+          <KindPalette onInsert={onInsert} />
           <button type="button" onClick={onToggle} className="ml-auto text-neutral-500 hover:underline">
             close
           </button>
@@ -366,8 +367,8 @@ export function PostBuilder({
       if (index < 0) return prev;
       return [...prev.slice(0, index + 1), cloneBlock(prev[index]), ...prev.slice(index + 1)];
     });
-  const insert = (index: number, kind: TopKind, columnCount: 2 | 3 = 2) => {
-    setBlocks((prev) => [...prev.slice(0, index), emptyBlock(kind, columnCount), ...prev.slice(index)]);
+  const insert = (index: number, kind: TopKind) => {
+    setBlocks((prev) => [...prev.slice(0, index), emptyBlock(kind), ...prev.slice(index)]);
     setInsertAt(null);
   };
   /** Drag & drop: move a block so it sits at the given insertion slot. */
@@ -440,17 +441,35 @@ export function PostBuilder({
     updateColumns(id, (columns) =>
       columns.map((column, i) => (i === col ? [...column, emptyInner(kind)] : column)),
     );
-  const setColumnCount = (id: number, count: 2 | 3) =>
+  const setColumnCount = (id: number, count: number) =>
     updateColumns(id, (columns) => {
-      if (columns.length === count) return columns;
-      // Shrinking merges the last column's content into the new last column.
-      if (count < columns.length) {
-        const kept = columns.slice(0, count);
+      const target = Math.max(2, Math.min(MAX_COLUMNS, Math.floor(count)));
+      if (columns.length === target) return columns;
+      // Shrinking merges the removed columns' content into the new last one.
+      if (target < columns.length) {
+        const kept = columns.slice(0, target);
         return kept.map((column, i) =>
-          i === count - 1 ? [...column, ...columns.slice(count).flat()] : column,
+          i === target - 1 ? [...column, ...columns.slice(target).flat()] : column,
         );
       }
-      return [...columns, [emptyInner("p")]];
+      return [
+        ...columns,
+        ...Array.from({ length: target - columns.length }, () => [emptyInner("p")]),
+      ];
+    });
+  /** Hand-composition: this block joins the columns row BELOW as a new column. */
+  const appendToNextColumns = (id: number) =>
+    setBlocks((prev) => {
+      const i = prev.findIndex((b) => b.uid === id);
+      const block = prev[i];
+      const next = prev[i + 1];
+      if (!block || !isInner(block) || next?.kind !== "columns") return prev;
+      if (next.columns.length >= MAX_COLUMNS) return prev;
+      const grown: BBlock = {
+        ...next,
+        columns: [...next.columns, [block as unknown as BInner]],
+      };
+      return [...prev.slice(0, i), grown, ...prev.slice(i + 2)];
     });
 
   const layoutControls = (block: BBlock) => (
@@ -506,11 +525,14 @@ export function PostBuilder({
           Columns
           <select
             value={block.columns.length}
-            onChange={(event) => setColumnCount(block.uid, Number(event.target.value) as 2 | 3)}
+            onChange={(event) => setColumnCount(block.uid, Number(event.target.value))}
             className="border border-neutral-300 px-1 py-0.5"
           >
-            <option value={2}>2</option>
-            <option value={3}>3</option>
+            {Array.from({ length: MAX_COLUMNS - 1 }, (_, i) => i + 2).map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
           </select>
         </label>
       )}
@@ -526,7 +548,7 @@ export function PostBuilder({
       <InsertPoint
         open={insertAt === 0}
         onToggle={() => setInsertAt(insertAt === 0 ? null : 0)}
-        onInsert={(kind, count) => insert(0, kind, count)}
+        onInsert={(kind) => insert(0, kind)}
         dragActive={dragId !== null}
         onDropBlock={() => dragId !== null && moveTo(dragId, 0)}
       />
@@ -569,6 +591,19 @@ export function PostBuilder({
                     ◫ with next
                   </button>
                 )}
+                {isInner(block) &&
+                  blocks[index + 1]?.kind === "columns" &&
+                  (blocks[index + 1] as Extract<BBlock, { kind: "columns" }>).columns.length <
+                    MAX_COLUMNS && (
+                    <button
+                      type="button"
+                      onClick={() => appendToNextColumns(block.uid)}
+                      title="Move this block into the columns row below as its own new column"
+                      className={btnCls}
+                    >
+                      ↳ into columns
+                    </button>
+                  )}
                 {block.kind === "columns" && (
                   <button
                     type="button"
@@ -595,7 +630,10 @@ export function PostBuilder({
             </div>
 
             {block.kind === "columns" ? (
-              <div className={`grid gap-3 ${block.columns.length === 3 ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+              <div
+                className="post-columns grid gap-3"
+                style={{ "--cols": block.columns.length } as CSSProperties}
+              >
                 {block.columns.map((column, col) => (
                   <div key={col} className="space-y-2 border border-dashed border-neutral-300 bg-neutral-50 p-2">
                     {column.map((child, childIndex) => (
@@ -653,12 +691,20 @@ export function PostBuilder({
           <InsertPoint
             open={insertAt === index + 1}
             onToggle={() => setInsertAt(insertAt === index + 1 ? null : index + 1)}
-            onInsert={(kind, count) => insert(index + 1, kind, count)}
+            onInsert={(kind) => insert(index + 1, kind)}
             dragActive={dragId !== null}
             onDropBlock={() => dragId !== null && moveTo(dragId, index + 1)}
           />
         </div>
       ))}
+
+      {/* Always-visible add bar: no need to discover the between-block lines. */}
+      <div className="mt-1 flex flex-wrap items-center gap-2 border border-dashed border-neutral-400 bg-neutral-50 p-2 text-sm">
+        <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+          Add a block
+        </span>
+        <KindPalette onInsert={(kind) => insert(blocks.length, kind)} />
+      </div>
 
       <div className="pt-2">
         <button

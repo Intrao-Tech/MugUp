@@ -97,7 +97,8 @@ export async function middleware(request: NextRequest) {
   // /admin/welcome completes email invites client-side (tokens arrive in the
   // URL fragment, invisible to the server) — it must stay reachable signed out.
   const openPaths = ["/admin/login", "/admin/welcome"];
-  const { response, isAuthenticated, timedOut } = await refreshAdminSession(request);
+  const { response, isAuthenticated, timedOut, mustChangePassword } =
+    await refreshAdminSession(request);
   if (timedOut) {
     // The redirect must carry the sign-out cookie deletions, or the login
     // page would still see a session and bounce straight back.
@@ -110,6 +111,14 @@ export async function middleware(request: NextRequest) {
   }
   if (isAuthenticated && pathname === "/admin/login") {
     return NextResponse.redirect(new URL("/admin", request.url));
+  }
+  // Temporary-password accounts must set their own password before anything else.
+  if (
+    isAuthenticated &&
+    mustChangePassword &&
+    !["/admin/account", ...openPaths].includes(pathname)
+  ) {
+    return NextResponse.redirect(new URL("/admin/account?must-change=1", request.url));
   }
   return withNoindex(response);
 }

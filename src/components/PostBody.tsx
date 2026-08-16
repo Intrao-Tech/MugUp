@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { renderInline } from "@/components/Markdown";
 import type { PostBlock, PostBlockAlign, PostBlockWidth } from "@/lib/post-blocks";
 
@@ -89,9 +90,12 @@ function BlockContent({ block }: { block: PostBlock }) {
     case "spacer":
       return <div aria-hidden="true" className={SPACER_CLS[block.size]} />;
     case "columns":
+      // Data-driven column count (2–6): grid-template comes from a CSS var
+      // (.post-columns in globals.css) since Tailwind classes are static.
       return (
         <div
-          className={`grid gap-6 ${block.columns.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+          className="post-columns grid gap-6"
+          style={{ "--cols": block.columns.length } as CSSProperties}
         >
           {block.columns.map((column, i) => (
             <div key={i} className="space-y-4">

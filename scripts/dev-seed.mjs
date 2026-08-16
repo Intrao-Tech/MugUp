@@ -47,24 +47,8 @@ for (const user of USERS) {
   console.log(profileError ? `! ${user.email}: ${profileError.message}` : `+ ${user.email} (${user.role})`);
 }
 
-// Every seeded account sees every notification type (subscriptions are
-// re-applied on reseed, so this also works on an already-seeded database).
-const NOTIFICATION_EVENTS = [
-  "lead_booking", "lead_contact", "lead_partnership", "review_new", "post_published",
-];
-{
-  const { data: profileRows } = await service
-    .from("profiles")
-    .select("id, email")
-    .in("email", USERS.map((u) => u.email));
-  for (const row of profileRows ?? []) {
-    const { error } = await service
-      .from("notification_subscriptions")
-      .upsert({ profile_id: row.id, events: NOTIFICATION_EVENTS });
-    if (error) console.log(`! subscription ${row.email}: ${error.message}`);
-  }
-  console.log(`+ notification subscriptions for ${(profileRows ?? []).length} accounts`);
-}
+// Notification routing is PER ROLE (notification_role_events); migration
+// 0009 seeds sensible defaults for admin/manager/editor — nothing to do here.
 
 // Dates relative to "now" so the dashboard demo always has data this month.
 const today = new Date().toISOString().slice(0, 10);

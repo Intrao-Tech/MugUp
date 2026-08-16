@@ -5,6 +5,7 @@ Agreement No. INTRAO-MUGUP-2026-07 (`docs/requirements/`).
 
 Documentation: `docs/SPEC.md` (full as-built spec) · `docs/HANDOFF-DESIGN.md`
 (for the design developer) · `docs/SEO-REQUIREMENTS.md` (SEO invariants) ·
+`docs/EMAIL-SETUP.md` (outgoing email) · `docs/DEPLOY.md` (production) ·
 `CLAUDE.md` (AI-assistant onboarding).
 
 **Current stage: structure skeleton.** Full page structure, navigation, bilingual
@@ -37,21 +38,28 @@ The fastest way to develop and test everything, no cloud account needed:
 npm run db:start   # local Supabase in Docker: applies supabase/migrations,
                    # prints API URL + anon/service keys, Studio on :54323
 npm run seed:dev   # test accounts + demo data (local stack only, guarded)
-npm run dev        # site on :3000, admin on /admin
+npm run dev        # site on http://localhost:3000,
+                   # admin on http://admin.localhost:3000 (host split via env)
 ```
 
 Copy the keys `db:start` prints into `.env.local` (see `.env.example`) before
 seeding. Test accounts: `admin@` / `manager@` / `editor@mugup.local`, password
 `admin123`. `npm run db:reset` wipes the DB and re-applies migrations;
+`npx supabase migration up` applies only NEW migrations without wiping data;
 `npm run db:stop` stops the containers.
+
+Emails (invites, password resets, enquiry copies): work out of the box into
+Mailpit (http://localhost:54324, nothing leaves the machine); to send REAL
+email from the local machine set the SMTP vars — see `docs/EMAIL-SETUP.md`.
 
 ## Run (hosted Supabase)
 
 1. **Supabase project** — create one at supabase.com (region **London,
    eu-west-2**; production project lives on the client's account, use your own
    free project for development).
-2. **Schema** — open the project's SQL editor and run the whole of
-   `supabase/migrations/0001_init.sql` (tables, RLS, triggers, storage bucket).
+2. **Schema** — apply every file in `supabase/migrations/` in order (0001 →
+   0006): either `npx supabase db push` with the project linked, or paste each
+   file into the SQL editor (tables, RLS, triggers, storage buckets).
 3. **Env vars** — copy `.env.example` to `.env.local`, fill in Project URL +
    anon key + service-role key (dashboard → Settings → API). The service-role
    key is server-only: never commit it, never expose it to the browser.
@@ -63,12 +71,19 @@ seeding. Test accounts: `admin@` / `manager@` / `editor@mugup.local`, password
 ## Admin panel
 
 English UI, never indexed (`X-Robots-Tag` + metadata; deliberately NOT listed
-in robots.txt). Modules: dashboard, Enquiries (status/form filter chips with
-counts, search by name/email, newest/oldest sort, internal notes, attached
-files via short-lived signed URLs), Reviews (add + moderate before anything
-can be published), Insights posts (Markdown editor, draft/publish/unpublish/
-delete with confirmation, status+language filters, "view on site" links; the
-public site updates within seconds via revalidation), Team.
+in robots.txt). Modules: dashboard (This Month, areas, top sources, needs
+attention), Enquiries (full CRM: 9-status pipeline with Lost reasons, owner /
+next action / due date, filter chips with counts, search, CSV export, PII
+masking, internal notes, attached files via short-lived signed URLs), Reviews
+(moderation queue + managed "All reviews" list: edit details, feature for the
+homepage, delete; manual Google-review import), Insights posts (layout block
+builder: drag & drop, per-block width/alignment, side-by-side columns,
+buttons, captions, live preview; draft/publish/schedule/unpublish/delete —
+the public site updates within seconds via revalidation), Team (invite by
+email, one-click password reset email, member deletion, custom roles),
+Notifications (in-admin feed with per-member event subscriptions),
+Activity log (date filters + stats), Settings (change own password with the
+current password required; idle session timeout, default 15 min).
 
 **Where it lives — not on the public site.** Access is controlled by env vars:
 
@@ -84,11 +99,13 @@ public site updates within seconds via revalidation), Team.
   or the hosting provider's firewall) in front of the admin host — the
   app-level allowlist is defence-in-depth, not a VPN replacement.
 
-**Access model:** a *role* (`admin` / `manager` / `editor`) is just a preset;
-enforcement uses per-account permission flags, editable per user in Team:
-`leads.view`, `leads.manage`, `files.view`, `reviews.moderate`, `posts.edit`,
-`posts.publish`, `users.manage`. Editor deliberately has no access to leads
-(personal data, GDPR minimisation); Manager has no publishing rights.
+**Access model:** a *role* is just a preset (built-in `admin` / `manager` /
+`editor` + admin-defined custom roles); enforcement uses per-account
+permission flags, editable per user in Team: `leads.view`, `leads.manage`,
+`leads.export`, `leads.pii`, `posts.edit`, `posts.publish`,
+`reviews.moderate`, `analytics.view`, `users.manage`. Editor deliberately has
+no access to leads (personal data, GDPR minimisation); learner PII
+(`leads.pii`) is a separate flag from working the pipeline.
 
 **Security layers:** middleware redirect for anonymous visitors → every page
 and server action re-checks the permission flag → Postgres RLS enforces the
@@ -101,8 +118,9 @@ self-registration); an account cannot remove `users.manage` from itself.
 
 Pages, actions and guards never import a vendor SDK — they talk to the
 interfaces in `src/lib/data/ports.ts` (`AuthPort`, `TeamPort`, `LeadsPort`,
-`ReviewsPort`, `PostsPort`, `FileStoragePort`) through `getData()` from
-`src/lib/data`. The active backend is chosen by the `DATA_BACKEND` env var.
+`ReviewsPort`, `PostsPort`, `FileStoragePort`, `ActivityPort`,
+`NotificationsPort`, `SettingsPort`) through `getData()` from `src/lib/data`.
+The active backend is chosen by the `DATA_BACKEND` env var.
 
 Migrating off Supabase = implement `DataBackend` once and flip one env var:
 
@@ -136,12 +154,19 @@ backend must return live in `src/lib/db-types.ts`.
 /{locale}/pathways/british-education         Hub: educational journey + 11 cards
 /{locale}/pathways/british-education/<slug>  11 programme pages (single template:
                                              hero, at-a-glance, sections, CTA)
-/{locale}/pathways/global-integration        Stage 1: hero landing only
-/{locale}/insights                           Listing, 5 fixed categories —
-                                             database-driven (admin-managed)
-/{locale}/insights/<slug>                    Article page (Markdown from DB;
-                                             ISR + instant revalidation on
-                                             publish/unpublish/delete)
+/{locale}/courses                            Full courses & programmes catalogue
+/{locale}/pathways/global-integration        Goal-first landing (Live/Work/Grow/
+                                             Study/Connect) + 6 language pages
+/{locale}/pathways/global-integration/qualifications
+                                             Intl. language qualifications hub
+                                             (+ IELTS/Cambridge/SELT pages, 301s
+                                             from the old BE URLs)
+/{locale}/pathways/global-integration/boarding-schools
+                                             British Boarding Schools page
+/{locale}/insights                           Listing, categories admin-managed
+/{locale}/insights/<slug>                    Article page (layout blocks or
+                                             Markdown from DB; ISR + instant
+                                             revalidation on publish/unpublish)
 /{locale}/book-assessment                    Content + booking form + FAQ
 /{locale}/contact                            Contact details + enquiry form
 /{locale}/privacy-policy, /{locale}/terms    Noindexed stubs pending legal text
@@ -175,6 +200,8 @@ video embed and founder photo (awaiting client materials), LinkedIn/YouTube/
 Eventbrite footer links (awaiting exact URLs), Stage 2 Global Integration
 sub-pages, legal texts.
 
-Email notifications for new enquiries ARE wired (Resend) — set
-`RESEND_API_KEY` + `LEADS_NOTIFY_EMAIL` to enable; without them submissions
-simply skip the email step.
+Notifications for new enquiries/reviews/posts ARE wired: they land in the
+admin panel's Notifications section with no setup at all. Outgoing email
+(team invites, password resets, optional email copies of enquiries) goes
+through one configurable channel — SMTP or Resend, sender set once via
+`MAIL_FROM` — see `docs/EMAIL-SETUP.md`.

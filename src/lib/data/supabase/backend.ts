@@ -2,20 +2,21 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   ActivityRow,
   CategoryRow,
-  CustomRoleRow,
   LeadRow,
+  NotificationEvent,
+  NotificationRoleEventsRow,
   NotificationRow,
-  NotificationSubscriptionRow,
   PostRow,
   ProfileRow,
   ReviewRow,
+  RoleRow,
 } from "@/lib/db-types";
 import type { DataBackend, FeaturedReview, LeadStatsRow, Result } from "@/lib/data/ports";
-import { isEmailConfigured, sendEmail } from "@/lib/email";
 import { createAnonClient, createServiceClient, createUserClient } from "./clients";
 import { LEAD_FILES_BUCKET, POST_IMAGES_BUCKET } from "./config";
 
-const PROFILE_COLUMNS = "id, email, full_name, role, permissions, created_at";
+const PROFILE_COLUMNS =
+  "id, email, full_name, role, permissions, must_change_password, created_at";
 
 function toResult(error: { message: string } | null): Result {
   return error ? { error: error.message } : {};
@@ -62,7 +63,18 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         await (await user()).auth.signOut();
       },
       async updateOwnPassword(newPassword) {
-        const { error } = await (await user()).auth.updateUser({ password: newPassword });
+        const client = await user();
+        const {
+          data: { user: authUser },
+        } = await client.auth.getUser();
+        const { error } = await client.auth.updateUser({ password: newPassword });
+        if (!error && authUser) {
+          // The member now owns their password — lift the first-login gate.
+          await createServiceClient()
+            .from("profiles")
+            .update({ must_change_password: false })
+            .eq("id", authUser.id);
+        }
         return toResult(error);
       },
       async verifyOwnPassword(password) {
@@ -103,47 +115,43 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           .eq("id", userId);
         return toResult(error);
       },
+      async createInvitedAccount({ email, fullName, role, permissions, password }) {
+        const service = createServiceClient();
+        const { data, error } = await service.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+        });
+        if (error || !data.user) return { error: error?.message ?? "create failed" };
+        // The on_auth_user_created trigger has already inserted the profile row.
+        const { error: profileError } = await service
+          .from("profiles")
+          .update({ full_name: fullName, role, permissions, must_change_password: true })
+          .eq("id", data.user.id);
+        if (profileError) return { error: profileError.message };
+        return { userId: data.user.id };
+      },
+      // Fallback (no email transport): Supabase Auth sends its own invite
+      // letter (Mailpit on the local stack).
       async inviteAccount({ email, fullName, role, permissions, redirectOrigin }) {
         const service = createServiceClient();
-        const redirectTo = `${redirectOrigin}/admin/welcome`;
-        let userId: string;
-        if (isEmailConfigured()) {
-          // App-owned email channel (src/lib/email.ts): Supabase only mints
-          // the invite link; the letter goes out from OUR sender address, so
-          // it reaches real inboxes even on the local stack.
-          const { data, error } = await service.auth.admin.generateLink({
-            type: "invite",
-            email,
-            options: { redirectTo },
-          });
-          if (error || !data.user) return { error: error?.message ?? "invite failed" };
-          userId = data.user.id;
-          const sent = await sendEmail({
-            to: email,
-            subject: "You are invited to Mug.Up Admin",
-            text: [
-              `Hello ${fullName},`,
-              "",
-              "You have been given access to the Mug.Up Studio admin panel.",
-              "Open the link below and choose your password:",
-              "",
-              data.properties.action_link,
-              "",
-              "The link can be used once. If you were not expecting this email, ignore it.",
-            ].join("\n"),
-          });
-          if (!sent) return { error: "invite email could not be sent" };
-        } else {
-          // Fallback: Supabase Auth sends the letter (Mailpit on the local stack).
-          const { data, error } = await service.auth.admin.inviteUserByEmail(email, {
-            redirectTo,
-          });
-          if (error || !data.user) return { error: error?.message ?? "invite failed" };
-          userId = data.user.id;
-        }
+        const { data, error } = await service.auth.admin.inviteUserByEmail(email, {
+          redirectTo: `${redirectOrigin}/admin/welcome`,
+        });
+        if (error || !data.user) return { error: error?.message ?? "invite failed" };
         const { error: profileError } = await service
           .from("profiles")
           .update({ full_name: fullName, role, permissions })
+          .eq("id", data.user.id);
+        return toResult(profileError);
+      },
+      async setPassword(userId, password, mustChange) {
+        const service = createServiceClient();
+        const { error } = await service.auth.admin.updateUserById(userId, { password });
+        if (error) return { error: error.message };
+        const { error: profileError } = await service
+          .from("profiles")
+          .update({ must_change_password: mustChange })
           .eq("id", userId);
         return toResult(profileError);
       },
@@ -152,53 +160,50 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         const { error } = await createServiceClient().auth.admin.deleteUser(userId);
         return toResult(error);
       },
+      // Fallback (no email transport): Supabase Auth emails a recovery link
+      // landing on the welcome set-password page (Mailpit on the local stack).
       async sendPasswordReset(email, redirectOrigin) {
-        const redirectTo = `${redirectOrigin}/admin/welcome`;
-        if (isEmailConfigured()) {
-          // Same app-owned channel as invites: mint the recovery link, send
-          // the letter ourselves.
-          const { data, error } = await createServiceClient().auth.admin.generateLink({
-            type: "recovery",
-            email,
-            options: { redirectTo },
-          });
-          if (error) return { error: error.message };
-          const sent = await sendEmail({
-            to: email,
-            subject: "Reset your Mug.Up Admin password",
-            text: [
-              "A password reset was requested for your Mug.Up Admin account.",
-              "Open the link below and choose a new password:",
-              "",
-              data.properties.action_link,
-              "",
-              "The link can be used once. If you did not request this, ignore it.",
-            ].join("\n"),
-          });
-          return sent ? {} : { error: "reset email could not be sent" };
-        }
-        // Fallback: Supabase Auth sends the letter (Mailpit on the local stack).
         const { error } = await createAnonClient().auth.resetPasswordForEmail(email, {
-          redirectTo,
+          redirectTo: `${redirectOrigin}/admin/welcome`,
         });
         return toResult(error);
       },
-      async listCustomRoles() {
+      async listRoles() {
+        // Built-ins first, then customs alphabetically.
         const { data } = await (await user())
-          .from("custom_roles")
+          .from("roles")
           .select("*")
+          .order("built_in", { ascending: false })
           .order("name", { ascending: true });
-        return (data ?? []) as CustomRoleRow[];
+        return (data ?? []) as RoleRow[];
       },
-      async addCustomRole({ slug, name, permissions }) {
+      async addRole({ slug, name, permissions }) {
         const { error } = await (await user())
-          .from("custom_roles")
+          .from("roles")
           .insert({ slug, name, permissions });
         return toResult(error);
       },
-      async deleteCustomRole(slug) {
-        const { error } = await (await user()).from("custom_roles").delete().eq("slug", slug);
+      async updateRole(slug, { name, permissions }) {
+        // A built-in row keeps its identity: only permissions may change.
+        const db = await user();
+        const { data } = await db.from("roles").select("built_in").eq("slug", slug).maybeSingle();
+        const patch = (data as { built_in: boolean } | null)?.built_in
+          ? { permissions }
+          : { name, permissions };
+        const { error } = await db.from("roles").update(patch).eq("slug", slug);
         return toResult(error);
+      },
+      async deleteRole(slug) {
+        const db = await user();
+        const { error } = await db
+          .from("roles")
+          .delete()
+          .eq("slug", slug)
+          .eq("built_in", false);
+        if (error) return { error: error.message };
+        // Its notification routing goes with it.
+        await db.from("notification_role_events").delete().eq("role_slug", slug);
+        return {};
       },
     },
 
@@ -258,21 +263,26 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
       },
       async submit(lead) {
         const service = createServiceClient();
-        const { error } = await service.from("leads").insert({
-          form: lead.form,
-          locale: lead.locale,
-          full_name: lead.fullName,
-          email: lead.email,
-          phone: lead.phone,
-          who_for: lead.whoFor,
-          pathway_interest: lead.pathwayInterest,
-          preferred_format: lead.preferredFormat,
-          subject: lead.subject,
-          message: lead.message,
-          file_path: lead.filePath,
-          source: lead.source,
-        });
-        return toResult(error);
+        const { data, error } = await service
+          .from("leads")
+          .insert({
+            form: lead.form,
+            locale: lead.locale,
+            full_name: lead.fullName,
+            email: lead.email,
+            phone: lead.phone,
+            who_for: lead.whoFor,
+            pathway_interest: lead.pathwayInterest,
+            preferred_format: lead.preferredFormat,
+            subject: lead.subject,
+            message: lead.message,
+            file_path: lead.filePath,
+            source: lead.source,
+          })
+          .select("id")
+          .single();
+        if (error) return { error: error.message };
+        return { id: (data as { id: string }).id };
       },
       // Aggregate-only projection (no PII columns); the service client keeps
       // the dashboard available to analytics.view holders without leads.view.
@@ -473,10 +483,10 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
       // Service role: called from public form actions (no user session) and
       // admin actions alike. Failures are swallowed — a notification must
       // never break the action it announces. Old rows are pruned in passing.
-      async record(event, title, detail = "") {
+      async record(event, title, detail = "", href = "") {
         try {
           const service = createServiceClient();
-          await service.from("notifications").insert({ event, title, detail });
+          await service.from("notifications").insert({ event, title, detail, href });
           await service
             .from("notifications")
             .delete()
@@ -485,29 +495,41 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           // ignore — see above
         }
       },
-      async listSubscriptions() {
-        const { data } = await (await user()).from("notification_subscriptions").select("*");
-        return (data ?? []) as NotificationSubscriptionRow[];
+      async listRoleEvents() {
+        const { data } = await (await user()).from("notification_role_events").select("*");
+        return (data ?? []) as NotificationRoleEventsRow[];
       },
-      async getSubscription(profileId) {
+      async eventsForRole(roleSlug) {
         const { data } = await (await user())
-          .from("notification_subscriptions")
-          .select("*")
-          .eq("profile_id", profileId)
+          .from("notification_role_events")
+          .select("events")
+          .eq("role_slug", roleSlug)
           .maybeSingle();
-        return (data as NotificationSubscriptionRow | null) ?? null;
+        return ((data as { events: NotificationEvent[] } | null)?.events ?? []);
       },
-      async setSubscription(profileId, events) {
+      async setRoleEvents(roleSlug, events) {
         const { error } = await (await user())
-          .from("notification_subscriptions")
-          .upsert({ profile_id: profileId, events });
+          .from("notification_role_events")
+          .upsert({ role_slug: roleSlug, events });
         return toResult(error);
       },
-      async markSeen(profileId) {
+      async readIds(profileId, notificationIds) {
+        if (!notificationIds.length) return [];
+        const { data } = await (await user())
+          .from("notification_reads")
+          .select("notification_id")
+          .eq("profile_id", profileId)
+          .in("notification_id", notificationIds);
+        return ((data ?? []) as { notification_id: string }[]).map((r) => r.notification_id);
+      },
+      async markRead(profileId, notificationIds) {
+        if (!notificationIds.length) return {};
         const { error } = await (await user())
-          .from("notification_subscriptions")
-          .update({ last_seen: new Date().toISOString() })
-          .eq("profile_id", profileId);
+          .from("notification_reads")
+          .upsert(
+            notificationIds.map((id) => ({ profile_id: profileId, notification_id: id })),
+            { ignoreDuplicates: true },
+          );
         return toResult(error);
       },
     },

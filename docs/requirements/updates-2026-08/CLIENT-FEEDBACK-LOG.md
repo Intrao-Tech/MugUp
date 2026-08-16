@@ -190,3 +190,54 @@ page-by-page in `docs/HANDOFF-ADMIN-CRM.md`.
 8. Builder: drag & drop reordering (⠿ handle, drop on a block or on any
    "+ add a block here" line), "◫ with next" pairs two blocks into a
    2-column row, "Unstack" breaks a columns row back into full-width blocks.
+
+## Internal feedback round (15 Aug)
+
+1. Notifications are clickable (migration 0007): each entry deep-links to
+   its target (enquiry card / reviews / post) and counts as read PER ITEM
+   only once opened (`notification_reads`); "mark all as read" kept.
+2. Schedule data-loss fixed: pressing Schedule with an empty/past date is
+   blocked client-side with an inline message — the typed post is never
+   thrown away by the server error redirect.
+3. Builder: an always-visible "Add a block" bar (all block types incl. 2/3
+   columns) at the bottom — no need to discover the between-block lines.
+4. Invites & resets carry NO links/tokens anymore (they broke against the
+   Auth redirect allowlist): the app creates the account with a generated
+   temporary password, emails login + password itself, and the middleware
+   forces setting an own password on first sign-in
+   (`profiles.must_change_password`). Link flows remain only as the
+   no-email-transport fallback; `supabase/config.toml` redirect allowlist
+   fixed for it (requires `supabase stop/start`).
+5. Live-verified end to end: columns insertion, schedule guard, notification
+   click-through + per-item read badge, invite email with password
+   (artemdom3+pw@gmail.com), must-change gate redirect, idle timeout
+   sign-out message.
+6. Fix: feed entries recorded before 0007 had an empty href, so their "open"
+   went nowhere — backfilled to module pages (migration 0008) + page-level
+   fallback by event type.
+7. Columns generalised: the count is free data 2–6 (select in the row
+   toolbar; CSS-var grid instead of fixed classes), growing adds empty
+   columns, shrinking merges content; new "↳ into columns" moves any block
+   into the columns row below as its own new column. 6 is a readability
+   ceiling, not a code limitation.
+8. Palette simplified: one "+ Columns" button (starts at 2, count changed in
+   the row toolbar) instead of separate "+ 2/+ 3 columns".
+9. Roles list shows the permission summary for built-in roles too (was
+   names only).
+10. First-login polish: the set-password form no longer asks for the current
+    password on a must-change account (they just typed the temporary one to
+    sign in; server skips verification too); sign-in now TRIMS the pasted
+    password — a trailing space/newline copied from the email made valid
+    temporary passwords "not work". The temporary password stays valid for
+    signing in until an own password is set (the notice says so). Fixed
+    `PROFILE_COLUMNS` to actually select `must_change_password` for app code.
+11. Custom roles are EDITABLE after creation (name + permission checkboxes,
+    Save per card) with an optional "also apply to the N members with this
+    role" (self-lockout guarded); built-ins stay fixed in code.
+12. Notification routing moved to PER ROLE (migration 0009,
+    `notification_role_events` replaces per-member subscriptions): only
+    administrators (users.manage) decide which role receives which events on
+    the Notifications page ("Who gets notified"); members — e.g. a manager —
+    just see their role's feed with no self-configuration. Built-in role
+    defaults seeded: admin = everything, manager = enquiries + reviews,
+    editor = reviews + posts. Deleting a custom role removes its routing.

@@ -21,9 +21,12 @@ place and you are done.
 Common vars: `MAIL_FROM` (sender on every email), `LEADS_NOTIFY_EMAIL`
 (the inbox that receives enquiry/review copies).
 
-Invites and password resets work in both modes: with a transport configured
-the app mints the link via Supabase (`generateLink`) and sends the letter
-itself; without one, Supabase Auth sends its own letter.
+Invites and password resets work in both modes. With a transport configured
+there are NO links or tokens involved: the account gets a generated
+temporary password, the letter (login + password) is sent by the app itself,
+and the member is forced to set their own password on first sign-in. Without
+a transport, Supabase Auth sends its own link-based letter (Mailpit locally)
+landing on `/admin/welcome`.
 
 ## Local: real email from your machine
 
@@ -40,6 +43,29 @@ the client's production traffic.
 
 Remove/comment the `SMTP_*` block in `.env.local` to go back to
 Mailpit-only (http://localhost:54324, nothing leaves the machine).
+
+## Staging: make emails work in 2 minutes
+
+Nothing in the code needs changing — the app only looks at env vars. On the
+staging host set the same six variables the local `.env.local` uses and
+restart the app:
+
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=<the shared Gmail test account>
+SMTP_PASS=<its app password>
+MAIL_FROM=Mug.Up Studio <the same Gmail address>
+LEADS_NOTIFY_EMAIL=<inbox for enquiry/review copies>
+```
+
+That is the whole job: invites, password resets and enquiry/review copies
+start sending real email immediately (no links involved, so no Supabase
+redirect configuration is needed). If staging runs against a hosted Supabase
+project, also make sure all `supabase/migrations` are applied there. The
+Gmail account is rate-limited (~500/day) and shows Gmail as the true sender —
+acceptable for staging, not for the client's production, which should use the
+Resend path below.
 
 ## Production (~15 minutes)
 
