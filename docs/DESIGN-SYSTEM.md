@@ -129,7 +129,7 @@ type; `variant="article"` for Insights post bodies = plain lists).
 hero (owl + ring, one primary CTA) → `what-we-support` (check grid + cta
 panel) → `choose-your-path` (2 accent-barred pathway cards, stretched links)
 → `how-it-works` (cream; numbered 3×2 grid) → `results` (teal stats strip,
-check grid, quote cards, review cta panel) → `for-parents` (cream) →
+check grid, testimonial quote rail, review cta rule-row) → `for-parents` (cream) →
 `why-mugup` → `meet-our-team` (portrait cards; horizontal scroll-snap < sm)
 → `insights-preview` (cream) → `final-cta` (ink closing band).
 
@@ -141,6 +141,11 @@ check grid, quote cards, review cta panel) → `for-parents` (cream) →
   out of scope for this rule and keeps its own utility styling.)
 - DO layout with `Container`/`Section`; DON'T hand-write `max-w-4xl px-4`.
 - DO CTAs with `Button`; DON'T style `<a>`/`<Link>` as buttons.
+- Social proof is an editorial **quote rail** (hairline rows, attribution
+  left, quote right at `text-quote`), NOT a grid of equal cards with quote
+  glyphs and tag pills — that reads as generated. Inline `cta` blocks are a
+  **rule row** (hairline top, text left, outlined button right), not a filled
+  box; filled pills belong to the hero, closing band and forms only.
 - DO headings with `SectionHeading` / `text-h2` etc.; DON'T combine size +
   weight + tracking utilities ad hoc.
 - DO keep `<img>` with `width/height` or an `aspect-*` class; hero image is
