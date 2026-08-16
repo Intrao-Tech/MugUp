@@ -5,11 +5,10 @@ import { cx } from "@/lib/cx";
 import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import { Button } from "@/components/ui/Button";
 import { Card, STRETCHED_LINK } from "@/components/ui/Card";
-import { Chip } from "@/components/ui/Chip";
 import { Container } from "@/components/ui/Container";
 import { BrandRing } from "@/components/ui/decor";
 import { Eyebrow, SectionHeading } from "@/components/ui/Heading";
-import { IconArrowRight, IconCheck, IconChevronDown, IconQuote } from "@/components/ui/icons";
+import { IconArrowRight, IconCheck, IconChevronDown } from "@/components/ui/icons";
 import { Section, type SectionTone } from "@/components/ui/Section";
 
 /* -------------------------------------------------------------------------
@@ -243,23 +242,22 @@ export function BlockView({
       );
     case "testimonials":
       return (
-        <div
-          className={cx(
-            "grid gap-6",
-            block.items.length % 3 === 0 ? "md:grid-cols-2 xl:grid-cols-3" : "md:grid-cols-2",
-          )}
-        >
+        <div className="divide-y divide-line border-t border-line">
           {block.items.map((t) => (
-            <Card as="figure" key={t.author + (t.tag ?? "")} className="h-full">
-              <IconQuote size={28} className="text-brand" />
-              {t.tag && (
-                <p className="mt-4">
-                  <Chip>{t.tag}</Chip>
-                </p>
-              )}
-              <blockquote className="mt-4 grow text-base">“{t.quote}”</blockquote>
-              <figcaption className="mt-5 text-sm font-bold text-ink">— {t.author}</figcaption>
-            </Card>
+            <figure
+              key={t.author + (t.tag ?? "")}
+              className="grid gap-4 py-8 md:grid-cols-12 md:gap-8 md:py-10"
+            >
+              <figcaption className="order-2 md:order-1 md:col-span-4 lg:col-span-3">
+                <span className="block text-sm font-bold text-ink">{t.author}</span>
+                {t.tag && (
+                  <span className="mt-1 block text-eyebrow uppercase text-muted">{t.tag}</span>
+                )}
+              </figcaption>
+              <blockquote className="order-1 text-quote text-ink md:order-2 md:col-span-8 lg:col-span-9 lg:max-w-[52ch] [hanging-punctuation:first]">
+                “{t.quote}”
+              </blockquote>
+            </figure>
           ))}
         </div>
       );
@@ -332,16 +330,16 @@ export function BlockView({
       );
     case "cta":
       return (
-        <aside className="rounded-card border border-line bg-surface-alt p-6 sm:p-8 md:flex md:items-center md:justify-between md:gap-10">
+        <aside className="border-t border-line pt-8 md:flex md:items-end md:justify-between md:gap-12">
           <div className="max-w-2xl">
             <h3 className="text-h3 text-ink">{block.title}</h3>
-            {block.body && <p className="mt-2 text-base">{block.body}</p>}
-            {block.note && <p className="mt-3 text-sm text-muted">{block.note}</p>}
+            {block.body && <p className="mt-2">{block.body}</p>}
+            {block.note && <p className="mt-2 text-sm text-muted">{block.note}</p>}
           </div>
           <p className="mt-6 shrink-0 md:mt-0">
-            <Button href={localeHref(locale, block.cta.href)} size="lg">
+            <Button href={localeHref(locale, block.cta.href)} variant="secondary">
               {block.cta.label}
-              <IconArrowRight />
+              <IconArrowRight size={18} />
             </Button>
           </p>
         </aside>

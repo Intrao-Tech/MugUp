@@ -63,6 +63,10 @@
   --text-eyebrow--line-height: 1.2;
   --text-eyebrow--letter-spacing: 0.06em;
   --text-eyebrow--font-weight: 700;
+  --text-quote: clamp(1.1875rem, 1.05rem + 0.6vw, 1.5rem);
+  --text-quote--line-height: 1.5;
+  --text-quote--letter-spacing: -0.005em;
+  --text-quote--font-weight: 400;
   --text-stat: clamp(2.5rem, 2rem + 2vw, 3.5rem);
   --text-stat--line-height: 1;
   --text-stat--letter-spacing: -0.02em;

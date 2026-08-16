@@ -85,6 +85,7 @@ One class = size + line-height + tracking + weight:
 | `text-base` | body (17px/1.65 — set on `<body>`, rarely needed explicitly) |
 | `text-sm` | captions, nav, chips, notes |
 | `text-eyebrow` + `uppercase` | kickers, tiny labels (`Eyebrow` component) — `tracking` is 0.06em, do NOT add `tracking-widest` (Cyrillic) |
+| `text-quote` | testimonial pull-quotes (light weight, editorial scale) |
 | `text-stat` | big numbers in `stats` |
 
 Never write `text-2xl font-bold tracking-tight` combinations; if a size is
@@ -106,7 +107,7 @@ stretched link inside an interactive `Card` (the card shows focus instead).
 | `Container` | `size="prose" \| "content" \| "wide"` (max-w 3xl / 6xl / 7xl) + horizontal padding. `as` for the tag. Every page block sits in one — never hand-write `mx-auto max-w-* px-*`. |
 | `Section` | `id`, `tone="default" \| "cream" \| "ink" \| "teal"`, `pad="sm" \| "md" \| "lg"`, `size`. Sets `data-tone` (see tokens). Never place two `ink`/`teal` bands next to each other. |
 | `SectionHeading` | `eyebrow, title, intro, as="h1"\|"h2"\|"h3", align`. All section titles go through it. `Eyebrow` alone for kickers. |
-| `Button` | `variant="primary" \| "secondary" \| "ghost"`, `size="sm" \| "md" \| "lg"`; renders `<Link>` when `href` given, else `<button type>`. **Every CTA on the site is a `Button`.** Tone changes its colours automatically. |
+| `Button` | `variant="primary"` (filled pill — hero, closing band, forms) \| `"secondary"` (outlined pill — inline nudges) \| `"ghost"` (underlined arrow link — tertiary), `size="sm" \| "md" \| "lg"`; renders `<Link>` when `href` given, else `<button type>`. **Every CTA on the site is a `Button`.** Tone changes its colours automatically. |
 | `Card` | flat card; `interactive` = hover lift + stretched-link host (put ONE `<Link className={STRETCHED_LINK}>` inside — no nested anchors). `padded={false}` for media-top cards. |
 | `Chip` | pill label (tags, dates, categories). Not clickable. |
 | `icons.tsx` | `IconCheck, IconArrowRight, IconChevronDown, IconMenu, IconClose, IconQuote` — the complete set; inline SVG lives nowhere else except `decor.tsx` and the placeholder cross in `ImagePlaceholder`. |

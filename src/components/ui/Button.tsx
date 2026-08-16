@@ -18,7 +18,8 @@ const BASE =
 const VARIANT: Record<ButtonVariant, string> = {
   primary: "bg-primary text-on-primary hover:bg-primary-hover shadow-card hover:shadow-lift",
   secondary: "border-2 border-ink text-ink hover:bg-ink hover:text-surface",
-  ghost: "text-primary hover:text-primary-hover hover:bg-surface-alt",
+  ghost:
+    "rounded-none px-0 text-primary underline decoration-2 decoration-brand/40 underline-offset-[6px] hover:text-primary-hover hover:decoration-brand",
 };
 
 const SIZE: Record<ButtonSize, string> = {
