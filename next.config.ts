@@ -13,6 +13,13 @@ const nextConfig: NextConfig = {
     return [
       // Root serves nothing itself: EN is the primary market locale.
       { source: "/", destination: "/en", permanent: true },
+      // International qualifications moved under Global Integration (Aug 2026).
+      {
+        source:
+          "/:locale(en|ua)/pathways/british-education/:slug(ielts-preparation|cambridge-english-qualifications|selt-preparation)",
+        destination: "/:locale/pathways/global-integration/qualifications/:slug",
+        permanent: true,
+      },
     ];
   },
 };

@@ -3,7 +3,7 @@ import type { ProgrammePage } from "@/content/types";
 // Українська версія сторінки "IELTS Preparation" (джерело: "British Education Pathways.docx", Page 8).
 export const page: ProgrammePage = {
   slug: "ielts-preparation",
-  group: "english-qualifications",
+  group: "international-qualifications",
   cardTitle: "Підготовка до IELTS",
   cardBlurb:
     "Підготовка до модулів Academic, General Training та UKVI, щоб упевнено досягти цільового балу.",

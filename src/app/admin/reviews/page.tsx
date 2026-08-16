@@ -1,8 +1,14 @@
-import type { ReviewRow, ReviewStatus } from "@/lib/db-types";
+import {
+  REVIEW_AUDIENCE_LABELS,
+  REVIEW_AUDIENCES,
+  type ReviewRow,
+  type ReviewStatus,
+} from "@/lib/db-types";
 import { requireProfile } from "@/lib/auth-guard";
 import { getData } from "@/lib/data";
-import { addReview, setReviewStatus } from "../actions";
-import { Notice } from "../ui";
+import { PROGRAMME_SUGGESTIONS } from "@/lib/programmes";
+import { addReview, deleteReview, setReviewStatus, updateReviewMeta } from "../actions";
+import { buildQuery, FilterChip, Notice } from "../ui";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +24,8 @@ const SOURCE_LABEL: Record<ReviewRow["source"], string> = {
   other: "Other",
 };
 
+// The card reads as a record; changing anything is behind explicit controls
+// (status buttons, "Edit details", "Delete") so nothing looks half-editable.
 function ReviewCard({ review }: { review: ReviewRow }) {
   return (
     <article className="border border-neutral-300 bg-white p-4">
@@ -25,13 +33,24 @@ function ReviewCard({ review }: { review: ReviewRow }) {
         {STATUS_LABEL[review.status]} · {SOURCE_LABEL[review.source]} ·{" "}
         {new Date(review.created_at).toLocaleDateString("en-GB")}
         {review.rating && <> · {"★".repeat(review.rating)}</>}
+        {review.featured && (
+          <span className="ml-2 border border-neutral-900 px-1 text-neutral-900">FEATURED</span>
+        )}
       </p>
+      {(review.programme || review.audience) && (
+        <p className="mt-1 text-xs text-neutral-500">
+          {[review.programme, review.audience && REVIEW_AUDIENCE_LABELS[review.audience]]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      )}
       <blockquote className="mt-2 text-sm">“{review.quote}”</blockquote>
       <p className="mt-2 text-sm font-medium">
         — {review.author_name}
         {review.author_tag && <span className="text-neutral-500"> · {review.author_tag}</span>}
       </p>
-      <div className="mt-3 flex gap-2 text-sm">
+
+      <div className="mt-3 flex flex-wrap gap-2 text-sm">
         {(["approved", "rejected", "pending"] as ReviewStatus[])
           .filter((s) => s !== review.status)
           .map((s) => (
@@ -44,6 +63,57 @@ function ReviewCard({ review }: { review: ReviewRow }) {
             </form>
           ))}
       </div>
+
+      <details className="mt-3 border-t border-neutral-200 pt-2 text-sm">
+        <summary className="cursor-pointer text-neutral-600 hover:underline">
+          Edit details (programme, audience, featured)
+        </summary>
+        <form
+          action={updateReviewMeta}
+          className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]"
+        >
+          <input type="hidden" name="id" value={review.id} />
+          <input
+            name="programme"
+            list="programme-suggestions"
+            placeholder="Programme (e.g. GCSE)"
+            defaultValue={review.programme}
+            className="border border-neutral-300 px-2 py-1"
+            aria-label="Programme"
+          />
+          <select
+            name="audience"
+            defaultValue={review.audience ?? ""}
+            className="border border-neutral-300 px-2 py-1"
+            aria-label="Audience"
+          >
+            <option value="">Audience…</option>
+            {REVIEW_AUDIENCES.map((a) => (
+              <option key={a} value={a}>
+                {REVIEW_AUDIENCE_LABELS[a]}
+              </option>
+            ))}
+          </select>
+          <label className="flex items-center gap-1 whitespace-nowrap">
+            <input type="checkbox" name="featured" defaultChecked={review.featured} />
+            Featured
+          </label>
+          <button type="submit" className="border border-neutral-900 px-3 py-1">
+            Save
+          </button>
+        </form>
+      </details>
+
+      <details className="mt-2 text-sm">
+        <summary className="cursor-pointer text-red-700 hover:underline">Delete…</summary>
+        <form action={deleteReview} className="mt-2 flex items-center gap-2">
+          <input type="hidden" name="id" value={review.id} />
+          <span className="text-neutral-600">This removes the review permanently.</span>
+          <button type="submit" className="border border-red-700 px-3 py-1 text-red-700">
+            Yes, delete
+          </button>
+        </form>
+      </details>
     </article>
   );
 }
@@ -51,25 +121,36 @@ function ReviewCard({ review }: { review: ReviewRow }) {
 export default async function ReviewsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; saved?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string; deleted?: string; show?: string }>;
 }) {
   await requireProfile("reviews.moderate");
-  const { error, saved } = await searchParams;
+  const params = await searchParams;
+  const { error, saved, deleted } = params;
+  const show = params.show === "approved" || params.show === "rejected" ? params.show : undefined;
 
   const data = await getData();
   const reviews = await data.reviews.listAll();
   const pending = reviews.filter((r) => r.status === "pending");
-  const rest = reviews.filter((r) => r.status !== "pending");
+  const moderated = reviews.filter((r) => r.status !== "pending");
+  const rest = show ? moderated.filter((r) => r.status === show) : moderated;
+  const countOf = (s: ReviewStatus) => moderated.filter((r) => r.status === s).length;
 
   return (
     <div>
       <h1 className="text-2xl font-bold">Reviews</h1>
       <p className="mt-1 text-sm text-neutral-500">
-        Only approved reviews may ever appear on the site.
+        Only approved reviews may ever appear on the site; approved + Featured ones become the
+        homepage testimonials.
       </p>
+      <datalist id="programme-suggestions">
+        {PROGRAMME_SUGGESTIONS.map((p) => (
+          <option key={p} value={p} />
+        ))}
+      </datalist>
       {saved && (
         <Notice tone="success">Saved.</Notice>
       )}
+      {deleted && <Notice tone="success">Review deleted.</Notice>}
       {error && (
         <Notice tone="error">
           {error === "input" ? "Author and quote are required." : "Could not save — try again."}
@@ -118,6 +199,31 @@ export default async function ReviewsPage({
                 ))}
               </select>
             </div>
+            <div>
+              <label htmlFor="add-programme" className="block text-sm font-medium">
+                Programme / area
+              </label>
+              <input
+                id="add-programme"
+                name="programme"
+                list="programme-suggestions"
+                placeholder="e.g. GCSE, IELTS, Spanish"
+                className="mt-1 w-full border border-neutral-400 px-3 py-2"
+              />
+            </div>
+            <div>
+              <label htmlFor="add-audience" className="block text-sm font-medium">
+                Audience
+              </label>
+              <select id="add-audience" name="audience" className="mt-1 w-full border border-neutral-400 px-3 py-2">
+                <option value="">—</option>
+                {REVIEW_AUDIENCES.map((a) => (
+                  <option key={a} value={a}>
+                    {REVIEW_AUDIENCE_LABELS[a]}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div>
             <label htmlFor="author_name" className="block text-sm font-medium">
@@ -159,12 +265,33 @@ export default async function ReviewsPage({
       </section>
 
       <section className="mt-8">
-        <h2 className="text-xl font-semibold">History</h2>
+        <h2 className="text-xl font-semibold">All reviews ({moderated.length})</h2>
+        <p className="mt-1 text-sm text-neutral-500">
+          Every review that has been moderated. Approve/reject changes where it can appear;
+          “Edit details” manages the marketing fields; “Delete” removes it for good.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-1.5 text-sm">
+          <FilterChip
+            label={`All (${moderated.length})`}
+            href={`/admin/reviews${buildQuery(params, { show: undefined })}`}
+            active={!show}
+          />
+          <FilterChip
+            label={`Approved (${countOf("approved")})`}
+            href={`/admin/reviews${buildQuery(params, { show: "approved" })}`}
+            active={show === "approved"}
+          />
+          <FilterChip
+            label={`Rejected (${countOf("rejected")})`}
+            href={`/admin/reviews${buildQuery(params, { show: "rejected" })}`}
+            active={show === "rejected"}
+          />
+        </div>
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
           {rest.map((r) => (
             <ReviewCard key={r.id} review={r} />
           ))}
-          {rest.length === 0 && <p className="text-sm text-neutral-500">No moderated reviews yet.</p>}
+          {rest.length === 0 && <p className="text-sm text-neutral-500">Nothing here yet.</p>}
         </div>
       </section>
     </div>

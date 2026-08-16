@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCommon, getProgramme } from "@/content";
-import { PROGRAMME_SLUGS, type Locale } from "@/content/types";
+import { getCommon, getProgramme, getProgrammes } from "@/content";
+import type { Locale } from "@/content/types";
 import { HeroSection, PageSections } from "@/components/BlockRenderer";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
@@ -11,10 +11,13 @@ import { ORGANIZATION, SITE_NAME, SITE_URL } from "@/lib/site";
 type Props = { params: Promise<{ locale: Locale; slug: string }> };
 
 export function generateStaticParams() {
-  return PROGRAMME_SLUGS.map((slug) => ({ slug }));
+  // International qualifications moved under Global Integration (Aug 2026);
+  // their old URLs 301-redirect in next.config.
+  return getProgrammes("en")
+    .filter((p) => p.group !== "international-qualifications")
+    .map((p) => ({ slug: p.slug }));
 }
 
-export const dynamicParams = false;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
@@ -26,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProgrammePage({ params }: Props) {
   const { locale, slug } = await params;
   const page = getProgramme(locale, slug);
-  if (!page) notFound();
+  if (!page || page.group === "international-qualifications") notFound();
   const dict = getCommon(locale);
 
   const serviceJsonLd = {

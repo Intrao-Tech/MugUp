@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { canAcceptSubmissions, getData } from "@/lib/data";
 import { formRating, formText, honeypotTripped } from "@/lib/form-data";
+import { notifyNewReview } from "@/lib/notify";
 
 /**
  * Public "leave a review" form. Reviews always land as pending — nothing is
@@ -20,11 +21,13 @@ export async function submitReview(formData: FormData): Promise<void> {
   if (!authorName || !quote) redirect(`${backUrl}?error=1`);
 
   const data = await getData();
+  const rating = formRating(formData);
   const { error } = await data.reviews.submitPublic({
     authorName,
     authorTag: formText(formData, "authorTag", 200) ?? "",
     quote,
-    rating: formRating(formData),
+    rating,
   });
+  if (!error) await notifyNewReview({ authorName, quote, rating });
   redirect(`${backUrl}${error ? "?error=1" : "?sent=1"}`);
 }

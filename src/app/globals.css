@@ -2,3 +2,15 @@
 
 /* Skeleton-stage styling only: structure must be readable, the real design
    is applied later by the design developer. Keep custom CSS at zero. */
+
+/* Article columns (PostBody + the admin builder's editing grid): the column
+   count is data-driven (--cols, any 2–6), which Tailwind's static classes
+   cannot express. Stacks to one column on phones. */
+.post-columns {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 640px) {
+  .post-columns {
+    grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+  }
+}

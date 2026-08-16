@@ -1,19 +1,25 @@
 import type { MetadataRoute } from "next";
 import type { Locale } from "@/content/types";
-import { PROGRAMME_SLUGS } from "@/content/types";
+import { LANGUAGE_SLUGS } from "@/content/types";
+import { getProgrammes } from "@/content";
 import { getPublishedSlugSets } from "@/lib/insights";
+import { programmePath } from "@/lib/links";
 import { SITE_URL } from "@/lib/site";
 
 // Every indexable page with hreflang alternates. Articles are listed per
 // locale they are actually published in — alternates only when the
 // translation exists. Noindexed pages (legal stubs, fallback samples) are
-// excluded on purpose.
+// excluded on purpose. Programme URLs follow their group's base path.
 const STATIC_PATHS = [
   "",
   "/about",
+  "/courses",
   "/pathways/british-education",
-  ...PROGRAMME_SLUGS.map((slug) => `/pathways/british-education/${slug}`),
   "/pathways/global-integration",
+  "/pathways/global-integration/qualifications",
+  "/pathways/global-integration/boarding-schools",
+  ...getProgrammes("en").map((p) => programmePath(p.group, p.slug)),
+  ...LANGUAGE_SLUGS.map((slug) => `/pathways/global-integration/${slug}`),
   "/insights",
   "/book-assessment",
   "/contact",

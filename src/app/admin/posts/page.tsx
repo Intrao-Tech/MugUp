@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { POST_STATUS_LABELS, POST_STATUSES, type PostStatus } from "@/lib/db-types";
 import { requireProfile } from "@/lib/auth-guard";
 import { getData } from "@/lib/data";
 import { publicSiteOrigin } from "@/lib/site";
+import { isoToUkDisplay } from "@/lib/uk-time";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { addCategory, deleteCategory } from "../actions";
 import { buildQuery, FilterChip, Notice } from "../ui";
@@ -19,7 +21,9 @@ type Search = { status?: string; lang?: string; saved?: string; deleted?: string
 export default async function PostsPage({ searchParams }: { searchParams: Promise<Search> }) {
   await requireProfile("posts.edit");
   const params = await searchParams;
-  const statusFilter = params.status === "draft" || params.status === "published" ? params.status : undefined;
+  const statusFilter = POST_STATUSES.includes(params.status as PostStatus)
+    ? (params.status as PostStatus)
+    : undefined;
   const langFilter = params.lang === "en" || params.lang === "ua" ? params.lang : undefined;
 
   const data = await getData();
@@ -53,16 +57,14 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
 
       <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
         <FilterChip label={`All (${all.length})`} href={chipHref({ status: undefined })} active={!statusFilter} />
-        <FilterChip
-          label={`Published (${all.filter((p) => p.status === "published").length})`}
-          href={chipHref({ status: "published" })}
-          active={statusFilter === "published"}
-        />
-        <FilterChip
-          label={`Drafts (${all.filter((p) => p.status === "draft").length})`}
-          href={chipHref({ status: "draft" })}
-          active={statusFilter === "draft"}
-        />
+        {POST_STATUSES.map((s) => (
+          <FilterChip
+            key={s}
+            label={`${POST_STATUS_LABELS[s]} (${all.filter((p) => p.status === s).length})`}
+            href={chipHref({ status: s })}
+            active={statusFilter === s}
+          />
+        ))}
         <span className="mx-2 text-neutral-300">|</span>
         <FilterChip label="All languages" href={chipHref({ lang: undefined })} active={!langFilter} />
         <FilterChip label="EN" href={chipHref({ lang: "en" })} active={langFilter === "en"} />
@@ -94,7 +96,14 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
                   </Link>
                 </td>
                 <td className="p-2">{post.category}</td>
-                <td className="p-2">{post.status}</td>
+                <td className="p-2 whitespace-nowrap">
+                  {POST_STATUS_LABELS[post.status]}
+                  {post.status === "scheduled" && post.published_at && (
+                    <span className="block text-xs text-neutral-500">
+                      {isoToUkDisplay(post.published_at)}
+                    </span>
+                  )}
+                </td>
                 <td className="p-2">
                   {post.status === "published" && (
                     <a

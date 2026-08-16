@@ -3,7 +3,7 @@ import type { ProgrammePage } from "@/content/types";
 // Copy source: client doc "British_Education_Pathways.docx", Page 7 (verbatim where provided).
 export const page: ProgrammePage = {
   slug: "cambridge-english-qualifications",
-  group: "english-qualifications",
+  group: "international-qualifications",
   cardTitle: "Cambridge English",
   cardBlurb:
     "Internationally recognised Cambridge English exams from A2 Key to C2 Proficiency — qualifications for education, work and life.",

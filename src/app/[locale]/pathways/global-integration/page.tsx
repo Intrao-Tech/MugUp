@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return pageMetadata(locale, "/pathways/global-integration", getGlobalIntegration(locale).meta);
 }
 
-// Stage 1 scope: hero landing only; full track + programme sub-pages are Stage 2.
+// Stage 2 landing ("Global integration updated v2"); language sub-pages still pending.
 export default async function GlobalIntegrationPage({ params }: Props) {
   const { locale } = await params;
   const page = getGlobalIntegration(locale);
@@ -28,7 +28,6 @@ export default async function GlobalIntegrationPage({ params }: Props) {
         ]}
       />
       <HeroSection hero={page.hero} locale={locale} />
-      <p className="mx-auto max-w-4xl px-4 text-sm text-neutral-500">{dict.ui.stage2Notice}</p>
       <PageSections sections={page.sections} locale={locale} />
     </>
   );

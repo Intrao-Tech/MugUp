@@ -8,6 +8,7 @@ export const common: CommonDict = {
     pathways: "Напрями",
     pathwaysBritish: "Британська освіта",
     pathwaysGlobal: "Глобальна інтеграція",
+    courses: "Курси та програми",
     insights: "Insights",
     bookAssessment: "Записатися на оцінювання",
     contact: "Контакти",
@@ -66,5 +67,6 @@ export const common: CommonDict = {
     stage2Notice: "Повні сторінки програм з'являться на другому етапі.",
     formSent: "Дякуємо — ваше повідомлення надіслано. Ми зв'яжемося з вами найближчим часом.",
     formError: "Сталася помилка, повідомлення не надіслано. Перевірте поля та спробуйте ще раз.",
+    meetFullTeam: "Уся команда — на сторінці «Про нас»",
   },
 };

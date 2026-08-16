@@ -19,13 +19,13 @@ const service = createClient(url, serviceKey, {
 });
 
 const ALL_PERMISSIONS = [
-  "leads.view", "leads.manage", "files.view",
-  "reviews.moderate", "posts.edit", "posts.publish", "users.manage",
+  "leads.view", "leads.manage", "leads.export", "leads.pii",
+  "posts.edit", "posts.publish", "reviews.moderate", "analytics.view", "users.manage",
 ];
 
 const USERS = [
   { email: "admin@mugup.local", name: "Local Admin", role: "admin", permissions: ALL_PERMISSIONS },
-  { email: "manager@mugup.local", name: "Test Manager", role: "manager", permissions: ["leads.view", "leads.manage", "files.view"] },
+  { email: "manager@mugup.local", name: "Test Manager", role: "manager", permissions: ["leads.view", "leads.manage", "leads.export", "leads.pii", "analytics.view"] },
   { email: "editor@mugup.local", name: "Test Editor", role: "editor", permissions: ["posts.edit", "posts.publish", "reviews.moderate"] },
 ];
 const PASSWORD = "admin123";
@@ -47,22 +47,49 @@ for (const user of USERS) {
   console.log(profileError ? `! ${user.email}: ${profileError.message}` : `+ ${user.email} (${user.role})`);
 }
 
+// Notification routing is PER ROLE (notification_role_events); migration
+// 0009 seeds sensible defaults for admin/manager/editor — nothing to do here.
+
+// Dates relative to "now" so the dashboard demo always has data this month.
+const today = new Date().toISOString().slice(0, 10);
 const DEMO_LEADS = [
   {
     form: "booking", locale: "en", full_name: "Demo Parent", email: "parent@example.com",
     phone: "+44 7700 900001", who_for: "Parent — for my child", pathway_interest: "British Education",
     preferred_format: "Online", message: "Demo enquiry: my daughter is in Year 5, we are considering 11+ preparation.",
+    source: "google_search", programme: "11+", status: "assessment_booked",
+    next_action: "Run the assessment call", next_action_date: today,
   },
   {
     form: "booking", locale: "ua", full_name: "Demo Student", email: "student@example.com",
     who_for: "Student", pathway_interest: "English Qualifications", preferred_format: "No preference",
     message: "Демо-заявка: готуюся до IELTS, потрібен бал 7.0 для університету.",
+    source: "instagram", programme: "IELTS", status: "contacted",
+    next_action: "Follow up about assessment slot", next_action_date: today,
   },
   {
-    form: "contact", locale: "en", full_name: "Demo Partner", email: "partner@example.com",
+    form: "partnership", locale: "en", full_name: "Demo Partner", email: "partner@example.com",
     subject: "Partnership", message: "Demo message: local college interested in collaboration.",
+    source: "referral", status: "new",
   },
-];
+  {
+    form: "booking", locale: "en", full_name: "Demo Enrolled", email: "enrolled@example.com",
+    who_for: "Adult learner", pathway_interest: "Global Integration", preferred_format: "In person (Bedford)",
+    source: "facebook_groups", programme: "General English", status: "enrolled",
+  },
+  {
+    form: "booking", locale: "en", full_name: "Demo Lost", email: "lost@example.com",
+    who_for: "Student", pathway_interest: "English Qualifications", preferred_format: "Online",
+    source: "tiktok", programme: "GCSE", status: "lost",
+    lost_reason: "timing", lost_reason_note: "Family travels until autumn.",
+  },
+].map((lead) => ({
+  // PostgREST bulk inserts need identical keys on every row (missing keys
+  // become NULL, not the column default) — normalise here.
+  programme: "", next_action: "", next_action_date: null,
+  lost_reason: null, lost_reason_note: "",
+  ...lead,
+}));
 const { error: leadsError } = await service.from("leads").insert(DEMO_LEADS);
 console.log(leadsError ? `! leads: ${leadsError.message}` : `+ ${DEMO_LEADS.length} demo leads`);
 
@@ -73,6 +100,8 @@ const DEMO_REVIEWS = [
     quote: "Demo review awaiting moderation — approve or reject me in the admin panel.",
     source: "website",
     rating: 5,
+    programme: "GCSE",
+    audience: "parent",
   },
   {
     author_name: "Demo Google User",
@@ -80,8 +109,22 @@ const DEMO_REVIEWS = [
     quote: "Demo imported review — this is how a review copied from Google looks.",
     source: "google",
     rating: 5,
+    programme: "IELTS",
+    audience: "student",
   },
-];
+  {
+    // Approved + featured: this one feeds the homepage testimonials pool.
+    author_name: "Demo Featured Parent",
+    author_tag: "Parent of 11+ Student",
+    quote: "Demo featured review — approved and marked as featured, so marketing shows it on the homepage.",
+    source: "google",
+    rating: 5,
+    programme: "11+",
+    audience: "parent",
+    status: "approved",
+    featured: true,
+  },
+].map((review) => ({ status: "pending", featured: false, ...review }));
 const { error: reviewError } = await service.from("reviews").insert(DEMO_REVIEWS);
 console.log(reviewError ? `! reviews: ${reviewError.message}` : `+ ${DEMO_REVIEWS.length} pending reviews`);
 
@@ -90,6 +133,8 @@ const ARTICLES = [
   {
     slug: "uk-school-system-parents-guide", locale: "en", category: "uk-education",
     status: "published", published_at: now,
+    author: "Demo Author, Education Lead",
+    cta_label: "Explore British Education", cta_url: "/en/pathways/british-education",
     title: "Understanding the UK school system: a parent's guide",
     description: "Key stages, school years and the exams that matter — a clear map of the British school journey for families new to the system.",
     body_md: [
@@ -106,6 +151,8 @@ const ARTICLES = [
   {
     slug: "uk-school-system-parents-guide", locale: "ua", category: "uk-education",
     status: "published", published_at: now,
+    author: "Demo Author, Education Lead",
+    cta_label: "Дізнатися про британську освіту", cta_url: "/ua/pathways/british-education",
     title: "Британська шкільна система: путівник для батьків",
     description: "Key stages, шкільні роки та іспити, що справді важать, — зрозуміла мапа британської школи для родин, які щойно приїхали.",
     body_md: [
@@ -194,6 +241,57 @@ const ARTICLES = [
     description: "Draft: spaced repetition, past papers and realistic weekly targets — a revision structure students stick to.",
     body_md: "## Draft\n\nEdit this draft in the admin panel and publish it to see the full flow: draft → publish → live on the site within seconds.",
   },
+  {
+    // Builder v2 demo: layout blocks (body_blocks) drive the rendering —
+    // wide/full widths, columns, buttons, captions. body_md is the flat mirror.
+    slug: "layout-showcase-what-the-builder-can-do", locale: "en", category: "integration-uk",
+    status: "published", published_at: now,
+    author: "Demo Author, Education Lead",
+    title: "Layout showcase: what the post builder can do",
+    description: "A demo article using the layout builder: wide and full-width blocks, side-by-side columns, buttons, captions and dividers.",
+    body_blocks: [
+      { kind: "p", text: "This article is built with the layout constructor: every block chooses its own width and alignment, and content can sit side by side in columns. Edit it in the admin panel to see how each piece is assembled." },
+      { kind: "h2", text: "A wide, centered heading", width: "wide", align: "center" },
+      { kind: "p", text: "The heading above uses the wide width; this paragraph is the standard reading column. Mixing widths gives articles rhythm without any custom code.", },
+      { kind: "columns", width: "wide", columns: [
+        [
+          { kind: "h3", text: "Left column" },
+          { kind: "p", text: "Columns hold any simple blocks: text, headings, lists, quotes, images and buttons. On phones they stack vertically." },
+          { kind: "ul", items: ["Two or three columns", "Per-block alignment", "Stacks on mobile"] },
+        ],
+        [
+          { kind: "quote", text: "Put a testimonial next to the argument it supports — the reader sees both at once." },
+          { kind: "button", label: "Book a free assessment", href: "/en/book-assessment", align: "center" },
+        ],
+      ] },
+      { kind: "divider", width: "wide" },
+      { kind: "p", text: "**Full-width blocks** run edge to edge — useful for panoramic images or a visual break between chapters.", align: "center" },
+      { kind: "spacer", size: "m" },
+      { kind: "p", text: "And when the article is done, the end-of-article CTA hands the reader to a programme page as usual." },
+    ],
+    body_md: [
+      "This article is built with the layout constructor: every block chooses its own width and alignment, and content can sit side by side in columns. Edit it in the admin panel to see how each piece is assembled.",
+      "## A wide, centered heading",
+      "The heading above uses the wide width; this paragraph is the standard reading column. Mixing widths gives articles rhythm without any custom code.",
+      "### Left column",
+      "Columns hold any simple blocks: text, headings, lists, quotes, images and buttons. On phones they stack vertically.",
+      "- Two or three columns\n- Per-block alignment\n- Stacks on mobile",
+      "> Put a testimonial next to the argument it supports — the reader sees both at once.",
+      "[Book a free assessment](/en/book-assessment)",
+      "**Full-width blocks** run edge to edge — useful for panoramic images or a visual break between chapters.",
+      "And when the article is done, the end-of-article CTA hands the reader to a programme page as usual.",
+    ].join("\n\n"),
+  },
+  {
+    // Scheduled demo: goes live by itself once the time passes (ISR).
+    slug: "scheduled-post-demo", locale: "en", category: "boarding-schools",
+    status: "scheduled",
+    published_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+    author: "Demo Author, Education Lead",
+    title: "Choosing a boarding school: a scheduled demo post",
+    description: "Demo of scheduled publishing — this article is queued and appears on the site automatically at its publication time.",
+    body_md: "## Scheduled\n\nThis post was seeded with a publication time two days in the future. Change the schedule (or publish now) in the admin panel.",
+  },
 ];
 
 let seeded = 0;
@@ -204,6 +302,6 @@ for (const article of ARTICLES) {
   if (error) console.log(`! post ${article.slug}/${article.locale}: ${error.message}`);
   else seeded += 1;
 }
-console.log(`+ ${seeded} posts (6 published EN/UA + 1 draft)`);
+console.log(`+ ${seeded} posts (6 published EN/UA + 1 layout demo + 1 draft + 1 scheduled)`);
 
 console.log("\nDone. Sign in at /admin with e.g. admin@mugup.local / " + PASSWORD);

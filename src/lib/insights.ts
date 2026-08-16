@@ -2,6 +2,7 @@ import type { Block, InsightPost, Locale } from "@/content/types";
 import type { PostRow } from "@/lib/db-types";
 import { getInsightsIndex, getPosts as getStaticPosts } from "@/content";
 import { getData, isBackendConfigured } from "@/lib/data";
+import { sanitizePostBlocks, type PostBlock } from "@/lib/post-blocks";
 
 // Public Insights source of truth: the database (admin-managed). The static
 // sample posts only appear when no backend is configured (bare checkout),
@@ -21,6 +22,16 @@ export interface PublicPost {
   blocks: Block[] | null;
   /** ...database posts carry Markdown. */
   bodyMd: string | null;
+  /** Layout-aware body (builder v2) — preferred over bodyMd when present. */
+  bodyBlocks: PostBlock[] | null;
+  /** Byline ("" = publish as the studio, no personal byline). */
+  author: string;
+  /** Featured image; alt is always set whenever the URL is. */
+  heroImageUrl: string | null;
+  heroImageAlt: string;
+  /** End-of-article call to action ("" = no CTA block). */
+  ctaLabel: string;
+  ctaUrl: string;
 }
 
 export interface PublicCategory {
@@ -61,6 +72,13 @@ function fromRow(row: PostRow): PublicPost {
     sample: false,
     blocks: null,
     bodyMd: row.body_md,
+    // jsonb is untrusted at the type level — invalid data degrades to Markdown.
+    bodyBlocks: row.body_blocks ? sanitizePostBlocks(row.body_blocks) : null,
+    author: row.author,
+    heroImageUrl: row.hero_image_url,
+    heroImageAlt: row.hero_image_alt,
+    ctaLabel: row.cta_label,
+    ctaUrl: row.cta_url,
   };
 }
 
@@ -74,6 +92,12 @@ function fromStatic(post: InsightPost): PublicPost {
     sample: true,
     blocks: post.body,
     bodyMd: null,
+    bodyBlocks: null,
+    author: "",
+    heroImageUrl: null,
+    heroImageAlt: "",
+    ctaLabel: "",
+    ctaUrl: "",
   };
 }
 

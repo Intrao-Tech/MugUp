@@ -115,12 +115,11 @@ working previews, use a Vercel *Preview*-scoped env set that omits
 4. First administrator: Supabase → Authentication → **Add user** (tick *Auto
    confirm user*), then edit the email in `supabase/seed_admin.sql` and run it
    against the project to grant the permission flags.
-5. Configure SMTP in Supabase (Authentication → Emails) so team invites
-   actually send.
-6. Lead notification emails (optional): create a Resend API key, verify the
-   sender domain, then add `RESEND_API_KEY`, `LEADS_NOTIFY_EMAIL`,
-   `LEADS_NOTIFY_FROM`. Without them submissions still save — only the email
-   step is skipped.
+5. Email (invites + notifications): follow `docs/EMAIL-SETUP.md` — Resend
+   API key + verified domain for enquiry/review notifications (recipients are
+   then configured on the admin **Notifications** page), and Supabase custom
+   SMTP + the `/admin/welcome` redirect URL for team invites. Without the
+   key, submissions still save — only the email step is skipped.
 7. Redeploy and verify: forms accept submissions, `/admin` on the admin host
    reaches the login page, Insights posts published from admin appear on the
    public site (ISR + `revalidatePath`).

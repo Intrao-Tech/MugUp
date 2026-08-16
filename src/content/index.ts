@@ -7,6 +7,8 @@ import type {
   FormPage,
   InsightPost,
   InsightsIndexPage,
+  LanguagePage,
+  LanguageSlug,
   Locale,
   Page,
   ProgrammePage,
@@ -31,6 +33,12 @@ import { page as enBritishHub } from "./en/pathways/british-education";
 import { page as uaBritishHub } from "./ua/pathways/british-education";
 import { page as enGlobal } from "./en/pathways/global-integration";
 import { page as uaGlobal } from "./ua/pathways/global-integration";
+import { page as enIntQuals } from "./en/pathways/international-qualifications";
+import { page as uaIntQuals } from "./ua/pathways/international-qualifications";
+import { page as enBoarding } from "./en/pathways/boarding-schools";
+import { page as uaBoarding } from "./ua/pathways/boarding-schools";
+import { pages as enLanguages } from "./en/pathways/global-integration-languages";
+import { pages as uaLanguages } from "./ua/pathways/global-integration-languages";
 
 import { page as enSats } from "./en/pathways/programmes/sats-preparation";
 import { page as enElevenPlus } from "./en/pathways/programmes/11-plus-preparation";
@@ -82,8 +90,21 @@ export const getBritishHub = (locale: Locale): Page =>
   locale === "ua" ? uaBritishHub : enBritishHub;
 export const getGlobalIntegration = (locale: Locale): Page =>
   locale === "ua" ? uaGlobal : enGlobal;
+export const getInternationalQualsHub = (locale: Locale): Page =>
+  locale === "ua" ? uaIntQuals : enIntQuals;
+export const getBoardingSchools = (locale: Locale): Page =>
+  locale === "ua" ? uaBoarding : enBoarding;
 
 export const getProgrammes = (locale: Locale): ProgrammePage[] => PROGRAMMES[locale];
+
+const LANGUAGES: Record<Locale, LanguagePage[]> = { en: enLanguages, ua: uaLanguages };
+
+export const getLanguagePages = (locale: Locale): LanguagePage[] => LANGUAGES[locale];
+
+export const getLanguagePage = (
+  locale: Locale,
+  slug: string,
+): LanguagePage | undefined => LANGUAGES[locale].find((p) => p.slug === (slug as LanguageSlug));
 
 export const getProgramme = (
   locale: Locale,

@@ -64,11 +64,14 @@ export type Block =
   | { type: "faq"; items: { question: string; answer: string }[] }
   | { type: "team"; members: TeamMember[] }
   | { type: "image"; alt: string; src?: string }
-  | { type: "cta"; title: string; body?: string; note?: string; cta: Cta };
+  | { type: "cta"; title: string; body?: string; note?: string; cta: Cta }
+  | { type: "buttons"; ctas: Cta[] };
 
 export interface Section {
   /** Stable anchor id, kebab-case, same in both locales. */
   id: string;
+  /** Small uppercase kicker above the H2 (e.g. "How It Works"). */
+  eyebrow?: string;
   /** Rendered as H2. */
   title?: string;
   intro?: string;
@@ -83,7 +86,11 @@ export interface Page {
 
 /* ---------- Programmes (Pathways sub-pages) ---------- */
 
-export type ProgrammeGroup = "education-pathways" | "english-qualifications";
+export type ProgrammeGroup =
+  | "education-pathways"
+  | "english-qualifications"
+  // Per the final client doc (Aug 2026) these live under Global Integration.
+  | "international-qualifications";
 
 export const PROGRAMME_SLUGS = [
   "sats-preparation",
@@ -108,6 +115,25 @@ export interface ProgrammePage extends Page {
   cardTitle: string;
   cardBlurb: string;
   atAGlance: { label: string; value: string }[];
+}
+
+/* ---------- Global Integration language sub-pages ---------- */
+
+export const LANGUAGE_SLUGS = [
+  "spanish",
+  "french",
+  "german",
+  "italian",
+  "portuguese",
+  "ukrainian",
+] as const;
+
+export type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
+
+export interface LanguagePage extends Page {
+  slug: LanguageSlug;
+  /** Short name for hub cards / breadcrumbs, e.g. "Spain · Spanish". */
+  cardTitle: string;
 }
 
 /* ---------- Forms (structure only for now; wired to Supabase later) ---------- */
@@ -175,6 +201,7 @@ export interface NavDict {
   pathways: string;
   pathwaysBritish: string;
   pathwaysGlobal: string;
+  courses: string;
   insights: string;
   bookAssessment: string;
   contact: string;
@@ -204,6 +231,7 @@ export interface UiDict {
   stage2Notice: string;
   formSent: string;
   formError: string;
+  meetFullTeam: string;
 }
 
 export interface CommonDict {

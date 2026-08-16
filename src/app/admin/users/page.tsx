@@ -1,30 +1,57 @@
-﻿import type { ProfileRow } from "@/lib/db-types";
-import {
-  PERMISSION_LABELS,
-  PERMISSIONS,
-  ROLE_DESCRIPTIONS,
-  ROLE_PRESETS,
-  type Role,
-} from "@/lib/permissions";
+import type { NotificationEvent, ProfileRow, RoleRow } from "@/lib/db-types";
+import { PERMISSION_LABELS, PERMISSIONS } from "@/lib/permissions";
 import { requireProfile } from "@/lib/auth-guard";
 import { getData } from "@/lib/data";
-import { createTeamUser, inviteTeamUser, issueTeamPassword, updateTeamUser } from "../actions";
+import { isEmailConfigured } from "@/lib/email";
+import {
+  addRole,
+  deleteTeamUser,
+  inviteTeamUser,
+  sendPasswordResetEmail,
+  updateTeamUser,
+} from "../actions";
 import { Notice } from "../ui";
+import { RoleEditor } from "./RoleEditor";
+import { RolePermissionsFields } from "./RolePermissionsFields";
 
 export const dynamic = "force-dynamic";
 
-const ROLES = Object.keys(ROLE_PRESETS) as Role[];
-
 const ERRORS: Record<string, string> = {
-  input: "Check the fields: valid email, name, password of 6+ characters.",
-  create: "Could not create the account — the email may already be in use.",
-  invite: "Could not send the invite — the email may already be in use, or email sending is not configured.",
+  input: "Check the fields: a valid email, a name and a role are required.",
+  invite:
+    "Could not send the invite — the email may already be in use, or email sending is not configured.",
   save: "Could not save — try again.",
-  "short-password": "The password must be at least 6 characters.",
-  "self-lockout": "You cannot remove team management from your own account.",
+  "self-lockout": "That change would remove team management from your own account.",
+  "admin-lockout": "The Admin role must keep “Manage users” — otherwise nobody can manage the panel.",
+  "self-delete": "You cannot delete your own account.",
+  "role-input": "Give the role a name.",
+  "role-save": "Could not save the role — the name may already exist.",
+  "role-in-use": "This role is still assigned to a team member — reassign them first.",
 };
 
-function UserCard({ profile, isSelf }: { profile: ProfileRow; isSelf: boolean }) {
+/** Where did the email actually go? With a real transport configured it went
+ *  to the real inbox; otherwise the local stack catches it in Mailpit. */
+const mailpitHint = () =>
+  !isEmailConfigured() && (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").includes("127.0.0.1")
+    ? " (Local test stack without email configured: the email lands in Mailpit, http://localhost:54324.)"
+    : "";
+
+function UserCard({
+  profile,
+  isSelf,
+  roles,
+}: {
+  profile: ProfileRow;
+  isSelf: boolean;
+  roles: RoleRow[];
+}) {
+  const displayName = profile.full_name || profile.email;
+  const roleOptions = roles.map((role) => ({ value: role.slug, label: role.name }));
+  // A role deleted after assignment still shows truthfully in the select.
+  const options = roleOptions.some((o) => o.value === profile.role)
+    ? roleOptions
+    : [...roleOptions, { value: profile.role, label: profile.role }];
+  const presets = Object.fromEntries(roles.map((role) => [role.slug, role.permissions]));
   return (
     <article className="border border-neutral-300 bg-white p-4">
       <h3 className="font-semibold">
@@ -34,59 +61,44 @@ function UserCard({ profile, isSelf }: { profile: ProfileRow; isSelf: boolean })
       <p className="text-sm text-neutral-600">{profile.email}</p>
       <form action={updateTeamUser} className="mt-3 space-y-2 text-sm">
         <input type="hidden" name="id" value={profile.id} />
-        <label className="block">
-          <span className="font-medium">Role preset</span>
-          <select name="role" defaultValue={profile.role} className="mt-1 w-full border border-neutral-300 p-1">
-            {ROLES.map((role) => (
-              <option key={role} value={role}>
-                {ROLE_DESCRIPTIONS[role]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <fieldset>
-          <legend className="font-medium">Permissions</legend>
-          {PERMISSIONS.map((perm) => (
-            <label key={perm} className="mt-1 flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="permissions"
-                value={perm}
-                defaultChecked={profile.permissions.includes(perm)}
-              />
-              {PERMISSION_LABELS[perm]}
-            </label>
-          ))}
-        </fieldset>
+        <RolePermissionsFields
+          roleOptions={options}
+          presets={presets}
+          initialRole={profile.role}
+          initialPermissions={profile.permissions}
+        />
         <button type="submit" className="border border-neutral-900 px-3 py-1">
           Save
         </button>
       </form>
-      <form action={issueTeamPassword} className="mt-3 border-t border-neutral-200 pt-3 text-sm">
+
+      <form action={sendPasswordResetEmail} className="mt-3 border-t border-neutral-200 pt-3 text-sm">
         <input type="hidden" name="id" value={profile.id} />
-        <label htmlFor={`pw-${profile.id}`} className="block font-medium">
-          Issue a new password
-        </label>
-        <p className="text-xs text-neutral-500">
-          Type a new password and pass it to the team member privately; they can change it later
-          on their “My account” page.
+        <button type="submit" className="border border-neutral-400 px-3 py-1 hover:border-neutral-900">
+          Send password reset email
+        </button>
+        <p className="mt-1 text-xs text-neutral-500">
+          Use when {displayName} has forgotten their password: they get an email to regain
+          access and must set a new password of their own at the next sign-in.
         </p>
-        <div className="mt-1 flex gap-2">
-          <input
-            id={`pw-${profile.id}`}
-            name="password"
-            type="text"
-            minLength={6}
-            required
-            placeholder="New password (6+ chars)"
-            autoComplete="off"
-            className="w-full border border-neutral-300 px-2 py-1"
-          />
-          <button type="submit" className="whitespace-nowrap border border-neutral-900 px-3 py-1">
-            Set
-          </button>
-        </div>
       </form>
+
+      {!isSelf && (
+        <details className="mt-2 text-sm">
+          <summary className="cursor-pointer text-red-700 hover:underline">
+            Remove {displayName}…
+          </summary>
+          <form action={deleteTeamUser} className="mt-2 flex flex-wrap items-center gap-2">
+            <input type="hidden" name="id" value={profile.id} />
+            <span className="text-neutral-600">
+              Deletes the account and its sign-in permanently.
+            </span>
+            <button type="submit" className="border border-red-700 px-3 py-1 text-red-700">
+              Yes, remove
+            </button>
+          </form>
+        </details>
+      )}
     </article>
   );
 }
@@ -94,159 +106,154 @@ function UserCard({ profile, isSelf }: { profile: ProfileRow; isSelf: boolean })
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    error?: string;
-    saved?: string;
-    invited?: string;
-    "password-issued"?: string;
-  }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const me = await requireProfile("users.manage");
-  const { error, saved, invited, "password-issued": passwordIssued } = await searchParams;
+  const params = await searchParams;
+  const { error } = params;
 
   const data = await getData();
-  const profiles = await data.team.listProfiles();
+  const [profiles, roles, roleEventRows] = await Promise.all([
+    data.team.listProfiles(),
+    data.team.listRoles(),
+    data.notifications.listRoleEvents(),
+  ]);
+  const roleEvents: Record<string, NotificationEvent[]> = Object.fromEntries(
+    roleEventRows.map((row) => [row.role_slug, row.events]),
+  );
+  const editableRoles = roles.map((role) => ({
+    slug: role.slug,
+    name: role.name,
+    permissions: role.permissions,
+    builtIn: role.built_in,
+    memberCount: profiles.filter((p) => p.role === role.slug).length,
+  }));
+  const inputCls = "mt-1 w-full border border-neutral-400 px-3 py-2";
 
   return (
     <div>
       <h1 className="text-2xl font-bold">Team</h1>
-      <p className="mt-1 text-sm text-neutral-500">
-        A role is a preset; the checkboxes are what actually grants access, so any account can be
-        fine-tuned per module.
-      </p>
-      {saved && (
-        <Notice tone="success">Saved.</Notice>
-      )}
-      {passwordIssued && (
+      {params.saved && <Notice tone="success">Saved.</Notice>}
+      {params.invited && (
         <Notice tone="success">
-          New password set — pass it to the team member privately.
+          Invite sent — the email contains everything they need to sign in, and the panel makes
+          them set their own password on first entry.
+          {mailpitHint()}
         </Notice>
       )}
-      {invited && (
+      {params["reset-sent"] && (
         <Notice tone="success">
-          Invite sent — the team member sets their own password via the emailed link.
+          Password reset email sent.
+          {mailpitHint()}
         </Notice>
       )}
-      {error && (
-        <Notice tone="error">
-          {ERRORS[error] ?? "Something went wrong."}
-        </Notice>
-      )}
+      {params.removed && <Notice tone="success">Account removed.</Notice>}
+      {params["role-saved"] && <Notice tone="success">Role saved.</Notice>}
+      {params["role-deleted"] && <Notice tone="success">Role deleted.</Notice>}
+      {error && <Notice tone="error">{ERRORS[error] ?? "Something went wrong."}</Notice>}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        {profiles.map((profile) => (
-          <UserCard key={profile.id} profile={profile} isSelf={profile.id === me.id} />
-        ))}
-      </div>
-
-      <section className="mt-10">
+      <section className="mt-6">
         <h2 className="text-xl font-semibold">Invite a team member</h2>
-        <p className="mt-1 text-sm text-neutral-500">
-          The easiest way: they get an email with a link and set their own password. No
-          self-registration exists. (Local stack: invite emails land in Mailpit at
-          http://localhost:54324.)
-        </p>
-        <form action={inviteTeamUser} className="mt-3 max-w-lg space-y-3">
+        <form action={inviteTeamUser} className="mt-3 max-w-lg space-y-3 border border-neutral-300 bg-white p-4">
+          <p className="text-sm text-neutral-500">
+            They receive an email with everything needed to sign in and are required to set
+            their own password on first entry — you never have to share or write one down.
+          </p>
           <div>
             <label htmlFor="inv-name" className="block text-sm font-medium">
               Full name *
             </label>
-            <input
-              id="inv-name"
-              name="full_name"
-              required
-              className="mt-1 w-full border border-neutral-400 px-3 py-2"
-            />
+            <input id="inv-name" name="full_name" required className={inputCls} />
           </div>
           <div>
             <label htmlFor="inv-email" className="block text-sm font-medium">
               Email *
             </label>
-            <input
-              id="inv-email"
-              name="email"
-              type="email"
-              required
-              className="mt-1 w-full border border-neutral-400 px-3 py-2"
-            />
+            <input id="inv-email" name="email" type="email" required className={inputCls} />
           </div>
           <div>
             <label htmlFor="inv-role" className="block text-sm font-medium">
-              Role preset *
+              Role *
             </label>
-            <select id="inv-role" name="role" className="mt-1 w-full border border-neutral-400 px-3 py-2">
-              {ROLES.map((role) => (
-                <option key={role} value={role}>
-                  {ROLE_DESCRIPTIONS[role]}
+            <select id="inv-role" name="role" className={inputCls}>
+              {roles.map((role) => (
+                <option key={role.slug} value={role.slug}>
+                  {role.name}
                 </option>
               ))}
             </select>
           </div>
-          <button type="submit" className="border border-neutral-900 px-4 py-2 font-medium">
+          <button type="submit" className="border border-neutral-900 bg-neutral-900 px-4 py-2 font-medium text-white">
             Send invite
           </button>
         </form>
       </section>
 
-      <details className="mt-6 max-w-lg">
-        <summary className="cursor-pointer text-sm font-medium text-neutral-600">
-          Or create an account with a temporary password (no email needed)
-        </summary>
-        <form action={createTeamUser} className="mt-3 space-y-3">
-          <div>
-            <label htmlFor="new-name" className="block text-sm font-medium">
-              Full name *
-            </label>
-            <input
-              id="new-name"
-              name="full_name"
-              required
-              className="mt-1 w-full border border-neutral-400 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label htmlFor="new-email" className="block text-sm font-medium">
-              Email *
-            </label>
-            <input
-              id="new-email"
-              name="email"
-              type="email"
-              required
-              className="mt-1 w-full border border-neutral-400 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label htmlFor="new-password" className="block text-sm font-medium">
-              Temporary password * (6+ characters)
-            </label>
-            <input
-              id="new-password"
-              name="password"
-              type="text"
-              required
-              minLength={6}
-              autoComplete="off"
-              className="mt-1 w-full border border-neutral-400 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label htmlFor="new-role" className="block text-sm font-medium">
-              Role preset *
-            </label>
-            <select id="new-role" name="role" className="mt-1 w-full border border-neutral-400 px-3 py-2">
-              {ROLES.map((role) => (
-                <option key={role} value={role}>
-                  {ROLE_DESCRIPTIONS[role]}
-                </option>
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold">Roles</h2>
+        <p className="mt-1 text-sm text-neutral-500">
+          Pick a role to edit what it can do and which notifications it receives. Saving applies
+          the permission set to every member holding the role; individual accounts can still be
+          fine-tuned below afterwards.
+        </p>
+        <div className="mt-4">
+          <RoleEditor roles={editableRoles} roleEvents={roleEvents} />
+        </div>
+
+        <details className="mt-4 max-w-lg">
+          <summary className="cursor-pointer text-sm font-medium text-neutral-600">
+            + Create a new role
+          </summary>
+          <form action={addRole} className="mt-3 space-y-3 border border-neutral-300 bg-white p-4">
+            <div>
+              <label htmlFor="role-name" className="block text-sm font-medium">
+                Role name *
+              </label>
+              <input
+                id="role-name"
+                name="name"
+                required
+                maxLength={60}
+                placeholder="e.g. Content + Enquiries"
+                className={inputCls}
+              />
+            </div>
+            <fieldset className="text-sm">
+              <legend className="font-medium">Permissions in this role</legend>
+              {PERMISSIONS.map((perm) => (
+                <label key={perm} className="mt-1 flex items-center gap-2">
+                  <input type="checkbox" name="permissions" value={perm} />
+                  {PERMISSION_LABELS[perm]}
+                </label>
               ))}
-            </select>
-          </div>
-          <button type="submit" className="border border-neutral-900 px-4 py-2 font-medium">
-            Create account
-          </button>
-        </form>
-      </details>
+            </fieldset>
+            <p className="text-xs text-neutral-500">
+              Notifications for the new role are configured in the editor above after creation.
+            </p>
+            <button type="submit" className="border border-neutral-900 px-4 py-2 font-medium">
+              Create role
+            </button>
+          </form>
+        </details>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold">Current team</h2>
+        <p className="mt-1 text-sm text-neutral-500">
+          A role is a preset; the checkboxes are what actually grants access, so any account can
+          be fine-tuned per module.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {profiles.map((profile) => (
+            <UserCard
+              key={profile.id}
+              profile={profile}
+              isSelf={profile.id === me.id}
+              roles={roles}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

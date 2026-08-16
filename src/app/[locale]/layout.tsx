@@ -17,8 +17,6 @@ export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
 }
 
-// Unknown locale prefixes (/fr/..., /random) must 404, not soft-render.
-export const dynamicParams = false;
 
 const organizationJsonLd = {
   "@context": "https://schema.org",

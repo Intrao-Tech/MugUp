@@ -3,7 +3,7 @@ import type { ProgrammePage } from "@/content/types";
 // Copy source: client doc "British Education Pathways.docx", Page 8 (verbatim where provided).
 export const page: ProgrammePage = {
   slug: "ielts-preparation",
-  group: "english-qualifications",
+  group: "international-qualifications",
   cardTitle: "IELTS Preparation",
   cardBlurb:
     "Academic, General Training and UKVI preparation to help you achieve your target band score with confidence.",

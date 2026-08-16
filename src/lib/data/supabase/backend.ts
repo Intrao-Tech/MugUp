@@ -1,10 +1,22 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { CategoryRow, LeadRow, PostRow, ProfileRow, ReviewRow } from "@/lib/db-types";
-import type { DataBackend, Result } from "@/lib/data/ports";
+import type {
+  ActivityRow,
+  CategoryRow,
+  LeadRow,
+  NotificationEvent,
+  NotificationRoleEventsRow,
+  NotificationRow,
+  PostRow,
+  ProfileRow,
+  ReviewRow,
+  RoleRow,
+} from "@/lib/db-types";
+import type { DataBackend, FeaturedReview, LeadStatsRow, Result } from "@/lib/data/ports";
 import { createAnonClient, createServiceClient, createUserClient } from "./clients";
 import { LEAD_FILES_BUCKET, POST_IMAGES_BUCKET } from "./config";
 
-const PROFILE_COLUMNS = "id, email, full_name, role, permissions, created_at";
+const PROFILE_COLUMNS =
+  "id, email, full_name, role, permissions, must_change_password, created_at";
 
 function toResult(error: { message: string } | null): Result {
   return error ? { error: error.message } : {};
@@ -51,8 +63,32 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         await (await user()).auth.signOut();
       },
       async updateOwnPassword(newPassword) {
-        const { error } = await (await user()).auth.updateUser({ password: newPassword });
+        const client = await user();
+        const {
+          data: { user: authUser },
+        } = await client.auth.getUser();
+        const { error } = await client.auth.updateUser({ password: newPassword });
+        if (!error && authUser) {
+          // The member now owns their password — lift the first-login gate.
+          await createServiceClient()
+            .from("profiles")
+            .update({ must_change_password: false })
+            .eq("id", authUser.id);
+        }
         return toResult(error);
+      },
+      async verifyOwnPassword(password) {
+        const {
+          data: { user: authUser },
+        } = await (await user()).auth.getUser();
+        if (!authUser?.email) return false;
+        // Probe sign-in on the cookie-less anon client: proves the password
+        // without touching the real session cookies.
+        const { error } = await createAnonClient().auth.signInWithPassword({
+          email: authUser.email,
+          password,
+        });
+        return !error;
       },
     },
 
@@ -79,7 +115,7 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           .eq("id", userId);
         return toResult(error);
       },
-      async createAccount({ email, fullName, password, role, permissions }) {
+      async createInvitedAccount({ email, fullName, role, permissions, password }) {
         const service = createServiceClient();
         const { data, error } = await service.auth.admin.createUser({
           email,
@@ -90,17 +126,13 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         // The on_auth_user_created trigger has already inserted the profile row.
         const { error: profileError } = await service
           .from("profiles")
-          .update({ full_name: fullName, role, permissions })
+          .update({ full_name: fullName, role, permissions, must_change_password: true })
           .eq("id", data.user.id);
-        return toResult(profileError);
+        if (profileError) return { error: profileError.message };
+        return { userId: data.user.id };
       },
-      async setPassword(userId, newPassword) {
-        const service = createServiceClient();
-        const { error } = await service.auth.admin.updateUserById(userId, {
-          password: newPassword,
-        });
-        return toResult(error);
-      },
+      // Fallback (no email transport): Supabase Auth sends its own invite
+      // letter (Mailpit on the local stack).
       async inviteAccount({ email, fullName, role, permissions, redirectOrigin }) {
         const service = createServiceClient();
         const { data, error } = await service.auth.admin.inviteUserByEmail(email, {
@@ -112,6 +144,66 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           .update({ full_name: fullName, role, permissions })
           .eq("id", data.user.id);
         return toResult(profileError);
+      },
+      async setPassword(userId, password, mustChange) {
+        const service = createServiceClient();
+        const { error } = await service.auth.admin.updateUserById(userId, { password });
+        if (error) return { error: error.message };
+        const { error: profileError } = await service
+          .from("profiles")
+          .update({ must_change_password: mustChange })
+          .eq("id", userId);
+        return toResult(profileError);
+      },
+      async deleteAccount(userId) {
+        // profiles(id) references auth.users on delete cascade.
+        const { error } = await createServiceClient().auth.admin.deleteUser(userId);
+        return toResult(error);
+      },
+      // Fallback (no email transport): Supabase Auth emails a recovery link
+      // landing on the welcome set-password page (Mailpit on the local stack).
+      async sendPasswordReset(email, redirectOrigin) {
+        const { error } = await createAnonClient().auth.resetPasswordForEmail(email, {
+          redirectTo: `${redirectOrigin}/admin/welcome`,
+        });
+        return toResult(error);
+      },
+      async listRoles() {
+        // Built-ins first, then customs alphabetically.
+        const { data } = await (await user())
+          .from("roles")
+          .select("*")
+          .order("built_in", { ascending: false })
+          .order("name", { ascending: true });
+        return (data ?? []) as RoleRow[];
+      },
+      async addRole({ slug, name, permissions }) {
+        const { error } = await (await user())
+          .from("roles")
+          .insert({ slug, name, permissions });
+        return toResult(error);
+      },
+      async updateRole(slug, { name, permissions }) {
+        // A built-in row keeps its identity: only permissions may change.
+        const db = await user();
+        const { data } = await db.from("roles").select("built_in").eq("slug", slug).maybeSingle();
+        const patch = (data as { built_in: boolean } | null)?.built_in
+          ? { permissions }
+          : { name, permissions };
+        const { error } = await db.from("roles").update(patch).eq("slug", slug);
+        return toResult(error);
+      },
+      async deleteRole(slug) {
+        const db = await user();
+        const { error } = await db
+          .from("roles")
+          .delete()
+          .eq("slug", slug)
+          .eq("built_in", false);
+        if (error) return { error: error.message };
+        // Its notification routing goes with it.
+        await db.from("notification_role_events").delete().eq("role_slug", slug);
+        return {};
       },
     },
 
@@ -141,8 +233,28 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         return (data as LeadRow | null) ?? null;
       },
       countByStatus: async (status) => countRows(await user(), "leads", "status", status),
-      async updateStatus(id, status) {
-        const { error } = await (await user()).from("leads").update({ status }).eq("id", id);
+      async updateStatus(id, status, lost) {
+        const { error } = await (await user())
+          .from("leads")
+          .update({
+            status,
+            lost_reason: status === "lost" ? (lost?.reason ?? null) : null,
+            lost_reason_note: status === "lost" ? (lost?.note ?? "") : "",
+          })
+          .eq("id", id);
+        return toResult(error);
+      },
+      async updateDetails(id, details) {
+        const { error } = await (await user())
+          .from("leads")
+          .update({
+            programme: details.programme,
+            source: details.source,
+            owner_id: details.ownerId,
+            next_action: details.nextAction,
+            next_action_date: details.nextActionDate,
+          })
+          .eq("id", id);
         return toResult(error);
       },
       async updateNotes(id, notes) {
@@ -151,20 +263,36 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
       },
       async submit(lead) {
         const service = createServiceClient();
-        const { error } = await service.from("leads").insert({
-          form: lead.form,
-          locale: lead.locale,
-          full_name: lead.fullName,
-          email: lead.email,
-          phone: lead.phone,
-          who_for: lead.whoFor,
-          pathway_interest: lead.pathwayInterest,
-          preferred_format: lead.preferredFormat,
-          subject: lead.subject,
-          message: lead.message,
-          file_path: lead.filePath,
-        });
-        return toResult(error);
+        const { data, error } = await service
+          .from("leads")
+          .insert({
+            form: lead.form,
+            locale: lead.locale,
+            full_name: lead.fullName,
+            email: lead.email,
+            phone: lead.phone,
+            who_for: lead.whoFor,
+            pathway_interest: lead.pathwayInterest,
+            preferred_format: lead.preferredFormat,
+            subject: lead.subject,
+            message: lead.message,
+            file_path: lead.filePath,
+            source: lead.source,
+          })
+          .select("id")
+          .single();
+        if (error) return { error: error.message };
+        return { id: (data as { id: string }).id };
+      },
+      // Aggregate-only projection (no PII columns); the service client keeps
+      // the dashboard available to analytics.view holders without leads.view.
+      async statsRows() {
+        const { data } = await createServiceClient()
+          .from("leads")
+          .select("created_at, status, source, pathway_interest, next_action_date")
+          .order("created_at", { ascending: false })
+          .limit(5000);
+        return (data ?? []) as LeadStatsRow[];
       },
     },
 
@@ -177,10 +305,16 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         return (data ?? []) as ReviewRow[];
       },
       countByStatus: async (status) => countRows(await user(), "reviews", "status", status),
-      async add({ authorName, authorTag, quote, source, rating }) {
-        const { error } = await (await user())
-          .from("reviews")
-          .insert({ author_name: authorName, author_tag: authorTag, quote, source, rating });
+      async add({ authorName, authorTag, quote, source, rating, programme, audience }) {
+        const { error } = await (await user()).from("reviews").insert({
+          author_name: authorName,
+          author_tag: authorTag,
+          quote,
+          source,
+          rating,
+          programme,
+          audience,
+        });
         return toResult(error);
       },
       async submitPublic({ authorName, authorTag, quote, rating }) {
@@ -201,6 +335,28 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           .update({ status, moderated_by: moderatorId, moderated_at: new Date().toISOString() })
           .eq("id", id);
         return toResult(error);
+      },
+      async updateMeta(id, { programme, audience, featured }) {
+        const { error } = await (await user())
+          .from("reviews")
+          .update({ programme, audience, featured })
+          .eq("id", id);
+        return toResult(error);
+      },
+      async delete(id) {
+        const { error } = await (await user()).from("reviews").delete().eq("id", id);
+        return toResult(error);
+      },
+      // Public read: cookie-less anon client keeps ISR pages static; RLS
+      // exposes approved rows only.
+      async listFeatured() {
+        const { data } = await createAnonClient()
+          .from("reviews")
+          .select("author_name, author_tag, quote, rating, programme, audience")
+          .eq("status", "approved")
+          .eq("featured", true)
+          .order("created_at", { ascending: false });
+        return (data ?? []) as FeaturedReview[];
       },
     },
 
@@ -239,11 +395,13 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         return toResult(error);
       },
       // Public reads: cookie-less anon client keeps ISR pages static.
+      // "Live" = published + scheduled posts whose time has passed (the RLS
+      // policy mirrors this condition, so anon can actually read them).
       async listPublished(locale) {
         const { data } = await createAnonClient()
           .from("posts")
           .select("*")
-          .eq("status", "published")
+          .or(livePostsFilter())
           .eq("locale", locale)
           .order("published_at", { ascending: false });
         return (data ?? []) as PostRow[];
@@ -252,7 +410,7 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         const { data } = await createAnonClient()
           .from("posts")
           .select("*")
-          .eq("status", "published")
+          .or(livePostsFilter())
           .eq("locale", locale)
           .eq("slug", slug)
           .maybeSingle();
@@ -276,6 +434,119 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           .from("post_categories")
           .delete()
           .eq("slug", slug);
+        return toResult(error);
+      },
+    },
+
+    activity: {
+      // Append-only via the service role: team accounts cannot write (or
+      // tamper with) audit entries directly. Failures are swallowed — the
+      // audit trail must never break the action it documents.
+      async record(entry) {
+        try {
+          await createServiceClient().from("activity_log").insert({
+            actor_id: entry.actorId,
+            actor_email: entry.actorEmail,
+            action: entry.action,
+            entity: entry.entity ?? "",
+            entity_id: entry.entityId ?? "",
+            detail: entry.detail ?? "",
+          });
+        } catch {
+          // ignore — see above
+        }
+      },
+      async list({ limit = 200, from, to } = {}) {
+        let query = (await user())
+          .from("activity_log")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (from) query = query.gte("created_at", from);
+        if (to) query = query.lt("created_at", to);
+        const { data } = await query;
+        return (data ?? []) as ActivityRow[];
+      },
+    },
+
+    notifications: {
+      async feed(events, limit = 100) {
+        if (!events.length) return [];
+        const { data } = await (await user())
+          .from("notifications")
+          .select("*")
+          .in("event", events)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        return (data ?? []) as NotificationRow[];
+      },
+      // Service role: called from public form actions (no user session) and
+      // admin actions alike. Failures are swallowed — a notification must
+      // never break the action it announces. Old rows are pruned in passing.
+      async record(event, title, detail = "", href = "") {
+        try {
+          const service = createServiceClient();
+          await service.from("notifications").insert({ event, title, detail, href });
+          await service
+            .from("notifications")
+            .delete()
+            .lt("created_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
+        } catch {
+          // ignore — see above
+        }
+      },
+      async listRoleEvents() {
+        const { data } = await (await user()).from("notification_role_events").select("*");
+        return (data ?? []) as NotificationRoleEventsRow[];
+      },
+      async eventsForRole(roleSlug) {
+        const { data } = await (await user())
+          .from("notification_role_events")
+          .select("events")
+          .eq("role_slug", roleSlug)
+          .maybeSingle();
+        return ((data as { events: NotificationEvent[] } | null)?.events ?? []);
+      },
+      async setRoleEvents(roleSlug, events) {
+        const { error } = await (await user())
+          .from("notification_role_events")
+          .upsert({ role_slug: roleSlug, events });
+        return toResult(error);
+      },
+      async readIds(profileId, notificationIds) {
+        if (!notificationIds.length) return [];
+        const { data } = await (await user())
+          .from("notification_reads")
+          .select("notification_id")
+          .eq("profile_id", profileId)
+          .in("notification_id", notificationIds);
+        return ((data ?? []) as { notification_id: string }[]).map((r) => r.notification_id);
+      },
+      async markRead(profileId, notificationIds) {
+        if (!notificationIds.length) return {};
+        const { error } = await (await user())
+          .from("notification_reads")
+          .upsert(
+            notificationIds.map((id) => ({ profile_id: profileId, notification_id: id })),
+            { ignoreDuplicates: true },
+          );
+        return toResult(error);
+      },
+    },
+
+    settings: {
+      async get(key) {
+        const { data } = await (await user())
+          .from("admin_settings")
+          .select("value")
+          .eq("key", key)
+          .maybeSingle();
+        return (data as { value: string } | null)?.value ?? null;
+      },
+      async set(key, value) {
+        const { error } = await (await user())
+          .from("admin_settings")
+          .upsert({ key, value });
         return toResult(error);
       },
     },
@@ -307,6 +578,11 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
   };
 }
 
+/** Anon "or" filter matching the public RLS policy for live posts. */
+function livePostsFilter(): string {
+  return `status.eq.published,and(status.eq.scheduled,published_at.lte.${new Date().toISOString()})`;
+}
+
 function toPostColumns(input: {
   slug: string;
   locale: string;
@@ -314,8 +590,14 @@ function toPostColumns(input: {
   title: string;
   description: string;
   bodyMd: string;
+  bodyBlocks: unknown;
   status: string;
   publishedAt?: string | null;
+  author: string;
+  heroImageUrl: string | null;
+  heroImageAlt: string;
+  ctaLabel: string;
+  ctaUrl: string;
 }) {
   return {
     slug: input.slug,
@@ -324,7 +606,13 @@ function toPostColumns(input: {
     title: input.title,
     description: input.description,
     body_md: input.bodyMd,
+    body_blocks: input.bodyBlocks,
     status: input.status,
+    author: input.author,
+    hero_image_url: input.heroImageUrl,
+    hero_image_alt: input.heroImageAlt,
+    cta_label: input.ctaLabel,
+    cta_url: input.ctaUrl,
     // undefined = leave the stored publication date untouched.
     ...(input.publishedAt !== undefined ? { published_at: input.publishedAt } : {}),
   };
