@@ -11,6 +11,15 @@ live in `src/content` and are frozen; one H1; section ids/hrefs unchanged;
 metadata/JSON-LD/forms untouched; images only from `public/images` or
 `ImagePlaceholder`.
 
+## 0. Signature — the study card
+
+"Mug up" means to cram — with flashcards. Every card on the site is a
+**study card**: white paper, a 1px ink rule, small radius, and — when it
+leads somewhere — a solid teal backplate behind it (the hard offset shadow the
+old site's buttons had). Missing images render as ruled notebook paper with a
+stamped label. Chips are small square labels. This is the one thing the site
+should be remembered by; everything else stays quiet.
+
 ## 1. Direction in one paragraph
 
 "Evolved Mug.Up": keep the brand equity of the old site — teal, cream, the
@@ -93,9 +102,12 @@ missing, add a `--text-*` token.
 
 ### Shape, elevation, motion
 
-Radius: `rounded-card` (1rem) for cards/panels/images, `rounded-full` for
-buttons, chips, locale pill, `rounded-lg` for inputs. Shadows: `shadow-card`
-(rest) and `shadow-lift` (hover) — nothing else. Motion: transitions only, no
+Radius: `rounded-card` (6px) for cards/panels/images, `rounded-full` for
+buttons and the locale pill only, `rounded-lg` for inputs, `rounded-sm` for
+chips. Shadows: `shadow-plate` / `shadow-plate-lg` — the solid brand
+backplate on interactive cards (the "study card" signature; it inherits the
+tone's `--brand`) — plus `shadow-card`/`shadow-lift` on the primary button and the mobile menu
+overlay. No blurred card shadows. Motion: transitions only, no
 keyframes; any transform is `motion-safe:`. Focus ring is global
 (`:focus-visible`), 2px, tone-aware — do not remove outlines except on the
 stretched link inside an interactive `Card` (the card shows focus instead).
@@ -108,11 +120,11 @@ stretched link inside an interactive `Card` (the card shows focus instead).
 | `Section` | `id`, `tone="default" \| "cream" \| "ink" \| "teal"`, `pad="sm" \| "md" \| "lg"`, `size`. Sets `data-tone` (see tokens). Never place two `ink`/`teal` bands next to each other. |
 | `SectionHeading` | `eyebrow, title, intro, as="h1"\|"h2"\|"h3", align`. All section titles go through it. `Eyebrow` alone for kickers. |
 | `Button` | `variant="primary"` (filled pill — hero, closing band, forms) \| `"secondary"` (outlined pill — inline nudges) \| `"ghost"` (underlined arrow link — tertiary), `size="sm" \| "md" \| "lg"`; renders `<Link>` when `href` given, else `<button type>`. **Every CTA on the site is a `Button`.** Tone changes its colours automatically. |
-| `Card` | flat card; `interactive` = hover lift + stretched-link host (put ONE `<Link className={STRETCHED_LINK}>` inside — no nested anchors). `padded={false}` for media-top cards. |
-| `Chip` | pill label (tags, dates, categories). Not clickable. |
+| `Card` | **study card**: white paper, 1px ink rule, `rounded-card` (6px). `interactive` = solid brand backplate (`shadow-plate`, a hard offset shadow — no blur) + up-left nudge on hover, and stretched-link host (put ONE `<Link className={STRETCHED_LINK}>` inside — no nested anchors). `padded={false}` for media-top cards; media gets `border-b border-ink`. |
+| `Chip` | small square ink-ruled label in `text-eyebrow` (dates, categories, stamps). Not clickable, never a pill. |
 | `icons.tsx` | `IconCheck, IconArrowRight, IconChevronDown, IconMenu, IconClose, IconQuote` — the complete set; inline SVG lives nowhere else except `decor.tsx` and the placeholder cross in `ImagePlaceholder`. |
-| `decor.tsx` | `BrandRing` — the yellow ring. The only decoration. |
-| `ImagePlaceholder` | `alt`, `aspect` — the grey/teal stand-in for missing client images. |
+| `decor.tsx` | `BrandRing` — the yellow ring. The only decoration besides the ruled paper. |
+| `ImagePlaceholder` | `alt`, `aspect` — ruled notebook paper (`.paper-ruled`) with a stamp label: the flashcard surface, not a grey X. |
 
 Site chrome: `Header.tsx` (sticky, blur, full nav at `xl`, `MobileNav`
 toggle below, `NavLink` marks the active section), `Footer.tsx` (Apple-style

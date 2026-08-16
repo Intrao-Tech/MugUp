@@ -28,7 +28,7 @@ export function FormRenderer({
   const inputCls =
     "mt-1.5 w-full rounded-lg border border-ink-300 bg-surface px-3.5 py-2.5 text-base text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30";
   return (
-    <form action={enabled ? submitLead : undefined} aria-label={form.title} className="mx-auto max-w-2xl space-y-5 rounded-card border border-line bg-surface p-6 shadow-card sm:p-8">
+    <form action={enabled ? submitLead : undefined} aria-label={form.title} className="mx-auto max-w-2xl space-y-5 rounded-card border border-ink bg-surface p-6 sm:p-8">
       <h3 className="text-h3 text-ink">{form.title}</h3>
       {form.intro && <p>{form.intro}</p>}
       <Suspense fallback={null}>

@@ -75,7 +75,7 @@ function CardLink({
   locale: Locale;
 }) {
   return (
-    <li className="rounded-card border border-line bg-surface p-6 shadow-card">
+    <li className="rounded-card border border-ink bg-surface p-6 shadow-plate">
       <h3 className="font-semibold">
         <Link href={localeHref(locale, href)} className="hover:underline">
           {title}

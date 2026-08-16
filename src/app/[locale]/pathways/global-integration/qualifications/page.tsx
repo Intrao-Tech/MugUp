@@ -43,7 +43,7 @@ export default async function InternationalQualificationsPage({ params }: Props)
       <section id="programmes" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {programmes.map((p) => (
-            <li key={p.slug} className="rounded-card border border-line bg-surface p-6 shadow-card">
+            <li key={p.slug} className="rounded-card border border-ink bg-surface p-6 shadow-plate">
               <h2 className="font-semibold">
                 <Link
                   href={localeHref(locale, programmePath(p.group, p.slug))}

@@ -61,7 +61,7 @@ export default async function BritishEducationHub({ params }: Props) {
             {programmes
               .filter((p) => p.group === group)
               .map((p) => (
-                <li key={p.slug} className="rounded-card border border-line bg-surface p-6 shadow-card">
+                <li key={p.slug} className="rounded-card border border-ink bg-surface p-6 shadow-plate">
                   <h3 className="font-semibold">
                     <Link
                       href={localeHref(locale, `/pathways/british-education/${p.slug}`)}

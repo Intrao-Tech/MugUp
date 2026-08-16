@@ -2,7 +2,8 @@ import type { ElementType, ReactNode } from "react";
 import { cx } from "@/lib/cx";
 
 /**
- * Flat card on the current surface. `interactive` adds hover lift and turns
+ * "Study card": white paper, 1px ink rule, small radius. `interactive` adds
+ * the solid brand backplate (hard offset shadow) + nudge on hover and turns
  * the card into a "stretched-link" host: place exactly ONE
  * <Link className={STRETCHED_LINK}> inside and the whole card is clickable
  * (pseudo-element overlay: no nested anchors, one tab stop; the card shows
@@ -24,10 +25,10 @@ export function Card({
   return (
     <Tag
       className={cx(
-        "relative flex flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card",
+        "relative flex flex-col overflow-hidden rounded-card border border-ink bg-surface",
         padded && "p-6",
         interactive &&
-          "transition-[box-shadow,transform,border-color] duration-200 hover:border-brand hover:shadow-lift motion-safe:hover:-translate-y-0.5 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-ring",
+          "shadow-plate transition-[box-shadow,transform] duration-200 motion-safe:hover:-translate-x-0.5 motion-safe:hover:-translate-y-0.5 hover:shadow-plate-lg has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-ring",
         className,
       )}
     >

@@ -120,18 +120,15 @@ function CheckList({ items, columns = true }: { items: string[]; columns?: boole
   );
 }
 
-const CARD_ACCENT = ["bg-brand", "bg-accent", "bg-ink"] as const;
-
-function CardItem({ card, locale, index }: { card: CardData; locale: Locale; index: number }) {
+function CardItem({ card, locale }: { card: CardData; locale: Locale }) {
   const interactive = Boolean(card.href);
   return (
     <Card as="article" interactive={interactive} padded={false} className="h-full">
-      <span aria-hidden="true" className={cx("h-1.5 w-full", CARD_ACCENT[index % CARD_ACCENT.length])} />
       {card.image === "placeholder" && (
-        <ImagePlaceholder alt={card.title} aspect="aspect-video" className="rounded-none border-0" />
+        <ImagePlaceholder alt={card.title} aspect="aspect-video" className="rounded-none border-0 border-b" />
       )}
       {card.image && card.image !== "placeholder" && (
-        <img src={card.image} alt={card.title} loading="lazy" className="aspect-video w-full object-cover" />
+        <img src={card.image} alt={card.title} loading="lazy" className="aspect-video w-full border-b border-ink object-cover" />
       )}
       <div className="flex grow flex-col p-6">
         {card.eyebrow && <Eyebrow className="mb-2">{card.eyebrow}</Eyebrow>}
@@ -202,8 +199,8 @@ export function BlockView({
             block.cards.length === 2 ? "md:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3",
           )}
         >
-          {block.cards.map((card, i) => (
-            <CardItem key={card.title} card={card} locale={locale} index={i} />
+          {block.cards.map((card) => (
+            <CardItem key={card.title} card={card} locale={locale} />
           ))}
         </div>
       );
@@ -291,10 +288,10 @@ export function BlockView({
                     src={m.photo}
                     alt={m.name}
                     loading="lazy"
-                    className="aspect-[4/5] w-full object-cover object-top"
+                    className="aspect-[4/5] w-full border-b border-ink object-cover object-top"
                   />
                 ) : (
-                  <ImagePlaceholder alt={m.name} aspect="aspect-[4/5]" className="rounded-none border-0" />
+                  <ImagePlaceholder alt={m.name} aspect="aspect-[4/5]" className="rounded-none border-0 border-b" />
                 )}
                 <div className="p-5">
                   <h3 className="text-h3 text-ink">{m.name}</h3>

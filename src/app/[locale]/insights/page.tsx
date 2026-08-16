@@ -59,7 +59,7 @@ export default async function InsightsPage({ params }: Props) {
             {catPosts.length > 0 ? (
               <ul className="mt-4 grid gap-4 sm:grid-cols-2">
                 {catPosts.map((post) => (
-                  <li key={post.slug} className="rounded-card border border-line bg-surface p-6 shadow-card">
+                  <li key={post.slug} className="rounded-card border border-ink bg-surface p-6 shadow-plate">
                     <p className="text-eyebrow uppercase text-muted">
                       {new Date(post.date).toLocaleDateString(locale === "ua" ? "uk-UA" : "en-GB")}
                     </p>
