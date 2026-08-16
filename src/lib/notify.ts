@@ -21,11 +21,12 @@ async function recordInAdmin(
   event: NotificationEvent,
   title: string,
   detail = "",
+  href = "",
 ): Promise<void> {
   if (!isBackendConfigured()) return;
   try {
     const data = await getData();
-    await data.notifications.record(event, title, detail);
+    await data.notifications.record(event, title, detail, href);
   } catch {
     // never break the calling action
   }
@@ -52,6 +53,8 @@ export async function notifyNewLead(lead: {
   subject: string | null;
   message: string | null;
   hasFile: boolean;
+  /** Deep-link target for the in-admin notification. */
+  leadId?: string;
 }): Promise<void> {
   const kind = LEAD_FORM_LABELS[lead.form];
   // Feed detail stays PII-light (name only) — the feed is visible to the
@@ -59,7 +62,8 @@ export async function notifyNewLead(lead: {
   await recordInAdmin(
     LEAD_EVENT[lead.form],
     `${kind}: ${lead.fullName}`,
-    `${lead.locale.toUpperCase()} site — open Enquiries to view and take it.`,
+    `${lead.locale.toUpperCase()} site — click to open the enquiry.`,
+    lead.leadId ? `/admin/leads/${lead.leadId}` : "/admin/leads",
   );
 
   const lines = [
@@ -87,6 +91,7 @@ export async function notifyNewReview(review: {
     "review_new",
     `New review from ${review.authorName}${stars}`,
     `“${review.quote.slice(0, 120)}${review.quote.length > 120 ? "…" : ""}” — awaiting moderation.`,
+    "/admin/reviews",
   );
 
   const lines = [
@@ -105,10 +110,13 @@ export async function notifyPostPublished(post: {
   title: string;
   status: "published" | "scheduled";
   actorEmail: string;
+  /** Admin edit page of the post, when known. */
+  href?: string;
 }): Promise<void> {
   await recordInAdmin(
     "post_published",
     post.status === "published" ? `Post published: ${post.title}` : `Post scheduled: ${post.title}`,
     `By ${post.actorEmail}.`,
+    post.href ?? "/admin/posts",
   );
 }

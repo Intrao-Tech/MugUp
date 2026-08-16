@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getData } from "@/lib/data";
@@ -10,6 +11,7 @@ import {
   LEAD_STATUSES,
   LEAD_STATUS_LABELS,
   LOST_REASONS,
+  NOTIFICATION_EVENT_PERMISSION,
   NOTIFICATION_EVENTS,
   REVIEW_AUDIENCES,
   type LeadSource,
@@ -19,6 +21,7 @@ import {
   type ProfileRow,
   type ReviewAudience,
 } from "@/lib/db-types";
+import { isEmailConfigured, sendEmail } from "@/lib/email";
 import { notifyPostPublished } from "@/lib/notify";
 import { isStrongPassword } from "@/lib/password";
 import { parsePostBlocksJson, sanitizePostBlocks, type PostBlock } from "@/lib/post-blocks";
@@ -65,7 +68,9 @@ async function logActivity(
 
 export async function signIn(formData: FormData): Promise<void> {
   const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
+  // Trimmed: temporary passwords are copied out of an email, and a stray
+  // trailing space/newline made perfectly valid credentials "not work".
+  const password = String(formData.get("password") ?? "").trim();
   if (!email || !password) redirect("/admin/login?error=missing");
   const data = await getData();
   const { error } = await data.auth.signInWithPassword(email, password);
@@ -275,41 +280,27 @@ function notificationEventsFromForm(formData: FormData): NotificationEvent[] {
   return NOTIFICATION_EVENTS.filter((event) => chosen.includes(event));
 }
 
-/** A member picks which events THEY see. */
-export async function saveOwnNotificationEvents(formData: FormData): Promise<void> {
+
+/** Clicking a feed entry: mark THAT entry read, then jump to its target. */
+export async function openNotification(formData: FormData): Promise<void> {
   const me = await requireProfile();
+  const id = String(formData.get("id") ?? "");
+  const href = String(formData.get("href") ?? "");
+  if (!UUID_RE.test(id)) redirect("/admin/notifications");
   const data = await getData();
-  const { error } = await data.notifications.setSubscription(
-    me.id,
-    notificationEventsFromForm(formData),
-  );
-  redirect(`/admin/notifications${error ? "?error=save" : "?saved=1"}`);
+  await data.notifications.markRead(me.id, [id]);
+  // Only in-admin targets — href comes from our own feed rows.
+  redirect(href.startsWith("/admin") ? href : "/admin/notifications");
 }
 
-/** A team manager configures what another member sees. */
-export async function saveMemberNotificationEvents(formData: FormData): Promise<void> {
-  const me = await requireProfile("users.manage");
-  const profileId = String(formData.get("profile_id") ?? "");
-  if (!UUID_RE.test(profileId)) redirect("/admin/notifications?error=input");
-  const events = notificationEventsFromForm(formData);
-  const data = await getData();
-  const { error } = await data.notifications.setSubscription(profileId, events);
-  if (!error) {
-    await logActivity(
-      me,
-      "notification.subscription",
-      "user",
-      profileId,
-      events.join(", ") || "(no events)",
-    );
-  }
-  redirect(`/admin/notifications${error ? "?error=save" : "?saved=1"}`);
-}
-
-export async function markNotificationsSeen(): Promise<void> {
+export async function markAllNotificationsRead(formData: FormData): Promise<void> {
   const me = await requireProfile();
+  const ids = formData
+    .getAll("ids")
+    .map(String)
+    .filter((id) => UUID_RE.test(id));
   const data = await getData();
-  await data.notifications.markSeen(me.id);
+  await data.notifications.markRead(me.id, ids);
   redirect("/admin/notifications");
 }
 
@@ -475,7 +466,12 @@ export async function savePost(formData: FormData): Promise<void> {
     if (status !== "draft" || existing?.status !== "draft") revalidatePublicInsights(input.slug);
     await logActivity(profile, `post.${intent}`, "post", id, input.title);
     if (status !== "draft") {
-      await notifyPostPublished({ title: input.title, status, actorEmail: profile.email });
+      await notifyPostPublished({
+        title: input.title,
+        status,
+        actorEmail: profile.email,
+        href: `/admin/posts/${id}`,
+      });
     }
     redirect("/admin/posts?saved=1");
   } else {
@@ -551,16 +547,21 @@ export async function uploadPostImage(
 
 
 export async function changeOwnPassword(formData: FormData): Promise<void> {
-  await requireProfile();
-  const current = String(formData.get("current") ?? "");
+  const me = await requireProfile();
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirm") ?? "");
   if (!isStrongPassword(password)) redirect("/admin/account?error=weak");
   if (password !== confirm) redirect("/admin/account?error=mismatch");
   const data = await getData();
   // Proving the current password stops a walk-up attacker with an unlocked
-  // screen from silently taking over the account.
-  if (!(await data.auth.verifyOwnPassword(current))) redirect("/admin/account?error=wrong-current");
+  // screen from silently taking over the account. First-login accounts skip
+  // it: they JUST typed their temporary password to get here.
+  if (!me.must_change_password) {
+    const current = String(formData.get("current") ?? "");
+    if (!(await data.auth.verifyOwnPassword(current))) {
+      redirect("/admin/account?error=wrong-current");
+    }
+  }
   const { error } = await data.auth.updateOwnPassword(password);
   redirect(`/admin/account${error ? "?error=save" : "?saved=1"}`);
 }
@@ -571,12 +572,42 @@ function permsFromForm(formData: FormData): Permission[] {
   return formData.getAll("permissions").map(String).filter(isPermission);
 }
 
-/** Permission preset for a role slug — built-in or custom; null = unknown role. */
+/** Readable 12-char temporary password that always passes the policy
+ *  (ambiguous characters excluded — it will be retyped from an email). */
+function generateTempPassword(): string {
+  const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  for (;;) {
+    const bytes = randomBytes(12);
+    const candidate = [...bytes].map((b) => alphabet[b % alphabet.length]).join("");
+    if (isStrongPassword(candidate)) return candidate;
+  }
+}
+
+function credentialsEmail(fullName: string, email: string, password: string): string {
+  return [
+    `Hello ${fullName},`,
+    "",
+    "Here is your access to the Mug.Up Studio admin panel:",
+    "",
+    `Panel:    ${adminSiteOrigin()}/admin`,
+    `Login:    ${email}`,
+    `Password: ${password}`,
+    "",
+    "This password is temporary — the panel will ask you to set your own the",
+    "first time you sign in.",
+    "",
+    "If you were not expecting this email, ignore it.",
+  ].join("\n");
+}
+
+/** Permission preset for a role slug (all roles live in the DB);
+ *  null = unknown role. */
 async function resolveRolePreset(role: string): Promise<Permission[] | null> {
-  if (role in ROLE_PRESETS) return ROLE_PRESETS[role as BuiltInRole];
   const data = await getData();
-  const custom = (await data.team.listCustomRoles()).find((r) => r.slug === role);
-  return custom ? custom.permissions : null;
+  const row = (await data.team.listRoles()).find((r) => r.slug === role);
+  if (row) return row.permissions;
+  // Safety net for a database that predates the roles table.
+  return role in ROLE_PRESETS ? ROLE_PRESETS[role as BuiltInRole] : null;
 }
 
 export async function inviteTeamUser(formData: FormData): Promise<void> {
@@ -588,6 +619,37 @@ export async function inviteTeamUser(formData: FormData): Promise<void> {
   const preset = await resolveRolePreset(role);
   if (!preset) redirect("/admin/users?error=input");
   const data = await getData();
+
+  if (isEmailConfigured()) {
+    // No links, no tokens: the account is created with a generated temporary
+    // password, the member gets login + password by email and MUST set their
+    // own password on first sign-in (middleware-enforced).
+    const password = generateTempPassword();
+    const { error, userId } = await data.team.createInvitedAccount({
+      email,
+      fullName,
+      role,
+      permissions: preset,
+      password,
+    });
+    if (error) redirect("/admin/users?error=invite");
+    const sent = await sendEmail({
+      to: email,
+      subject: "Your access to Mug.Up Admin",
+      text: credentialsEmail(fullName, email, password),
+    });
+    if (!sent) {
+      // No usable letter went out — remove the half-born account so the
+      // invite can simply be retried.
+      if (userId) await data.team.deleteAccount(userId);
+      redirect("/admin/users?error=invite");
+    }
+    await logActivity(me, "user.invite", "user", email, `role: ${role}`);
+    redirect("/admin/users?invited=1");
+  }
+
+  // No email transport configured: the auth provider sends its own invite
+  // letter (Mailpit on the local stack).
   const { error } = await data.team.inviteAccount({
     email,
     fullName,
@@ -605,6 +667,23 @@ export async function sendPasswordResetEmail(formData: FormData): Promise<void> 
   const data = await getData();
   const target = await data.team.getProfile(id);
   if (!target) redirect("/admin/users?error=input");
+
+  if (isEmailConfigured()) {
+    // Same model as invites: a generated temporary password by email,
+    // own password forced on the next sign-in.
+    const password = generateTempPassword();
+    const { error } = await data.team.setPassword(id, password, true);
+    if (error) redirect("/admin/users?error=save");
+    const sent = await sendEmail({
+      to: target.email,
+      subject: "Your Mug.Up Admin password was reset",
+      text: credentialsEmail(target.full_name || target.email, target.email, password),
+    });
+    if (!sent) redirect("/admin/users?error=save");
+    await logActivity(me, "user.password-reset", "user", id, `new temporary password emailed to ${target.email}`);
+    redirect("/admin/users?reset-sent=1");
+  }
+
   const { error } = await data.team.sendPasswordReset(target.email, adminSiteOrigin());
   if (!error) await logActivity(me, "user.password-reset", "user", id, `reset email to ${target.email}`);
   redirect(`/admin/users${error ? "?error=save" : "?reset-sent=1"}`);
@@ -622,22 +701,62 @@ export async function deleteTeamUser(formData: FormData): Promise<void> {
   redirect(`/admin/users${error ? "?error=save" : "?removed=1"}`);
 }
 
-export async function addCustomRole(formData: FormData): Promise<void> {
+export async function addRole(formData: FormData): Promise<void> {
   const me = await requireProfile("users.manage");
   const name = String(formData.get("name") ?? "").trim().slice(0, 60);
   const permissions = permsFromForm(formData);
   const slug = slugify(name);
-  // Built-in slugs stay reserved so a custom role can never shadow one.
-  if (!name || !slug || slug in ROLE_PRESETS) redirect("/admin/users?error=role-input");
+  if (!name || !slug) redirect("/admin/users?error=role-input");
   const data = await getData();
-  const { error } = await data.team.addCustomRole({ slug, name, permissions });
+  const { error } = await data.team.addRole({ slug, name, permissions });
   if (!error) {
     await logActivity(me, "role.create", "role", slug, permissions.join(", ") || "(no access)");
   }
   redirect(`/admin/users${error ? "?error=role-save" : "?role-saved=1"}`);
 }
 
-export async function deleteCustomRole(formData: FormData): Promise<void> {
+/** The role editor's single save: name (custom roles), permissions AND
+ *  notification events in one go. The permission set is re-applied to every
+ *  member holding the role — a role IS its members' access. */
+export async function saveRole(formData: FormData): Promise<void> {
+  const me = await requireProfile("users.manage");
+  const slug = String(formData.get("slug") ?? "");
+  const name = String(formData.get("name") ?? "").trim().slice(0, 60);
+  const permissions = permsFromForm(formData);
+  // An event is only offered when the role can OPEN its target.
+  const events = notificationEventsFromForm(formData).filter((event) =>
+    permissions.includes(NOTIFICATION_EVENT_PERMISSION[event]),
+  );
+  if (!/^[a-z0-9-]+$/.test(slug) || !name) redirect("/admin/users?error=role-input");
+  // The admin role losing team management would brick the panel.
+  if (slug === "admin" && !permissions.includes("users.manage")) {
+    redirect("/admin/users?error=admin-lockout");
+  }
+
+  const data = await getData();
+  const members = (await data.team.listProfiles()).filter((p) => p.role === slug);
+  // The save applies to members — never let it lock YOU out.
+  if (!permissions.includes("users.manage") && members.some((p) => p.id === me.id)) {
+    redirect("/admin/users?error=self-lockout");
+  }
+
+  const { error } = await data.team.updateRole(slug, { name, permissions });
+  if (error) redirect("/admin/users?error=role-save");
+  await data.notifications.setRoleEvents(slug, events);
+  for (const member of members) {
+    await data.team.updateAccess(member.id, slug, permissions);
+  }
+  await logActivity(
+    me,
+    "role.update",
+    "role",
+    slug,
+    `permissions: ${permissions.join(", ") || "(none)"}; notifications: ${events.join(", ") || "(none)"}; applied to ${members.length} member(s)`,
+  );
+  redirect("/admin/users?role-saved=1");
+}
+
+export async function deleteRole(formData: FormData): Promise<void> {
   const me = await requireProfile("users.manage");
   const slug = String(formData.get("slug") ?? "");
   if (!/^[a-z0-9-]+$/.test(slug)) redirect("/admin/users?error=role-input");
@@ -645,7 +764,7 @@ export async function deleteCustomRole(formData: FormData): Promise<void> {
   // Keep accounts consistent: a role in use cannot be deleted.
   const inUse = (await data.team.listProfiles()).some((p) => p.role === slug);
   if (inUse) redirect("/admin/users?error=role-in-use");
-  const { error } = await data.team.deleteCustomRole(slug);
+  const { error } = await data.team.deleteRole(slug);
   if (!error) await logActivity(me, "role.delete", "role", slug, "");
   redirect(`/admin/users${error ? "?error=role-save" : "?role-deleted=1"}`);
 }

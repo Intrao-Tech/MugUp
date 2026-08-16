@@ -32,6 +32,12 @@ export default async function SettingsPage({
   return (
     <div className="max-w-md">
       <h1 className="text-2xl font-bold">Settings</h1>
+      {profile.must_change_password && !saved && (
+        <Notice tone="error">
+          Your password is temporary — set your own below to start using the panel. (The
+          temporary one stays valid for signing in until you do.)
+        </Notice>
+      )}
       {saved && <Notice tone="success">Password changed. Use it the next time you sign in.</Notice>}
       {params["saved-timeout"] && <Notice tone="success">Session timeout updated.</Notice>}
       {error && <Notice tone="error">{ERRORS[error] ?? "Something went wrong."}</Notice>}
@@ -57,19 +63,23 @@ export default async function SettingsPage({
       <section className="mt-4 border border-neutral-300 bg-white p-4">
         <h2 className="text-lg font-semibold">Set a new password</h2>
         <form action={changeOwnPassword} className="mt-3 space-y-3">
-          <div>
-            <label htmlFor="current" className="block text-sm font-medium">
-              Current password *
-            </label>
-            <input
-              id="current"
-              name="current"
-              type="password"
-              required
-              autoComplete="current-password"
-              className={inputCls}
-            />
-          </div>
+          {/* First-login accounts just typed their temporary password to get
+              here — asking for it again is pure friction. */}
+          {!profile.must_change_password && (
+            <div>
+              <label htmlFor="current" className="block text-sm font-medium">
+                Current password *
+              </label>
+              <input
+                id="current"
+                name="current"
+                type="password"
+                required
+                autoComplete="current-password"
+                className={inputCls}
+              />
+            </div>
+          )}
           <NewPasswordFields />
           <button type="submit" className="border border-neutral-900 px-4 py-2 font-medium">
             Change password

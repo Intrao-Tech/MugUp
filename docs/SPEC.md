@@ -107,26 +107,43 @@ when no backend is configured (and are noindexed).
 Known deliberate deviation from the TZ: `Contact` appears in the header nav
 (TZ lists it in the footer only) — restored by client request for findability.
 
-## 7. Data model (supabase/migrations/0001_init.sql — plain Postgres)
+## 7. Data model (supabase/migrations/ 0001–0007 — plain Postgres, applied in order)
 
-- `profiles` — 1:1 with auth users (auto-created by trigger); role preset +
-  `permissions text[]` (the enforcement source of truth).
-- `leads` — both public enquiry forms; `form` = booking|contact, status
-  workflow new→contacted→in_progress→converted→closed, internal notes,
-  optional `file_path` into private `lead-files` bucket.
+- `profiles` — 1:1 with auth users (auto-created by trigger); role slug
+  (built-in or custom) + `permissions text[]` (the enforcement source of
+  truth) + `must_change_password` (first-login gate for invited/reset
+  accounts, enforced by the middleware).
+- `leads` — the public enquiry forms as a CRM: `form` =
+  booking|contact|partnership; 9-stage pipeline (new → contacted →
+  assessment_booked → assessment_completed → offer → programme_recommended →
+  enrolled / closed / lost, `lost_reason` + note required for Lost);
+  `programme`, `source`, `owner_id`, `next_action`, `next_action_date`,
+  internal notes, optional `file_path` into the private `lead-files` bucket.
 - `reviews` — moderation queue: status pending|approved|rejected; `source`
-  website|google|other (google = manually imported real reviews), optional
-  1–5 `rating`. Public form always inserts pending. Approved reviews are NOT
-  yet rendered on the public site (next step if requested).
-- `posts` — Insights articles: slug+locale unique, draft → published with
-  stable `published_at`; FK to `post_categories`. Body is stored twice:
-  `body_blocks` (jsonb, layout-aware builder-v2 blocks — the render source;
-  see `src/lib/post-blocks.ts` for the schema and validation) and `body_md`
-  (flattened Markdown mirror; the only body for pre-v2 posts, and the
-  fallback whenever `body_blocks` is null).
-- `post_categories` — admin-managed (slug + label_en + label_ua + sort); the
-  TZ's five are seeded; delete restricted while posts reference it.
-- Storage: `lead-files` (private, signed URLs for `files.view` holders),
+  website|google|other (google = manually imported real reviews), 1–5
+  `rating`, marketing fields `programme` / `audience` / `featured`. Public
+  form always inserts pending; approved+featured reviews replace the static
+  homepage testimonials.
+- `posts` — Insights articles: slug+locale unique; draft|scheduled|published
+  with stable `published_at` (scheduled goes live by itself once the time
+  passes); `author`, hero image (+alt), end-of-article CTA pair; FK to
+  `post_categories`. Body is stored twice: `body_blocks` (jsonb, layout-aware
+  builder-v2 blocks — the render source; schema + validation in
+  `src/lib/post-blocks.ts`) and `body_md` (flattened Markdown mirror; the
+  only body for pre-v2 posts and the fallback whenever `body_blocks` is null).
+- `post_categories` — admin-managed (slug + label_en + label_ua + sort);
+  delete restricted while posts reference it.
+- `custom_roles` — admin-defined permission presets next to the built-in
+  three, editable after creation (name + permissions, optional "apply to
+  current members"; a role stays cosmetic — flags enforce).
+- `admin_settings` — key/value; today `session_timeout_minutes` (idle
+  sign-out, middleware-enforced).
+- `notifications` + `notification_role_events` + `notification_reads` —
+  the in-admin notification centre: feed entries with deep-link `href`
+  (service-role writes only, pruned after 90 days), admin-configured
+  role→events routing, per-member per-entry read state.
+- `activity_log` — append-only audit trail (service-role writes only).
+- Storage: `lead-files` (private, signed URLs for `leads.pii` holders),
   `post-images` (public bucket for images embedded in articles).
 
 ## 8. Admin panel modules
@@ -138,24 +155,32 @@ page) · Reviews (pending queue first, approve/reject; "All reviews"
 management list with status filter, per-card Edit details / Delete; manual
 add with source+rating) · Insights (layout-aware post builder v2 — text /
 heading / subheading / list / quote / image+caption / button / divider /
-spacer / 2–3 columns; per-block width standard|wide|full and alignment;
+spacer / columns — one "+ Columns" button starts a 2-column row, the count
+(2–6) changes in the row's toolbar (CSS-var grid, stacks on mobile;
+"◫ with next" pairs two blocks, "↳ into columns" moves a block into the row
+below as a new column, "Unstack" reverses); per-block width
+standard|wide|full and alignment;
 insert-anywhere, duplicate, live preview through the same PostBody renderer
 the site uses; serializes to `body_blocks` JSON + a `body_md` mirror; image
 upload to `post-images`; auto-slug from title with UA transliteration;
 category management; draft/publish/unpublish/delete with `revalidatePath` so
 the public site updates in seconds) · Team (invite by email is the single
-way to add accounts → `/admin/welcome` set-password page; per-user role
-preset + flag checkboxes; one-click "Send password reset email" (recovery
-link lands on the same welcome page); member deletion with confirm
-(self-delete blocked); custom roles — admin-defined named permission presets
-in `custom_roles`, offered in every role dropdown, deletable only while
-unused; self-lockout guard) ·
+way to add accounts: with an email transport the member receives login + a
+generated temporary password and MUST set their own on first sign-in
+(`profiles.must_change_password`, middleware-enforced); one-click password
+reset works the same way; link-based flows via `/admin/welcome` remain only
+as the no-transport fallback; per-user role preset + flag checkboxes with
+live preset fill; member deletion with confirm (self-delete blocked); custom
+roles — admin-defined named permission presets in `custom_roles`, offered in
+every role dropdown, deletable only while unused; self-lockout guard) ·
 Notifications (in-admin notification centre: events — new booking / contact /
 partnership enquiry, new review, post published/scheduled — land in the
-`notifications` feed; each member subscribes to event types
-(`notification_subscriptions`, self-service + manager-configurable), NEW
-badge via `last_seen`, mark-all-as-read; optional email copy of
-enquiry/review events via env — docs/EMAIL-SETUP.md) · Activity (range chips
+`notifications` feed with a deep-link href (enquiry card / reviews / post);
+routing is PER ROLE (`notification_role_events`): an administrator ticks
+which events each role receives, members inherit their role's set and cannot
+configure it themselves; an entry counts as read per member only once
+clicked (`notification_reads`), NEW badge + mark-all-as-read; optional email
+copy of enquiry/review events via env — docs/EMAIL-SETUP.md) · Activity (range chips
 today/7d/30d/all + custom from–to dates, stats: totals, per-module, top
 actors, busiest day) · Settings (account info + change own password requiring
 the current password; Security card for managers — idle session timeout,
@@ -163,34 +188,39 @@ stored in `admin_settings`, enforced by the middleware, default 15 min).
 
 Password policy everywhere a password is set (`src/lib/password.ts`): min 8
 chars with upper + lower + digit; enforced server-side and hinted client-side
-(the seeded `admin123` predates the policy and is dev-only).
+(the seeded `admin123` predates the policy and is dev-only). Self password
+change requires the current password EXCEPT on a first-login account — it
+just typed its temporary password to sign in, so the form skips the field.
+Sign-in trims the pasted password (temporary ones are copied from an email).
 
-Flows that send email: team invites (Supabase Auth SMTP; Mailpit locally) and
-new-lead notifications (`src/lib/notify.ts`, Resend REST; enabled only when
-`RESEND_API_KEY` + `LEADS_NOTIFY_EMAIL` are set).
+Outgoing email goes through ONE app-owned channel (`src/lib/email.ts`, SMTP
+via nodemailer or Resend HTTP, env-selected; sender = `MAIL_FROM`): invite
+credentials, password resets and optional email copies of enquiries/reviews.
+Without a transport, invites/resets fall back to Supabase Auth's own letters
+(Mailpit locally). Full guide: `docs/EMAIL-SETUP.md`.
 
 ## 9. Environment variables
 
 See `.env.example` — it documents every variable. Summary: `DATA_BACKEND`
 (backend selector, default supabase), 3 Supabase keys (service key is
-server-only), `PUBLIC_HOST`, `ADMIN_HOST`, `ADMIN_IP_ALLOWLIST`,
-`RESEND_API_KEY` + `LEADS_NOTIFY_EMAIL` + `LEADS_NOTIFY_FROM`.
+server-only), `PUBLIC_HOST`, `ADMIN_HOST`, `ADMIN_IP_ALLOWLIST`, and the
+email transport: `SMTP_*` or `RESEND_API_KEY`, plus `MAIL_FROM` and
+`LEADS_NOTIFY_EMAIL` (docs/EMAIL-SETUP.md).
 
 ## 10. Runbooks
 
 Local: `npm run db:start` → copy printed keys into `.env.local` →
 `npm run seed:dev` → `npm run dev`. Details and test logins: `README.md`.
 
-Production: client-owned Supabase project (London) → run the migration SQL →
-set env vars on the host (Vercel) incl. `ADMIN_HOST` (hidden subdomain added
-as a domain alias) → first admin via Authentication → Add user +
-`supabase/seed_admin.sql` → configure SMTP in Supabase for invites → set
-Resend vars for lead notifications → GA4 + Search Console + cookie banner
-(pending, see §11).
+Production: client-owned Supabase project (London) → apply the migrations in
+order → set env vars on the host (Vercel) incl. `ADMIN_HOST` (hidden
+subdomain added as a domain alias) → first admin via Authentication → Add
+user + `supabase/seed_admin.sql` → email per `docs/EMAIL-SETUP.md` → GA4 +
+Search Console + cookie banner (pending, see §11).
 
 ## 11. Not built yet (agreed backlog)
 
-Rendering approved reviews on the public site · GA4 + Search Console + cookie
+GA4 + Search Console + cookie
 consent banner · Cloudflare Turnstile (honeypot only today) · founder video &
 photo (awaiting client materials) · LinkedIn/YouTube/Eventbrite footer links
 (awaiting exact URLs) · UA copy review by client · legal texts · Stage 2

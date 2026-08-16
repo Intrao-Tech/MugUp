@@ -18,7 +18,10 @@ export type Permission = (typeof PERMISSIONS)[number];
 /** The fixed presets that ship with the panel. */
 export type BuiltInRole = "admin" | "manager" | "editor";
 
-/** A profile's role: a built-in slug or a custom role slug (custom_roles). */
+/** A profile's role: a slug from the `roles` table (built-in or custom).
+ *  ROLE_PRESETS/ROLE_DESCRIPTIONS below are the built-ins' seed values and a
+ *  fallback for a database that predates the table — the DB rows are the
+ *  live source of truth (editable in Team → Roles). */
 export type Role = string;
 
 export const ROLE_PRESETS: Record<BuiltInRole, Permission[]> = {

@@ -1,84 +1,57 @@
-import type { CustomRoleRow, ProfileRow } from "@/lib/db-types";
-import {
-  PERMISSION_LABELS,
-  PERMISSIONS,
-  ROLE_DESCRIPTIONS,
-  ROLE_PRESETS,
-  type BuiltInRole,
-} from "@/lib/permissions";
+import type { NotificationEvent, ProfileRow, RoleRow } from "@/lib/db-types";
+import { PERMISSION_LABELS, PERMISSIONS } from "@/lib/permissions";
 import { requireProfile } from "@/lib/auth-guard";
 import { getData } from "@/lib/data";
+import { isEmailConfigured } from "@/lib/email";
 import {
-  addCustomRole,
-  deleteCustomRole,
+  addRole,
   deleteTeamUser,
   inviteTeamUser,
   sendPasswordResetEmail,
   updateTeamUser,
 } from "../actions";
 import { Notice } from "../ui";
+import { RoleEditor } from "./RoleEditor";
 import { RolePermissionsFields } from "./RolePermissionsFields";
 
 export const dynamic = "force-dynamic";
-
-const BUILT_IN_ROLES = Object.keys(ROLE_PRESETS) as BuiltInRole[];
 
 const ERRORS: Record<string, string> = {
   input: "Check the fields: a valid email, a name and a role are required.",
   invite:
     "Could not send the invite — the email may already be in use, or email sending is not configured.",
   save: "Could not save — try again.",
-  "self-lockout": "You cannot remove team management from your own account.",
+  "self-lockout": "That change would remove team management from your own account.",
+  "admin-lockout": "The Admin role must keep “Manage users” — otherwise nobody can manage the panel.",
   "self-delete": "You cannot delete your own account.",
-  "role-input": "Give the role a name (built-in role names are reserved).",
+  "role-input": "Give the role a name.",
   "role-save": "Could not save the role — the name may already exist.",
   "role-in-use": "This role is still assigned to a team member — reassign them first.",
 };
 
-/** Mailpit hint only makes sense on the local Supabase stack. */
-const isLocalStack = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").includes("127.0.0.1");
-
-/** <option> list: built-in presets + custom roles (+ the current value if it
- *  belongs to a since-deleted custom role, so the select stays truthful). */
-function RoleOptions({ customRoles, current }: { customRoles: CustomRoleRow[]; current?: string }) {
-  const known = [...BUILT_IN_ROLES, ...customRoles.map((r) => r.slug)];
-  return (
-    <>
-      {BUILT_IN_ROLES.map((role) => (
-        <option key={role} value={role}>
-          {ROLE_DESCRIPTIONS[role]}
-        </option>
-      ))}
-      {customRoles.map((role) => (
-        <option key={role.slug} value={role.slug}>
-          {role.name} — custom role
-        </option>
-      ))}
-      {current && !known.includes(current) && <option value={current}>{current}</option>}
-    </>
-  );
-}
+/** Where did the email actually go? With a real transport configured it went
+ *  to the real inbox; otherwise the local stack catches it in Mailpit. */
+const mailpitHint = () =>
+  !isEmailConfigured() && (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").includes("127.0.0.1")
+    ? " (Local test stack without email configured: the email lands in Mailpit, http://localhost:54324.)"
+    : "";
 
 function UserCard({
   profile,
   isSelf,
-  customRoles,
+  roles,
 }: {
   profile: ProfileRow;
   isSelf: boolean;
-  customRoles: CustomRoleRow[];
+  roles: RoleRow[];
 }) {
   const displayName = profile.full_name || profile.email;
-  const known = [...BUILT_IN_ROLES, ...customRoles.map((r) => r.slug)];
-  const roleOptions = [
-    ...BUILT_IN_ROLES.map((role) => ({ value: role, label: ROLE_DESCRIPTIONS[role] })),
-    ...customRoles.map((role) => ({ value: role.slug, label: `${role.name} — custom role` })),
-    ...(known.includes(profile.role) ? [] : [{ value: profile.role, label: profile.role }]),
-  ];
-  const presets: Record<string, typeof profile.permissions> = {
-    ...ROLE_PRESETS,
-    ...Object.fromEntries(customRoles.map((role) => [role.slug, role.permissions])),
-  };
+  const roleOptions = roles.map((role) => ({ value: role.slug, label: role.name }));
+  // A role deleted after assignment still shows truthfully in the select.
+  const options = roleOptions.some((o) => o.value === profile.role)
+    ? roleOptions
+    : [...roleOptions, { value: profile.role, label: profile.role }];
+  const presets = Object.fromEntries(roles.map((role) => [role.slug, role.permissions]));
   return (
     <article className="border border-neutral-300 bg-white p-4">
       <h3 className="font-semibold">
@@ -89,7 +62,7 @@ function UserCard({
       <form action={updateTeamUser} className="mt-3 space-y-2 text-sm">
         <input type="hidden" name="id" value={profile.id} />
         <RolePermissionsFields
-          roleOptions={roleOptions}
+          roleOptions={options}
           presets={presets}
           initialRole={profile.role}
           initialPermissions={profile.permissions}
@@ -105,7 +78,8 @@ function UserCard({
           Send password reset email
         </button>
         <p className="mt-1 text-xs text-neutral-500">
-          {displayName} gets a link to choose a new password — nothing to write down or hand over.
+          Use when {displayName} has forgotten their password: they get an email to regain
+          access and must set a new password of their own at the next sign-in.
         </p>
       </form>
 
@@ -139,10 +113,21 @@ export default async function UsersPage({
   const { error } = params;
 
   const data = await getData();
-  const [profiles, customRoles] = await Promise.all([
+  const [profiles, roles, roleEventRows] = await Promise.all([
     data.team.listProfiles(),
-    data.team.listCustomRoles(),
+    data.team.listRoles(),
+    data.notifications.listRoleEvents(),
   ]);
+  const roleEvents: Record<string, NotificationEvent[]> = Object.fromEntries(
+    roleEventRows.map((row) => [row.role_slug, row.events]),
+  );
+  const editableRoles = roles.map((role) => ({
+    slug: role.slug,
+    name: role.name,
+    permissions: role.permissions,
+    builtIn: role.built_in,
+    memberCount: profiles.filter((p) => p.role === role.slug).length,
+  }));
   const inputCls = "mt-1 w-full border border-neutral-400 px-3 py-2";
 
   return (
@@ -151,18 +136,19 @@ export default async function UsersPage({
       {params.saved && <Notice tone="success">Saved.</Notice>}
       {params.invited && (
         <Notice tone="success">
-          Invite sent — the team member sets their own password via the emailed link.
-          {isLocalStack && " (Local test stack: the email arrives in Mailpit, port 54324.)"}
+          Invite sent — the email contains everything they need to sign in, and the panel makes
+          them set their own password on first entry.
+          {mailpitHint()}
         </Notice>
       )}
       {params["reset-sent"] && (
         <Notice tone="success">
           Password reset email sent.
-          {isLocalStack && " (Local test stack: the email arrives in Mailpit, port 54324.)"}
+          {mailpitHint()}
         </Notice>
       )}
       {params.removed && <Notice tone="success">Account removed.</Notice>}
-      {params["role-saved"] && <Notice tone="success">Role created.</Notice>}
+      {params["role-saved"] && <Notice tone="success">Role saved.</Notice>}
       {params["role-deleted"] && <Notice tone="success">Role deleted.</Notice>}
       {error && <Notice tone="error">{ERRORS[error] ?? "Something went wrong."}</Notice>}
 
@@ -170,8 +156,8 @@ export default async function UsersPage({
         <h2 className="text-xl font-semibold">Invite a team member</h2>
         <form action={inviteTeamUser} className="mt-3 max-w-lg space-y-3 border border-neutral-300 bg-white p-4">
           <p className="text-sm text-neutral-500">
-            They receive an email with a secure link and choose their own password — you never
-            have to share one.
+            They receive an email with everything needed to sign in and are required to set
+            their own password on first entry — you never have to share or write one down.
           </p>
           <div>
             <label htmlFor="inv-name" className="block text-sm font-medium">
@@ -190,7 +176,11 @@ export default async function UsersPage({
               Role *
             </label>
             <select id="inv-role" name="role" className={inputCls}>
-              <RoleOptions customRoles={customRoles} />
+              {roles.map((role) => (
+                <option key={role.slug} value={role.slug}>
+                  {role.name}
+                </option>
+              ))}
             </select>
           </div>
           <button type="submit" className="border border-neutral-900 bg-neutral-900 px-4 py-2 font-medium text-white">
@@ -200,62 +190,21 @@ export default async function UsersPage({
       </section>
 
       <section className="mt-10">
-        <h2 className="text-xl font-semibold">Current team</h2>
-        <p className="mt-1 text-sm text-neutral-500">
-          A role is a preset; the checkboxes are what actually grants access, so any account can
-          be fine-tuned per module.
-        </p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {profiles.map((profile) => (
-            <UserCard
-              key={profile.id}
-              profile={profile}
-              isSelf={profile.id === me.id}
-              customRoles={customRoles}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="mt-10">
         <h2 className="text-xl font-semibold">Roles</h2>
         <p className="mt-1 text-sm text-neutral-500">
-          Three built-in roles ship with the panel; add your own presets for recurring
-          combinations. Picking a role pre-fills the permissions — they can still be adjusted
-          per person afterwards.
+          Pick a role to edit what it can do and which notifications it receives. Saving applies
+          the permission set to every member holding the role; individual accounts can still be
+          fine-tuned below afterwards.
         </p>
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="space-y-2">
-            {BUILT_IN_ROLES.map((role) => (
-              <div key={role} className="border border-neutral-200 bg-white p-3 text-sm">
-                <p className="font-medium">
-                  {ROLE_DESCRIPTIONS[role]}
-                  <span className="ml-2 text-xs font-normal text-neutral-400">built-in</span>
-                </p>
-              </div>
-            ))}
-            {customRoles.map((role) => (
-              <div key={role.slug} className="border border-neutral-300 bg-white p-3 text-sm">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-medium">{role.name}</p>
-                  <form action={deleteCustomRole}>
-                    <input type="hidden" name="slug" value={role.slug} />
-                    <button type="submit" className="text-red-700 underline">
-                      Delete
-                    </button>
-                  </form>
-                </div>
-                <p className="mt-1 text-xs text-neutral-500">
-                  {role.permissions.length
-                    ? role.permissions.map((perm) => PERMISSION_LABELS[perm]).join(" · ")
-                    : "No access granted"}
-                </p>
-              </div>
-            ))}
-          </div>
+        <div className="mt-4">
+          <RoleEditor roles={editableRoles} roleEvents={roleEvents} />
+        </div>
 
-          <form action={addCustomRole} className="space-y-3 self-start border border-neutral-300 bg-white p-4">
-            <h3 className="font-semibold">Create a custom role</h3>
+        <details className="mt-4 max-w-lg">
+          <summary className="cursor-pointer text-sm font-medium text-neutral-600">
+            + Create a new role
+          </summary>
+          <form action={addRole} className="mt-3 space-y-3 border border-neutral-300 bg-white p-4">
             <div>
               <label htmlFor="role-name" className="block text-sm font-medium">
                 Role name *
@@ -278,10 +227,31 @@ export default async function UsersPage({
                 </label>
               ))}
             </fieldset>
+            <p className="text-xs text-neutral-500">
+              Notifications for the new role are configured in the editor above after creation.
+            </p>
             <button type="submit" className="border border-neutral-900 px-4 py-2 font-medium">
               Create role
             </button>
           </form>
+        </details>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold">Current team</h2>
+        <p className="mt-1 text-sm text-neutral-500">
+          A role is a preset; the checkboxes are what actually grants access, so any account can
+          be fine-tuned per module.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {profiles.map((profile) => (
+            <UserCard
+              key={profile.id}
+              profile={profile}
+              isSelf={profile.id === me.id}
+              roles={roles}
+            />
+          ))}
         </div>
       </section>
     </div>

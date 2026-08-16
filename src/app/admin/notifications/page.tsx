@@ -1,83 +1,73 @@
+import Link from "next/link";
 import {
   NOTIFICATION_EVENT_LABELS,
-  NOTIFICATION_EVENTS,
+  NOTIFICATION_EVENT_PERMISSION,
   type NotificationEvent,
 } from "@/lib/db-types";
 import { hasPerm, requireProfile } from "@/lib/auth-guard";
 import { getData } from "@/lib/data";
-import {
-  markNotificationsSeen,
-  saveMemberNotificationEvents,
-  saveOwnNotificationEvents,
-} from "../actions";
-import { Notice } from "../ui";
+import { markAllNotificationsRead, openNotification } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-function EventCheckboxes({ checked }: { checked: NotificationEvent[] }) {
-  return (
-    <fieldset className="space-y-1 text-sm">
-      <legend className="sr-only">Notification types</legend>
-      {NOTIFICATION_EVENTS.map((event) => (
-        <label key={event} className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            name="events"
-            value={event}
-            defaultChecked={checked.includes(event)}
-          />
-          {NOTIFICATION_EVENT_LABELS[event]}
-        </label>
-      ))}
-    </fieldset>
-  );
-}
+/** Entries without a stored deep link (or with a future unknown event) still
+ *  open the right module page. */
+const MODULE_FALLBACK: Record<NotificationEvent, string> = {
+  lead_booking: "/admin/leads",
+  lead_contact: "/admin/leads",
+  lead_partnership: "/admin/leads",
+  review_new: "/admin/reviews",
+  post_published: "/admin/posts",
+};
 
-export default async function NotificationsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string; saved?: string }>;
-}) {
+export default async function NotificationsPage() {
   const me = await requireProfile();
-  const { error, saved } = await searchParams;
   const canManage = hasPerm(me, "users.manage");
 
   const data = await getData();
-  const mySubscription = await data.notifications.getSubscription(me.id);
-  const myEvents = mySubscription?.events ?? [];
-  const lastSeen = mySubscription?.last_seen ?? new Date(0).toISOString();
+  // Members inherit their ROLE's event set (configured in Team → Roles);
+  // additionally an event only reaches someone who can OPEN its target —
+  // the member's own permission flags are the final filter.
+  const myEvents = (await data.notifications.eventsForRole(me.role)).filter((event) =>
+    hasPerm(me, NOTIFICATION_EVENT_PERMISSION[event]),
+  );
   const feed = await data.notifications.feed(myEvents, 100);
-  const unseen = feed.filter((item) => item.created_at > lastSeen).length;
-
-  const [profiles, subscriptions] = canManage
-    ? await Promise.all([data.team.listProfiles(), data.notifications.listSubscriptions()])
-    : [[], []];
+  const readIds = new Set(await data.notifications.readIds(me.id, feed.map((f) => f.id)));
+  const unread = feed.filter((item) => !readIds.has(item.id));
 
   return (
     <div className="max-w-2xl">
       <h1 className="text-2xl font-bold">
         Notifications
-        {unseen > 0 && (
+        {unread.length > 0 && (
           <span className="ml-2 align-middle border border-neutral-900 bg-neutral-900 px-2 py-0.5 text-sm font-medium text-white">
-            {unseen} new
+            {unread.length} new
           </span>
         )}
       </h1>
       <p className="mt-1 text-sm text-neutral-500">
-        Website events land here — you see the types ticked in “What I get notified about”.
+        Website events for your role land here. Click an entry to open it; it counts as read
+        only once you have.
+        {canManage && (
+          <>
+            {" "}
+            Which role receives what is configured in{" "}
+            <Link href="/admin/users" className="underline">
+              Team → Roles
+            </Link>
+            .
+          </>
+        )}
       </p>
-      {saved && <Notice tone="success">Saved.</Notice>}
-      {error && (
-        <Notice tone="error">
-          {error === "input" ? "Something was wrong with the input." : "Could not save — try again."}
-        </Notice>
-      )}
 
       <section className="mt-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-xl font-semibold">Latest</h2>
-          {unseen > 0 && (
-            <form action={markNotificationsSeen}>
+          {unread.length > 0 && (
+            <form action={markAllNotificationsRead}>
+              {unread.map((item) => (
+                <input key={item.id} type="hidden" name="ids" value={item.id} />
+              ))}
               <button type="submit" className="border border-neutral-400 px-3 py-1 text-sm hover:border-neutral-900">
                 Mark all as read
               </button>
@@ -86,79 +76,53 @@ export default async function NotificationsPage({
         </div>
         <div className="mt-3 space-y-2">
           {feed.map((item) => {
-            const isNew = item.created_at > lastSeen;
+            const isNew = !readIds.has(item.id);
             return (
-              <article
-                key={item.id}
-                className={`border bg-white p-3 ${isNew ? "border-neutral-900" : "border-neutral-200"}`}
-              >
-                <p className="flex flex-wrap items-baseline gap-2 text-xs text-neutral-500">
-                  {isNew && <span className="bg-neutral-900 px-1.5 py-0.5 font-medium text-white">NEW</span>}
-                  <span>{NOTIFICATION_EVENT_LABELS[item.event] ?? item.event}</span>
-                  <span>
-                    {new Date(item.created_at).toLocaleString("en-GB", {
-                      dateStyle: "short",
-                      timeStyle: "short",
-                    })}
+              <form key={item.id} action={openNotification}>
+                <input type="hidden" name="id" value={item.id} />
+                <input
+                  type="hidden"
+                  name="href"
+                  value={item.href || MODULE_FALLBACK[item.event] || "/admin"}
+                />
+                {/* The whole card is the button: opens the event and only
+                    then marks this entry as read. */}
+                <button
+                  type="submit"
+                  className={`block w-full border bg-white p-3 text-left hover:border-neutral-900 ${
+                    isNew ? "border-neutral-900" : "border-neutral-200"
+                  }`}
+                >
+                  <span className="flex flex-wrap items-baseline gap-2 text-xs text-neutral-500">
+                    {isNew && (
+                      <span className="bg-neutral-900 px-1.5 py-0.5 font-medium text-white">NEW</span>
+                    )}
+                    <span>{NOTIFICATION_EVENT_LABELS[item.event] ?? item.event}</span>
+                    <span>
+                      {new Date(item.created_at).toLocaleString("en-GB", {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
+                    </span>
+                    <span className="ml-auto underline">open →</span>
                   </span>
-                </p>
-                <p className="mt-1 font-medium">{item.title}</p>
-                {item.detail && <p className="text-sm text-neutral-600">{item.detail}</p>}
-              </article>
+                  <span className="mt-1 block font-medium">{item.title}</span>
+                  {item.detail && (
+                    <span className="block text-sm text-neutral-600">{item.detail}</span>
+                  )}
+                </button>
+              </form>
             );
           })}
           {feed.length === 0 && (
             <p className="text-sm text-neutral-500">
               {myEvents.length === 0
-                ? "You are not subscribed to any notification types yet — tick some below."
+                ? "Your role does not receive any notifications — an administrator configures which role gets what in Team → Roles."
                 : "Nothing yet — new events will appear here."}
             </p>
           )}
         </div>
       </section>
-
-      <section className="mt-8 border border-neutral-300 bg-white p-4">
-        <h2 className="text-lg font-semibold">What I get notified about</h2>
-        <form action={saveOwnNotificationEvents} className="mt-3 space-y-3">
-          <EventCheckboxes checked={myEvents} />
-          <button type="submit" className="border border-neutral-900 px-4 py-2 font-medium">
-            Save
-          </button>
-        </form>
-      </section>
-
-      {canManage && (
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold">Team subscriptions</h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            Configure what each team member sees in their Notifications section.
-          </p>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
-            {profiles.map((profile) => {
-              const sub = subscriptions.find((s) => s.profile_id === profile.id);
-              return (
-                <form
-                  key={profile.id}
-                  action={saveMemberNotificationEvents}
-                  className="space-y-2 border border-neutral-300 bg-white p-4"
-                >
-                  <input type="hidden" name="profile_id" value={profile.id} />
-                  <h3 className="font-semibold">
-                    {profile.full_name || profile.email}
-                    {profile.id === me.id && (
-                      <span className="ml-2 text-xs font-normal text-neutral-500">you</span>
-                    )}
-                  </h3>
-                  <EventCheckboxes checked={sub?.events ?? []} />
-                  <button type="submit" className="border border-neutral-900 px-3 py-1 text-sm">
-                    Save
-                  </button>
-                </form>
-              );
-            })}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

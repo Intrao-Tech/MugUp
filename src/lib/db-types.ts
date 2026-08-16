@@ -6,14 +6,20 @@ export interface ProfileRow {
   full_name: string;
   role: Role;
   permissions: Permission[];
+  /** True until an invited/reset account sets its own password (middleware-enforced). */
+  must_change_password: boolean;
   created_at: string;
 }
 
-/** Admin-defined role preset (next to the built-in admin/manager/editor). */
-export interface CustomRoleRow {
+/** A role preset (permissions + notification routing target). Built-in rows
+ *  (admin/manager/editor) have a fixed slug/name and cannot be deleted; the
+ *  permissions of EVERY role are editable, and saving a role re-applies its
+ *  permission set to all members holding it. */
+export interface RoleRow {
   slug: string;
   name: string;
   permissions: Permission[];
+  built_in: boolean;
   created_at: string;
 }
 
@@ -274,6 +280,18 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEvent, string> = {
   post_published: "Post published or scheduled",
 };
 
+/** A notification is only useful if the receiver can OPEN its target — each
+ *  event requires the matching permission. The role editor disables events
+ *  the role lacks the permission for, the server strips them on save, and
+ *  the feed additionally filters by the member's own flags. */
+export const NOTIFICATION_EVENT_PERMISSION: Record<NotificationEvent, Permission> = {
+  lead_booking: "leads.view",
+  lead_contact: "leads.view",
+  lead_partnership: "leads.view",
+  review_new: "reviews.moderate",
+  post_published: "posts.edit",
+};
+
 /** One feed entry, shown in the admin Notifications section. */
 export interface NotificationRow {
   id: string;
@@ -281,13 +299,16 @@ export interface NotificationRow {
   event: NotificationEvent;
   title: string;
   detail: string;
+  /** Admin URL the entry opens when clicked ("" = the notifications page itself). */
+  href: string;
 }
 
-/** Which events a team member sees; last_seen powers the NEW badge. */
-export interface NotificationSubscriptionRow {
-  profile_id: string;
+/** Which events a ROLE receives — administrators configure this; members
+ *  inherit their role's set. (Read state lives per entry in
+ *  notification_reads.) */
+export interface NotificationRoleEventsRow {
+  role_slug: string;
   events: NotificationEvent[];
-  last_seen: string;
 }
 
 /* ---------- Activity log ---------- */

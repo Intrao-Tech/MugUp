@@ -8,21 +8,21 @@
 import type {
   ActivityRow,
   CategoryRow,
-  CustomRoleRow,
   LeadForm,
   LeadRow,
   LeadSource,
   LeadStatus,
   LostReason,
   NotificationEvent,
+  NotificationRoleEventsRow,
   NotificationRow,
-  NotificationSubscriptionRow,
   PostRow,
   PostStatus,
   ProfileRow,
   ReviewAudience,
   ReviewRow,
   ReviewStatus,
+  RoleRow,
 } from "@/lib/db-types";
 import type { Permission, Role } from "@/lib/permissions";
 import type { PostBlock } from "@/lib/post-blocks";
@@ -48,8 +48,20 @@ export interface TeamPort {
   listProfiles(): Promise<ProfileRow[]>;
   updateAccess(userId: string, role: Role, permissions: Permission[]): Promise<Result>;
   /**
-   * Privileged: invite a team member by email. The invite letter links to
-   * `${redirectOrigin}/admin/welcome`, where the invitee sets a password.
+   * Privileged: create a ready-to-use account with a generated temporary
+   * password; the profile is flagged must_change_password until the member
+   * sets their own. The caller emails the credentials (src/lib/email.ts).
+   */
+  createInvitedAccount(input: {
+    email: string;
+    fullName: string;
+    role: Role;
+    permissions: Permission[];
+    password: string;
+  }): Promise<Result & { userId?: string }>;
+  /**
+   * Fallback when no email transport is configured: the auth provider sends
+   * its own invite letter linking to `${redirectOrigin}/admin/welcome`.
    */
   inviteAccount(input: {
     email: string;
@@ -58,14 +70,21 @@ export interface TeamPort {
     permissions: Permission[];
     redirectOrigin: string;
   }): Promise<Result>;
+  /** Privileged: sets a (temporary) password; mustChange flags the profile
+   *  so the member is forced to pick their own on next sign-in. */
+  setPassword(userId: string, password: string, mustChange: boolean): Promise<Result>;
   /** Privileged: removes the login and (via cascade) its profile. */
   deleteAccount(userId: string): Promise<Result>;
-  /** Emails a password-reset link that lands on `${redirectOrigin}/admin/welcome`. */
+  /** Fallback reset when no email transport is configured: the auth provider
+   *  emails a recovery link landing on `${redirectOrigin}/admin/welcome`. */
   sendPasswordReset(email: string, redirectOrigin: string): Promise<Result>;
-  /* Custom role presets (built-ins live in src/lib/permissions.ts). */
-  listCustomRoles(): Promise<CustomRoleRow[]>;
-  addCustomRole(input: { slug: string; name: string; permissions: Permission[] }): Promise<Result>;
-  deleteCustomRole(slug: string): Promise<Result>;
+  /* Role presets — built-in AND custom live in the `roles` table. */
+  listRoles(): Promise<RoleRow[]>;
+  addRole(input: { slug: string; name: string; permissions: Permission[] }): Promise<Result>;
+  /** Built-in rows keep their name; permissions update for every role. */
+  updateRole(slug: string, input: { name: string; permissions: Permission[] }): Promise<Result>;
+  /** Custom roles only (built-ins refuse); also removes notification routing. */
+  deleteRole(slug: string): Promise<Result>;
 }
 
 export interface NewLead {
@@ -128,7 +147,8 @@ export interface LeadsPort {
   updateDetails(id: string, details: LeadDetailsInput): Promise<Result>;
   updateNotes(id: string, notes: string): Promise<Result>;
   /** Privileged: public form submission (visitors have no direct DB access). */
-  submit(lead: NewLead): Promise<Result>;
+  /** Returns the new enquiry's id so the notification can deep-link to it. */
+  submit(lead: NewLead): Promise<Result & { id?: string }>;
   /** Privileged aggregate read (no PII columns) — dashboard only. */
   statsRows(): Promise<LeadStatsRow[]>;
 }
@@ -226,14 +246,16 @@ export interface NotificationsPort {
   /** Feed entries for the given events, newest first (empty events = []). */
   feed(events: NotificationEvent[], limit?: number): Promise<NotificationRow[]>;
   /** Privileged append (public form actions have no session); never throws. */
-  record(event: NotificationEvent, title: string, detail?: string): Promise<void>;
-  /** All members' subscriptions (managers; RLS narrows others to their own row). */
-  listSubscriptions(): Promise<NotificationSubscriptionRow[]>;
-  getSubscription(profileId: string): Promise<NotificationSubscriptionRow | null>;
-  /** Upsert events for a member (own row, or any row for managers). */
-  setSubscription(profileId: string, events: NotificationEvent[]): Promise<Result>;
-  /** Reset the member's NEW badge. */
-  markSeen(profileId: string): Promise<Result>;
+  record(event: NotificationEvent, title: string, detail?: string, href?: string): Promise<void>;
+  /** Per-role routing (admin-configured; members inherit their role's set). */
+  listRoleEvents(): Promise<NotificationRoleEventsRow[]>;
+  eventsForRole(roleSlug: string): Promise<NotificationEvent[]>;
+  /** users.manage only (RLS-enforced). */
+  setRoleEvents(roleSlug: string, events: NotificationEvent[]): Promise<Result>;
+  /** Which of the given feed entries this member has already opened. */
+  readIds(profileId: string, notificationIds: string[]): Promise<string[]>;
+  /** Mark entries as read for the member (idempotent). */
+  markRead(profileId: string, notificationIds: string[]): Promise<Result>;
 }
 
 export interface SettingsPort {

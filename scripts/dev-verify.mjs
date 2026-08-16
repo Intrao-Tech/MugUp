@@ -59,13 +59,18 @@ await asUser("manager@mugup.local", async (db) => {
   }
   const { data: posts } = await db.from("posts").select("id");
   check("manager: posts invisible", (posts ?? []).length === 0);
+  // Migration 0002: leads.view holders read all profiles — the CRM's Owner
+  // column and assignment dropdown need the team list.
   const { data: profiles } = await db.from("profiles").select("id");
-  check("manager: sees only own profile", (profiles ?? []).length === 1);
+  check("manager: sees the team (Owner dropdown)", (profiles ?? []).length >= 2);
 });
 
 await asUser("editor@mugup.local", async (db) => {
   const { data: leads } = await db.from("leads").select("id");
   check("editor: leads invisible (GDPR)", (leads ?? []).length === 0);
+  // No leads.view and no users.manage -> the team list stays hidden too.
+  const { data: profiles } = await db.from("profiles").select("id");
+  check("editor: sees only own profile", (profiles ?? []).length === 1);
   const { data: reviews } = await db.from("reviews").select("id, status");
   check("editor: sees reviews", (reviews ?? []).length >= 1);
   const { data: posts } = await db.from("posts").select("id");

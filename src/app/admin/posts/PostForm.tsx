@@ -1,9 +1,10 @@
 import type { CategoryRow, PostRow } from "@/lib/db-types";
 import { sanitizePostBlocks } from "@/lib/post-blocks";
 import { isoToUkWallTime } from "@/lib/uk-time";
-import { savePost, savePostDraft, savePostPublish, savePostSchedule } from "../actions";
+import { savePost, savePostDraft, savePostPublish } from "../actions";
 import { HeroImageField } from "./HeroImageField";
 import { PostBuilder } from "./PostBuilder";
+import { ScheduleField } from "./ScheduleField";
 
 // Shared by /admin/posts/new and /admin/posts/[id]. The block builder
 // serializes to Markdown (body_md) — the same format the site renders.
@@ -167,27 +168,13 @@ export function PostForm({
           </button>
         )}
         {canPublish && (
-          <div className="flex items-end gap-2">
-            <div>
-              <label htmlFor="publish_at" className="block text-xs font-medium text-neutral-600">
-                Go live at (UK time)
-              </label>
-              <input
-                id="publish_at"
-                name="publish_at"
-                type="datetime-local"
-                defaultValue={
-                  post?.status === "scheduled" && post.published_at
-                    ? isoToUkWallTime(post.published_at)
-                    : ""
-                }
-                className="mt-1 border border-neutral-400 px-2 py-1.5 text-sm"
-              />
-            </div>
-            <button type="submit" formAction={savePostSchedule} className="border border-neutral-900 px-4 py-2">
-              Schedule
-            </button>
-          </div>
+          <ScheduleField
+            initialValue={
+              post?.status === "scheduled" && post.published_at
+                ? isoToUkWallTime(post.published_at)
+                : ""
+            }
+          />
         )}
       </div>
       <p className="text-sm text-neutral-500">

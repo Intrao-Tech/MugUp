@@ -26,8 +26,9 @@ export type PostBlock = Layout &
     | { kind: "button"; label: string; href: string }
     | { kind: "divider" }
     | { kind: "spacer"; size: PostSpacerSize }
-    /** 2–3 side-by-side columns (stacked on mobile). Children may not nest
-     *  further columns/spacers; child width is ignored (the row sets it). */
+    /** 2–MAX_COLUMNS side-by-side columns (stacked on mobile). Children may
+     *  not nest further columns/spacers; child width is ignored (the row
+     *  sets it). */
     | { kind: "columns"; columns: PostBlock[][] }
   );
 
@@ -35,8 +36,10 @@ export const POST_WIDTHS: PostBlockWidth[] = ["normal", "wide", "full"];
 export const POST_ALIGNS: PostBlockAlign[] = ["left", "center", "right"];
 export const POST_SPACER_SIZES: PostSpacerSize[] = ["s", "m", "l"];
 
-/** Block kinds allowed inside a column. */
-export const COLUMN_CHILD_KINDS = ["p", "h2", "h3", "ul", "quote", "img", "button"] as const;
+/** Physical ceiling for side-by-side columns: at 6 each column is already
+ *  ~150px inside the widest (5xl) row — beyond that nothing stays readable.
+ *  The count itself is free data (2..MAX), not a fixed set of layouts. */
+export const MAX_COLUMNS = 6;
 
 const TEXT_MAX = 8000;
 const ITEM_MAX = 500;
@@ -109,7 +112,11 @@ function sanitizeBlock(value: unknown, insideColumn: boolean): PostBlock | null 
         : null;
     case "columns": {
       if (insideColumn) return null;
-      if (!Array.isArray(raw.columns) || raw.columns.length < 2 || raw.columns.length > 3) {
+      if (
+        !Array.isArray(raw.columns) ||
+        raw.columns.length < 2 ||
+        raw.columns.length > MAX_COLUMNS
+      ) {
         return null;
       }
       const columns: PostBlock[][] = [];
