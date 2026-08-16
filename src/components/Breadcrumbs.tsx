@@ -3,6 +3,7 @@ import type { Locale } from "@/content/types";
 import { localeHref } from "@/lib/links";
 import { SITE_URL } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
+import { Container } from "@/components/ui/Container";
 
 export interface Crumb {
   label: string;
@@ -22,24 +23,28 @@ export function Breadcrumbs({ locale, items }: { locale: Locale; items: Crumb[] 
     })),
   };
   return (
-    <nav aria-label="Breadcrumb" className="mx-auto max-w-4xl px-4 pt-6 text-sm">
+    <Container as="nav" aria-label="Breadcrumb" className="pt-6 text-sm">
       <JsonLd data={data} />
-      <ol className="flex flex-wrap gap-1 text-neutral-600">
+      <ol className="flex flex-wrap gap-x-2 gap-y-1 text-muted">
         {items.map((item, i) => (
-          <li key={`${item.label}-${i}`} className="flex items-center gap-1">
-            {i > 0 && <span aria-hidden="true">/</span>}
+          <li key={`${item.label}-${i}`} className="flex items-center gap-2">
+            {i > 0 && (
+              <span aria-hidden="true" className="text-ink-300">
+                /
+              </span>
+            )}
             {item.href ? (
-              <Link href={localeHref(locale, item.href)} className="hover:underline">
+              <Link href={localeHref(locale, item.href)} className="font-semibold hover:text-ink hover:underline">
                 {item.label}
               </Link>
             ) : (
-              <span aria-current="page" className="text-neutral-900">
+              <span aria-current="page" className="font-semibold text-ink">
                 {item.label}
               </span>
             )}
           </li>
         ))}
       </ol>
-    </nav>
+    </Container>
   );
 }

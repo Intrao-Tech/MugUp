@@ -33,16 +33,16 @@ function BlockContent({ block }: { block: PostBlock }) {
   const align = block.align ?? "left";
   switch (block.kind) {
     case "h2":
-      return <h2 className={`text-2xl font-bold ${ALIGN_CLS[align]}`}>{renderInline(block.text)}</h2>;
+      return <h2 className={`text-h2 text-ink ${ALIGN_CLS[align]}`}>{renderInline(block.text)}</h2>;
     case "h3":
       return (
-        <h3 className={`text-xl font-semibold ${ALIGN_CLS[align]}`}>{renderInline(block.text)}</h3>
+        <h3 className={`text-h3 text-ink ${ALIGN_CLS[align]}`}>{renderInline(block.text)}</h3>
       );
     case "ul": {
       // A centered/right list keeps its bullets readable: the list itself is
       // left-aligned and the whole box shifts.
       const list = (
-        <ul className="list-disc space-y-1 pl-5 text-left text-neutral-700">
+        <ul className="list-disc space-y-1 pl-5 text-left text-body">
           {block.items.map((item, i) => (
             <li key={i}>{renderInline(item)}</li>
           ))}
@@ -53,7 +53,7 @@ function BlockContent({ block }: { block: PostBlock }) {
     case "quote":
       return (
         <blockquote
-          className={`border-l-4 border-neutral-300 pl-4 text-neutral-600 italic ${ALIGN_CLS[align]}`}
+          className={`border-l-4 border-line pl-4 text-muted italic ${ALIGN_CLS[align]}`}
         >
           {renderInline(block.text)}
         </blockquote>
@@ -64,7 +64,7 @@ function BlockContent({ block }: { block: PostBlock }) {
         <figure>
           {align === "left" ? image : <div className={`flex ${JUSTIFY_CLS[align]}`}>{image}</div>}
           {block.caption && (
-            <figcaption className="mt-2 text-center text-sm text-neutral-500">
+            <figcaption className="mt-2 text-center text-sm text-muted">
               {renderInline(block.caption)}
             </figcaption>
           )}
@@ -77,7 +77,7 @@ function BlockContent({ block }: { block: PostBlock }) {
         <div className={`flex ${JUSTIFY_CLS[align]}`}>
           <a
             href={block.href}
-            className="inline-block border border-neutral-900 bg-neutral-900 px-6 py-2 font-medium text-white"
+            className="inline-flex min-h-11 items-center rounded-full bg-primary px-6 py-2.5 font-bold text-on-primary hover:bg-primary-hover"
             {...(external ? { rel: "noopener" } : {})}
           >
             {block.label}
@@ -86,7 +86,7 @@ function BlockContent({ block }: { block: PostBlock }) {
       );
     }
     case "divider":
-      return <hr className="border-neutral-200" />;
+      return <hr className="border-line" />;
     case "spacer":
       return <div aria-hidden="true" className={SPACER_CLS[block.size]} />;
     case "columns":
@@ -107,7 +107,7 @@ function BlockContent({ block }: { block: PostBlock }) {
         </div>
       );
     default:
-      return <p className={`text-neutral-700 ${ALIGN_CLS[align]}`}>{renderInline(block.text)}</p>;
+      return <p className={`text-body ${ALIGN_CLS[align]}`}>{renderInline(block.text)}</p>;
   }
 }
 

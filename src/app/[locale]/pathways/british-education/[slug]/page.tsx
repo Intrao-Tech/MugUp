@@ -66,13 +66,13 @@ export default async function ProgrammePage({ params }: Props) {
       <section
         id="at-a-glance"
         aria-label={dict.ui.atAGlance}
-        className="mx-auto max-w-4xl px-4 py-4"
+        className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8"
       >
-        <h2 className="text-xl font-bold">{dict.ui.atAGlance}</h2>
+        <h2 className="text-h3 text-ink">{dict.ui.atAGlance}</h2>
         <dl className="mt-3 flex flex-wrap gap-x-10 gap-y-3">
           {page.atAGlance.map((item) => (
             <div key={item.label}>
-              <dt className="text-sm text-neutral-500">{item.label}</dt>
+              <dt className="text-sm text-muted">{item.label}</dt>
               <dd className="font-medium">{item.value}</dd>
             </div>
           ))}

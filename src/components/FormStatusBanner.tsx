@@ -8,14 +8,14 @@ export function FormStatusBanner({ sentText, errorText }: { sentText: string; er
   const params = useSearchParams();
   if (params.get("sent")) {
     return (
-      <p role="status" className="border border-green-500 bg-green-50 p-3 text-sm text-green-900">
+      <p role="status" className="rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-800">
         {sentText}
       </p>
     );
   }
   if (params.get("error")) {
     return (
-      <p role="alert" className="border border-red-400 bg-red-50 p-3 text-sm text-red-800">
+      <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
         {errorText}
       </p>
     );

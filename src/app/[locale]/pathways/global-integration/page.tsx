@@ -23,7 +23,6 @@ export default async function GlobalIntegrationPage({ params }: Props) {
         locale={locale}
         items={[
           { label: dict.ui.breadcrumbsHome, href: "/" },
-          { label: dict.nav.pathways },
           { label: dict.nav.pathwaysGlobal },
         ]}
       />

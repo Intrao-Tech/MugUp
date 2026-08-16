@@ -5,7 +5,6 @@ export const common: CommonDict = {
   nav: {
     home: "Home",
     about: "About",
-    pathways: "Pathways",
     pathwaysBritish: "British Education",
     pathwaysGlobal: "Global Integration",
     courses: "Courses & Programmes",

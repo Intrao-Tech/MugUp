@@ -2,52 +2,58 @@ import Link from "next/link";
 import type { CommonDict, Locale } from "@/content/types";
 import { localeHref } from "@/lib/links";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { MobileNav } from "@/components/MobileNav";
+import { NavLink } from "@/components/NavLink";
+import { Button } from "@/components/ui/Button";
+import { Container } from "@/components/ui/Container";
 
-// Minimal accessible navigation: top-level links, a no-JS dropdown for
-// Pathways (<details>), Book Assessment as the primary CTA, locale switcher.
 export function Header({ locale, dict }: { locale: Locale; dict: CommonDict }) {
   const { nav } = dict;
-  const item = "px-2 py-1 hover:underline";
+  const links = [
+    { href: `/${locale}`, label: nav.home, exact: true },
+    { href: localeHref(locale, "/pathways/british-education"), label: nav.pathwaysBritish },
+    { href: localeHref(locale, "/pathways/global-integration"), label: nav.pathwaysGlobal },
+    { href: localeHref(locale, "/courses"), label: nav.courses },
+    { href: localeHref(locale, "/about"), label: nav.about },
+    { href: localeHref(locale, "/insights"), label: nav.insights },
+    { href: localeHref(locale, "/contact"), label: nav.contact },
+  ];
   return (
-    <header className="border-b border-neutral-300">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-        <Link href={`/${locale}`} className="mr-auto flex items-center gap-2 font-bold">
-          <img src="/images/logo.png" alt="" className="h-8 w-auto" />
-          <span>{dict.siteName}</span>
+    <header className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur supports-[backdrop-filter]:bg-canvas/80">
+      <Container size="wide" className="relative flex min-h-16 items-center gap-2 py-2 sm:gap-4">
+        <Link href={`/${locale}`} className="mr-auto flex items-center rounded-lg py-1">
+          <img
+            src="/images/logo-nav.png"
+            alt=""
+            width={640}
+            height={562}
+            className="h-11 w-auto sm:h-12"
+          />
+          <span className="sr-only">{dict.siteName}</span>
         </Link>
-        {/* Nav per the final client doc (Aug 2026) + Insights kept for the
-            SEO funnel; labels may still shift with the design round. */}
-        <nav aria-label="Main" className="flex flex-wrap items-center gap-1">
-          <Link href={`/${locale}`} className={item}>
-            {nav.home}
-          </Link>
-          <Link href={localeHref(locale, "/pathways/british-education")} className={item}>
-            {nav.pathwaysBritish}
-          </Link>
-          <Link href={localeHref(locale, "/pathways/global-integration")} className={item}>
-            {nav.pathwaysGlobal}
-          </Link>
-          <Link href={localeHref(locale, "/courses")} className={item}>
-            {nav.courses}
-          </Link>
-          <Link href={localeHref(locale, "/about")} className={item}>
-            {nav.about}
-          </Link>
-          <Link href={localeHref(locale, "/insights")} className={item}>
-            {nav.insights}
-          </Link>
-          <Link href={localeHref(locale, "/contact")} className={item}>
-            {nav.contact}
-          </Link>
-          <Link
-            href={localeHref(locale, "/book-assessment")}
-            className="ml-2 border border-neutral-900 px-3 py-1 font-medium"
+
+        <MobileNav label={dict.ui.openMenu}>
+          <nav
+            aria-label="Main"
+            className="absolute inset-x-0 top-full flex max-h-[calc(100dvh-4rem)] flex-col gap-1 overflow-y-auto border-b border-line bg-canvas px-4 py-4 shadow-lift sm:px-6 xl:static xl:max-h-none xl:flex-row xl:items-center xl:gap-1 xl:overflow-visible xl:border-0 xl:bg-transparent xl:p-0 xl:shadow-none"
           >
-            {nav.bookAssessment}
-          </Link>
-        </nav>
+            {links.map((l) => (
+              <NavLink key={l.href} href={l.href} exact={l.exact}>
+                {l.label}
+              </NavLink>
+            ))}
+            <Button
+              href={localeHref(locale, "/book-assessment")}
+              size="sm"
+              className="mt-3 self-start xl:ml-3 xl:mt-0"
+            >
+              {nav.bookAssessment}
+            </Button>
+          </nav>
+        </MobileNav>
+
         <LocaleSwitcher current={locale} label={dict.ui.localeSwitchLabel} />
-      </div>
+      </Container>
     </header>
   );
 }

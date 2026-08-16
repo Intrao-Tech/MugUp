@@ -47,7 +47,6 @@ export default async function BritishEducationHub({ params }: Props) {
         locale={locale}
         items={[
           { label: dict.ui.breadcrumbsHome, href: "/" },
-          { label: dict.nav.pathways },
           { label: dict.nav.pathwaysBritish },
         ]}
       />
@@ -56,13 +55,13 @@ export default async function BritishEducationHub({ params }: Props) {
         <SectionView key={section.id} section={section} locale={locale} />
       ))}
       {groups.map((group) => (
-        <section key={group} id={group} className="mx-auto max-w-4xl px-4 py-8">
-          <h2 className="text-2xl font-bold">{GROUP_LABELS[locale][group]}</h2>
+        <section key={group} id={group} className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+          <h2 className="text-h2 text-ink">{GROUP_LABELS[locale][group]}</h2>
           <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {programmes
               .filter((p) => p.group === group)
               .map((p) => (
-                <li key={p.slug} className="border border-neutral-300 p-4">
+                <li key={p.slug} className="rounded-card border border-ink bg-surface p-6 shadow-plate">
                   <h3 className="font-semibold">
                     <Link
                       href={localeHref(locale, `/pathways/british-education/${p.slug}`)}
@@ -71,7 +70,7 @@ export default async function BritishEducationHub({ params }: Props) {
                       {p.cardTitle}
                     </Link>
                   </h3>
-                  <p className="mt-2 text-sm text-neutral-700">{p.cardBlurb}</p>
+                  <p className="mt-2 text-sm text-body">{p.cardBlurb}</p>
                 </li>
               ))}
           </ul>

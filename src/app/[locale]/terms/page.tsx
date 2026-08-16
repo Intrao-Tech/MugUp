@@ -29,9 +29,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function TermsPage({ params }: Props) {
   const { locale } = await params;
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-bold">{COPY[locale].title}</h1>
-      <p className="mt-4 text-neutral-700">{COPY[locale].body}</p>
+    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+      <h1 className="text-display text-ink">{COPY[locale].title}</h1>
+      <p className="mt-4 text-body">{COPY[locale].body}</p>
     </div>
   );
 }

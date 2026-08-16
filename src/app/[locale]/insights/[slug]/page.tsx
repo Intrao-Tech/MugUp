@@ -68,14 +68,14 @@ export default async function InsightPostPage({ params }: Props) {
       {/* The body container is deliberately unconstrained: builder-v2 blocks
           carry their own width wrappers (normal / wide / full-bleed). */}
       <article className="py-8">
-        <div className="mx-auto max-w-3xl px-4">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           {post.sample && (
-            <p className="mb-4 border border-amber-400 bg-amber-50 p-3 text-sm text-amber-900">
+            <p className="mb-4 rounded-lg border border-sun-300 bg-sun-100 px-4 py-3 text-sm font-semibold text-ink">
               {dict.ui.samplePostNotice}
             </p>
           )}
           <header>
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-muted">
               {new Date(post.date).toLocaleDateString(locale === "ua" ? "uk-UA" : "en-GB")}
               {category && (
                 <>
@@ -85,7 +85,7 @@ export default async function InsightPostPage({ params }: Props) {
               )}
               {post.author && <> · {post.author}</>}
             </p>
-            <h1 className="mt-2 text-3xl font-bold">{post.title}</h1>
+            <h1 className="mt-2 text-display text-ink">{post.title}</h1>
           </header>
           {post.heroImageUrl && (
             <img src={post.heroImageUrl} alt={post.heroImageAlt} className="mt-6 w-full" />
@@ -96,20 +96,20 @@ export default async function InsightPostPage({ params }: Props) {
             <PostBody blocks={post.bodyBlocks} />
           </div>
         ) : (
-          <div className="mx-auto mt-6 max-w-3xl space-y-4 px-4">
+          <div className="mx-auto mt-6 max-w-3xl space-y-4 px-4 sm:px-6 lg:px-8">
             {post.bodyMd !== null ? (
               <Markdown source={post.bodyMd} />
             ) : (
-              post.blocks?.map((block, i) => <BlockView key={i} block={block} locale={locale} />)
+              post.blocks?.map((block, i) => <BlockView key={i} block={block} locale={locale} variant="article" />)
             )}
           </div>
         )}
-        <div className="mx-auto max-w-3xl px-4">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           {post.ctaLabel && post.ctaUrl && (
-            <aside className="mt-8 border border-neutral-900 p-6 text-center">
+            <aside className="mt-8 border border-ink p-6 text-center">
               <a
                 href={post.ctaUrl.startsWith("http") ? post.ctaUrl : `/${locale}${post.ctaUrl}`}
-                className="inline-block border border-neutral-900 px-6 py-2 font-medium"
+                className="inline-flex min-h-11 items-center rounded-full border-2 border-ink px-6 py-2 font-bold text-ink hover:bg-ink hover:text-surface"
               >
                 {post.ctaLabel}
               </a>

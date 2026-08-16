@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { FormSpec, Locale } from "@/content/types";
 import { submitLead } from "@/app/actions/leads";
 import { FormStatusBanner } from "@/components/FormStatusBanner";
+import { Button } from "@/components/ui/Button";
 
 interface FormRendererProps {
   form: FormSpec;
@@ -24,11 +25,12 @@ export function FormRenderer({
   sentText,
   errorText,
 }: FormRendererProps) {
-  const inputCls = "mt-1 w-full border border-neutral-400 px-3 py-2";
+  const inputCls =
+    "mt-1.5 w-full rounded-lg border border-ink-300 bg-surface px-3.5 py-2.5 text-base text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30";
   return (
-    <form action={enabled ? submitLead : undefined} aria-label={form.title} className="mx-auto max-w-2xl space-y-4">
-      <h3 className="text-xl font-semibold">{form.title}</h3>
-      {form.intro && <p className="text-neutral-700">{form.intro}</p>}
+    <form action={enabled ? submitLead : undefined} aria-label={form.title} className="mx-auto max-w-2xl space-y-5 rounded-card border border-ink bg-surface p-6 sm:p-8">
+      <h3 className="text-h3 text-ink">{form.title}</h3>
+      {form.intro && <p>{form.intro}</p>}
       <Suspense fallback={null}>
         <FormStatusBanner sentText={sentText} errorText={errorText} />
       </Suspense>
@@ -42,7 +44,7 @@ export function FormRenderer({
       {form.fields.map((field) => {
         const id = `f-${formKind}-${field.name}`;
         const label = (
-          <label htmlFor={id} className="block text-sm font-medium">
+          <label htmlFor={id} className="block text-sm font-bold text-ink">
             {field.label}
             {field.required && <span aria-hidden="true"> *</span>}
           </label>
@@ -50,8 +52,14 @@ export function FormRenderer({
         return (
           <div key={field.name}>
             {field.type === "checkbox" ? (
-              <label htmlFor={id} className="flex items-start gap-2 text-sm">
-                <input id={id} name={field.name} type="checkbox" required={field.required} />
+              <label htmlFor={id} className="flex items-start gap-3 text-sm">
+                <input
+                  id={id}
+                  name={field.name}
+                  type="checkbox"
+                  required={field.required}
+                  className="mt-0.5 h-5 w-5 shrink-0 rounded border-ink-300 accent-teal-600"
+                />
                 <span>{field.label}</span>
               </label>
             ) : field.type === "textarea" ? (
@@ -83,18 +91,14 @@ export function FormRenderer({
                 />
               </>
             )}
-            {field.hint && <p className="mt-1 text-xs text-neutral-500">{field.hint}</p>}
+            {field.hint && <p className="mt-1.5 text-sm text-muted">{field.hint}</p>}
           </div>
         );
       })}
-      <button
-        type="submit"
-        disabled={!enabled}
-        className="border border-neutral-900 px-5 py-2 font-medium disabled:opacity-50"
-      >
+      <Button type="submit" disabled={!enabled} size="lg" className="w-full sm:w-auto">
         {form.submitLabel}
-      </button>
-      {!enabled && <p className="text-sm text-neutral-500">{notWiredNote}</p>}
+      </Button>
+      {!enabled && <p className="text-sm text-muted">{notWiredNote}</p>}
     </form>
   );
 }
