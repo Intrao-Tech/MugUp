@@ -5,7 +5,6 @@ export const common: CommonDict = {
   nav: {
     home: "Головна",
     about: "Про нас",
-    pathways: "Напрями",
     pathwaysBritish: "Британська освіта",
     pathwaysGlobal: "Глобальна інтеграція",
     courses: "Курси та програми",

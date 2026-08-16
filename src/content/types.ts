@@ -198,7 +198,6 @@ export interface InsightPost {
 export interface NavDict {
   home: string;
   about: string;
-  pathways: string;
   pathwaysBritish: string;
   pathwaysGlobal: string;
   courses: string;
