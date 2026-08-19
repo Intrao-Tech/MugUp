@@ -133,9 +133,13 @@ Known deliberate deviation from the TZ: `Contact` appears in the header nav
   only body for pre-v2 posts and the fallback whenever `body_blocks` is null).
 - `post_categories` — admin-managed (slug + label_en + label_ua + sort);
   delete restricted while posts reference it.
-- `custom_roles` — admin-defined permission presets next to the built-in
-  three, editable after creation (name + permissions, optional "apply to
-  current members"; a role stays cosmetic — flags enforce).
+- `roles` — ALL role presets, built-in (admin/manager/editor, `built_in`
+  flag: fixed slug/name, undeletable) and custom, edited in one panel
+  (Team → Roles): permissions + the notification events the role receives;
+  saving re-applies the permission set to every member holding the role.
+  Guards: the admin role can never lose `users.manage`; you cannot apply a
+  users.manage-less set to your own role; per-account flags remain the
+  enforcement source of truth and stay individually tunable.
 - `admin_settings` — key/value; today `session_timeout_minutes` (idle
   sign-out, middleware-enforced).
 - `notifications` + `notification_role_events` + `notification_reads` —
@@ -176,11 +180,15 @@ every role dropdown, deletable only while unused; self-lockout guard) ·
 Notifications (in-admin notification centre: events — new booking / contact /
 partnership enquiry, new review, post published/scheduled — land in the
 `notifications` feed with a deep-link href (enquiry card / reviews / post);
-routing is PER ROLE (`notification_role_events`): an administrator ticks
-which events each role receives, members inherit their role's set and cannot
-configure it themselves; an entry counts as read per member only once
-clicked (`notification_reads`), NEW badge + mark-all-as-read; optional email
-copy of enquiry/review events via env — docs/EMAIL-SETUP.md) · Activity (range chips
+routing is PER ROLE and lives in the role editor (Team → Roles,
+`notification_role_events`): members inherit their role's set and cannot
+configure it themselves, and an event is only offered/delivered with the
+matching permission (`NOTIFICATION_EVENT_PERMISSION`: enquiries need
+leads.view, reviews need reviews.moderate, posts need posts.edit — the feed
+re-filters by the member's own flags as the final gate); an entry counts as
+read per member only once clicked (`notification_reads`), NEW badge +
+mark-all-as-read; optional email copy of enquiry/review events via env —
+docs/EMAIL-SETUP.md) · Activity (range chips
 today/7d/30d/all + custom from–to dates, stats: totals, per-module, top
 actors, busiest day) · Settings (account info + change own password requiring
 the current password; Security card for managers — idle session timeout,

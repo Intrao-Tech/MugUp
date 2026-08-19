@@ -241,3 +241,23 @@ page-by-page in `docs/HANDOFF-ADMIN-CRM.md`.
     just see their role's feed with no self-configuration. Built-in role
     defaults seeded: admin = everything, manager = enquiries + reviews,
     editor = reviews + posts. Deleting a custom role removes its routing.
+
+## Internal feedback round (16–17 Aug)
+
+1. Logic hole fixed: the manager role was routed review_new but lacked
+   reviews.moderate — clicking the notification hit "access denied". An
+   event now REQUIRES its matching permission
+   (`NOTIFICATION_EVENT_PERMISSION` in db-types): the role editor disables
+   unavailable events (with a "needs …" hint) and auto-unticks them when the
+   permission is removed, the server strips them on save, the feed
+   re-filters by the member's own flags, and migration 0010 removed
+   review_new from the manager defaults.
+2. ONE role panel (user-confirmed choices): built-in roles moved into the DB
+   (migration 0010, `custom_roles` renamed to `roles` + `built_in` flag), so
+   Admin/Manager/Editor are edited exactly like custom roles — pick a role
+   tab, edit its permissions AND its notifications in a single form; saving
+   ALWAYS re-applies the permission set to every member with the role (no
+   opt-in checkbox anymore). Built-ins keep slug/name and cannot be deleted;
+   the admin role cannot lose "Manage users"; self-lockout guarded. The
+   Notifications page is now a pure feed (config lives in Team → Roles);
+   creating a role moved into a collapsible "+ Create a new role".

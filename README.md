@@ -8,9 +8,10 @@ Documentation: `docs/SPEC.md` (full as-built spec) · `docs/HANDOFF-DESIGN.md`
 `docs/EMAIL-SETUP.md` (outgoing email) · `docs/DEPLOY.md` (production) ·
 `CLAUDE.md` (AI-assistant onboarding).
 
-**Current stage: structure skeleton.** Full page structure, navigation, bilingual
-content and technical SEO are in place; visual design is intentionally absent —
-it is applied later by the design developer on top of the existing components.
+**Stage: structure complete, visual design in progress.** Every page, both
+languages, navigation, technical SEO and the admin panel are done; the design
+developer applies the visual layer on top of the existing components
+(`docs/HANDOFF-DESIGN.md`).
 
 ## Stack
 
@@ -48,6 +49,53 @@ seeding. Test accounts: `admin@` / `manager@` / `editor@mugup.local`, password
 `npx supabase migration up` applies only NEW migrations without wiping data;
 `npm run db:stop` stops the containers.
 
+### Seeding a hosted project
+
+`seed:dev` refuses any non-local URL. To seed a hosted (staging/test)
+project, copy `.env.remote.example` to `.env.remote`, fill in the project
+URL + service-role key, set `SEED_ALLOW_REMOTE=1` and your own
+`SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD`, then:
+
+```bash
+npx supabase link --project-ref <ref>   # once
+npx supabase db push                    # apply migrations 0001-0010
+npm run seed:remote                     # administrator (+ demo data)
+```
+
+A named `SEED_ADMIN_EMAIL` replaces the `@mugup.local` demo trio entirely —
+`admin123` accounts never reach a hosted project. `SEED_DEMO_DATA=0` creates
+only the administrator. Re-running repairs an existing account's
+role/permissions instead of failing.
+
+Seeding is idempotent: accounts get their role/permissions refreshed, demo
+enquiries and reviews go in only while those tables are still empty, posts
+are upserted by slug+locale.
+
+### Seeding from a deployment — one switch
+
+`npm run build` starts with `scripts/deploy-seed.mjs`, which is a no-op
+unless **`SEED_ON_DEPLOY=true`** is present in the build environment. So on
+Vercel: add that one variable in Settings → Environment Variables, redeploy,
+and the build seeds the database it is configured against.
+
+Everything else has a default, so the flag alone is enough:
+
+| Variable | Default |
+| --- | --- |
+| `SEED_ADMIN_EMAIL` | `LEADS_NOTIFY_EMAIL`, else `admin@mugupstudio.com` |
+| `SEED_ADMIN_PASSWORD` | generated and printed in the build log |
+| `SEED_ADMIN_NAME` | `Administrator` |
+| `SEED_DEMO_DATA` | `1` (set `0` for the administrator only) |
+
+The build log ends with a `[deploy-seed] === SIGN IN TO THE ADMIN PANEL ===`
+block carrying the login and password. **Remove `SEED_ON_DEPLOY` afterwards**
+so later builds stop seeding. A seeding failure is logged but never fails the
+build, and re-runs never duplicate data.
+
+Note: this seeds DATA. The schema itself (`supabase/migrations`) still has to
+be applied once — a service-role key cannot run DDL, only `db push` or the
+SQL editor can.
+
 Emails (invites, password resets, enquiry copies): work out of the box into
 Mailpit (http://localhost:54324, nothing leaves the machine); to send REAL
 email from the local machine set the SMTP vars — see `docs/EMAIL-SETUP.md`.
@@ -58,14 +106,14 @@ email from the local machine set the SMTP vars — see `docs/EMAIL-SETUP.md`.
    eu-west-2**; production project lives on the client's account, use your own
    free project for development).
 2. **Schema** — apply every file in `supabase/migrations/` in order (0001 →
-   0006): either `npx supabase db push` with the project linked, or paste each
+   0010): either `npx supabase db push` with the project linked, or paste each
    file into the SQL editor (tables, RLS, triggers, storage buckets).
 3. **Env vars** — copy `.env.example` to `.env.local`, fill in Project URL +
    anon key + service-role key (dashboard → Settings → API). The service-role
    key is server-only: never commit it, never expose it to the browser.
-4. **First admin** — dashboard → Authentication → Add user (email + password,
-   tick *Auto confirm*), then edit your email into `supabase/seed_admin.sql`
-   and run it in the SQL editor.
+4. **First admin** — easiest is `npm run seed:remote` (see “Seeding a hosted
+   project” above). Manually: dashboard → Authentication → Add user (tick
+   *Auto confirm*), then run `supabase/seed_admin.sql` with your email.
 5. `npm run dev` → `http://localhost:3000/admin` → sign in.
 
 ## Admin panel
@@ -81,9 +129,10 @@ builder: drag & drop, per-block width/alignment, side-by-side columns,
 buttons, captions, live preview; draft/publish/schedule/unpublish/delete —
 the public site updates within seconds via revalidation), Team (invite by
 email, one-click password reset email, member deletion, custom roles),
-Notifications (in-admin feed with per-member event subscriptions),
-Activity log (date filters + stats), Settings (change own password with the
-current password required; idle session timeout, default 15 min).
+Notifications (in-admin feed; routing configured per role in Team → Roles),
+Activity log (date filters + stats), Settings (change own password — the
+current one is required except on a first login with a temporary password;
+idle session timeout, default 15 min).
 
 **Where it lives — not on the public site.** Access is controlled by env vars:
 
@@ -99,9 +148,10 @@ current password required; idle session timeout, default 15 min).
   or the hosting provider's firewall) in front of the admin host — the
   app-level allowlist is defence-in-depth, not a VPN replacement.
 
-**Access model:** a *role* is just a preset (built-in `admin` / `manager` /
-`editor` + admin-defined custom roles); enforcement uses per-account
-permission flags, editable per user in Team: `leads.view`, `leads.manage`,
+**Access model:** a *role* is a preset stored in the `roles` table (built-in
+`admin`/`manager`/`editor` + custom ones, all editable in Team → Roles along
+with the notifications they receive); enforcement uses per-account permission
+flags, tunable per user: `leads.view`, `leads.manage`,
 `leads.export`, `leads.pii`, `posts.edit`, `posts.publish`,
 `reviews.moderate`, `analytics.view`, `users.manage`. Editor deliberately has
 no access to leads (personal data, GDPR minimisation); learner PII
@@ -124,7 +174,7 @@ The active backend is chosen by the `DATA_BACKEND` env var.
 
 Migrating off Supabase = implement `DataBackend` once and flip one env var:
 
-1. `src/lib/data/<name>/backend.ts` — implement the six ports (any Postgres
+1. `src/lib/data/<name>/backend.ts` — implement the ports (any Postgres
    driver, any S3-compatible storage, any auth provider);
 2. swap `refreshAdminSession` (`src/lib/data/<name>/middleware.ts`) — the one
    vendor-specific call the root middleware makes;
