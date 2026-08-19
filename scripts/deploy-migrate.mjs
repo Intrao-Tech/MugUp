@@ -35,7 +35,22 @@ const client = new pg.Client({
   connectionString: url,
   ssl: local ? false : { rejectUnauthorized: false },
 });
-await client.connect();
+
+try {
+  await client.connect();
+} catch (error) {
+  // Supabase's DIRECT host (db.<ref>.supabase.co) resolves to IPv6 only,
+  // and CI builders (Vercel included) are IPv4-only — the connection dies
+  // before any SQL runs. The session pooler is dual-stack.
+  if (["ENETUNREACH", "ENOTFOUND", "EAI_AGAIN"].includes(error.code)) {
+    log(`cannot reach the database (${error.code} ${error.address ?? ""}).`);
+    log("If this is Supabase's DIRECT connection string, switch SUPABASE_DB_URL to the");
+    log("SESSION POOLER one: dashboard -> Connect -> Session pooler. It looks like");
+    log("postgresql://postgres.<project-ref>:PASSWORD@aws-0-<region>.pooler.supabase.com:5432/postgres");
+    log("(port 5432 = session mode; the 6543 transaction pooler cannot run migrations).");
+  }
+  throw error;
+}
 
 try {
   await client.query("create schema if not exists supabase_migrations");

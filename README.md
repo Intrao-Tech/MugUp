@@ -73,10 +73,15 @@ are upserted by slug+locale.
 
 ### Applying the schema from a deployment
 
-Set **`SUPABASE_DB_URL`** in the hosting environment (Supabase dashboard →
-Connect → Direct connection, with the database password filled in) and every
-build applies the pending migrations before building
-(`scripts/deploy-migrate.mjs`). Nothing to run by hand, nothing to log into.
+Set **`SUPABASE_DB_URL`** in the hosting environment and every build applies
+the pending migrations before building (`scripts/deploy-migrate.mjs`).
+Nothing to run by hand, nothing to log into.
+
+Take the **Session pooler** string (Supabase dashboard → Connect → Session
+pooler, port 5432), not the Direct one: `db.<ref>.supabase.co` resolves to
+IPv6 only and CI builders — Vercel included — are IPv4-only, so a direct
+string fails with `ENETUNREACH`. Port 6543 (transaction pooler) cannot run
+migrations; session mode can.
 
 Applied versions are recorded in `supabase_migrations.schema_migrations` —
 the same table the Supabase CLI uses — so this runner and `supabase db push`
