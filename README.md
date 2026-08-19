@@ -71,6 +71,21 @@ Seeding is idempotent: accounts get their role/permissions refreshed, demo
 enquiries and reviews go in only while those tables are still empty, posts
 are upserted by slug+locale.
 
+### Applying the schema from a deployment
+
+Set **`SUPABASE_DB_URL`** in the hosting environment (Supabase dashboard →
+Connect → Direct connection, with the database password filled in) and every
+build applies the pending migrations before building
+(`scripts/deploy-migrate.mjs`). Nothing to run by hand, nothing to log into.
+
+Applied versions are recorded in `supabase_migrations.schema_migrations` —
+the same table the Supabase CLI uses — so this runner and `supabase db push`
+stay interchangeable and no migration is ever applied twice. Each migration
+runs in its own transaction, and a failure FAILS the build on purpose:
+shipping an app against a schema it does not have is worse than not shipping.
+Without the variable the step is skipped entirely (local development uses the
+CLI).
+
 ### Seeding from a deployment — one switch
 
 `npm run build` starts with `scripts/deploy-seed.mjs`, which is a no-op
@@ -92,9 +107,7 @@ block carrying the login and password. **Remove `SEED_ON_DEPLOY` afterwards**
 so later builds stop seeding. A seeding failure is logged but never fails the
 build, and re-runs never duplicate data.
 
-Note: this seeds DATA. The schema itself (`supabase/migrations`) still has to
-be applied once — a service-role key cannot run DDL, only `db push` or the
-SQL editor can.
+Note: this seeds DATA; the schema is handled by `SUPABASE_DB_URL` above.
 
 Emails (invites, password resets, enquiry copies): work out of the box into
 Mailpit (http://localhost:54324, nothing leaves the machine); to send REAL
