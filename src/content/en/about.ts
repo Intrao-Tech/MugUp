@@ -200,6 +200,7 @@ export const page: Page = {
           members: [
             {
               name: "Ievgeniia Angerchik, PhD, CELTA",
+              photo: "/images/team/ievgeniia.jpg",
               role: "Founder & Director | Education Consultant",
               bio: "Founder of Mug.Up Language Studio Ltd, education expert, and language learning consultant with extensive experience supporting learners, families, and migrants in achieving their academic, professional, and integration goals. Specialising in GCSE, IELTS, ESOL, and SELT preparation, Ievgeniia helps students develop language confidence, navigate educational pathways, and successfully adapt to life and learning in the UK.",
             },
