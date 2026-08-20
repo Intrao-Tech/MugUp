@@ -7,7 +7,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
 import { ScrollToTop } from "@/components/ScrollToTop";
-import { brandFont } from "@/lib/fonts";
+import { fontVariables } from "@/lib/fonts";
 import { ORGANIZATION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -46,7 +46,7 @@ export default async function LocaleLayout({
   const typedLocale = locale as Locale;
   const dict = getCommon(typedLocale);
   return (
-    <html lang={HTML_LANG[typedLocale]} className={brandFont.variable}>
+    <html lang={HTML_LANG[typedLocale]} className={fontVariables}>
       <body className="flex min-h-screen flex-col antialiased">
         <a
           href="#content"

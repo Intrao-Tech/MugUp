@@ -21,7 +21,7 @@ export const page: ProgrammePage = {
       "It is about communicating with confidence, accessing education, finding employment, supporting your family, and feeling at home in everyday life in the UK.",
       "At Mug.Up, our ESOL programmes help learners develop practical English skills while building the confidence to live, work, and thrive in Britain.",
     ],
-    ctas: [{ label: "Book Your Assessment", href: "/book-assessment" }],
+    ctas: [{ label: "Book an Assessment", href: "/book-assessment" }],
   },
   atAGlance: [
     { label: "Level", value: "Entry Level – Level 2" },
@@ -90,7 +90,7 @@ export const page: ProgrammePage = {
           type: "cta",
           title: "Start with the Right Guidance",
           body: "Every learner has different experiences, goals, and ambitions. Our personalised assessment helps us understand your current English level and recommend the ESOL programme that best supports your learning journey and future opportunities.",
-          cta: { label: "Book Your Assessment", href: "/book-assessment" },
+          cta: { label: "Book an Assessment", href: "/book-assessment" },
         },
       ],
     },

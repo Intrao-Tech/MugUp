@@ -240,10 +240,10 @@ export const page: Page = {
     },
     {
       id: "international-language-qualifications",
-      eyebrow: "Qualifications for Global Opportunities",
-      title: "International Language Qualifications",
+      eyebrow: "Tests for Global Opportunities",
+      title: "International Language Tests",
       intro:
-        "Preparation for internationally recognised language qualifications for education, work, migration requirements and international mobility.",
+        "Preparation for internationally recognised language tests for study, work, migration and international mobility. Ages 6–19.",
       blocks: [
         {
           type: "paragraph",
@@ -253,7 +253,7 @@ export const page: Page = {
           type: "buttons",
           ctas: [
             {
-              label: "Explore International Language Qualifications",
+              label: "Explore International Language Tests",
               href: "/pathways/global-integration/qualifications",
             },
           ],

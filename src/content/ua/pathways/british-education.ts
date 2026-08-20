@@ -28,30 +28,30 @@ export const page: Page = {
           type: "cards",
           cards: [
             {
-              eyebrow: "3–11 років",
-              title: "Дошкільна та початкова освіта",
+              eyebrow: "6–11 років · 1–6 класи",
+              title: "Початкова освіта",
               body: "Розвиваємо впевненість, грамотність, математичні навички та міцні академічні підвалини.",
             },
             {
-              eyebrow: "10–11 років",
+              eyebrow: "9–11 років · 5–6 класи",
               title: "Підготовка до SATs",
               body: "Цілеспрямована підтримка, щоб упевнено скласти оцінювання Key Stage.",
               href: "/pathways/british-education/sats-preparation",
             },
             {
-              eyebrow: "9–11 років",
+              eyebrow: "9–11 років · 5–6 класи",
               title: "Підготовка до 11+",
               body: "Фахова підготовка до вступу в граматичні та селективні школи.",
               href: "/pathways/british-education/11-plus-preparation",
             },
             {
-              eyebrow: "11–14 років",
+              eyebrow: "11–14 років · 7–9 класи",
               title: "Середня освіта",
               body: "Академічна підтримка та супровід у ключові роки середньої школи.",
               href: "/pathways/british-education/secondary-education",
             },
             {
-              eyebrow: "14–16 років",
+              eyebrow: "14–16 років · 10–11 класи",
               title: "Підготовка до GCSE",
               body: "Здобувайте високі результати GCSE й залишайте відкритими всі шляхи в майбутнє.",
               href: "/pathways/british-education/gcse-pathways",
@@ -63,15 +63,61 @@ export const page: Page = {
               href: "/pathways/british-education/post-16-pathways",
             },
             {
-              eyebrow: "18+ років",
+              eyebrow: "17–18+ років",
               title: "Вступ до університету",
               body: "Персональний супровід вступу до університету: заяви, мотиваційні листи та співбесіди.",
               href: "/pathways/british-education/university-application-support",
             },
             {
-              eyebrow: "Кар’єра",
+              eyebrow: "18+ · Дорослі, випускники та професіонали",
               title: "Кар’єра та подальший шлях",
               body: "Відкриваємо двері до змістовної кар’єри та можливостей упродовж усього життя.",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "boarding-crosslink",
+      blocks: [
+        {
+          type: "cards",
+          cards: [
+            {
+              title: "British Boarding Schools for International Students",
+              body: "Супровід вступу та академічна підготовка для міжнародних родин, які розглядають пансіонну освіту у Великій Британії.",
+              href: "/pathways/global-integration/boarding-schools",
+              linkLabel: "Переглянути British Boarding Schools",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "uk-qualifications",
+      title: "Кваліфікації та іспити Великої Британії",
+      blocks: [
+        {
+          type: "cards",
+          cards: [
+            {
+              title: "Кваліфікації ESOL",
+              body: "Кваліфікації з англійської мови для носіїв інших мов — підтримка спілкування для життя, роботи та навчання у Великій Британії.",
+              href: "/pathways/british-education/esol",
+            },
+            {
+              title: "Functional Skills English & Maths",
+              body: "Практичні, визнані на національному рівні кваліфікації для роботи, подальшої освіти та повсякденного життя.",
+              href: "/pathways/british-education/functional-skills-english-maths",
+            },
+            {
+              title: "GCSE English & Maths",
+              body: "Базові академічні кваліфікації Великої Британії, які широко вимагаються для подальшої освіти, apprenticeship-програм, університетських шляхів і працевлаштування.",
+            },
+            {
+              title: "Мовні тести з англійської",
+              body: "Іспити IELTS, IELTS for UKVI, Cambridge English, LanguageCert, PTE і Trinity для академічних, професійних та імміграційних цілей.",
+              href: "/pathways/global-integration/qualifications",
             },
           ],
         },
@@ -103,22 +149,6 @@ export const page: Page = {
             {
               title: "Погляд у майбутнє",
               body: "Готуємо учнів до світу, що змінюється.",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "boarding-crosslink",
-      blocks: [
-        {
-          type: "cards",
-          cards: [
-            {
-              title: "British Boarding Schools for International Students",
-              body: "Супровід вступу та академічна підготовка для міжнародних родин, які розглядають пансіонну освіту у Великій Британії.",
-              href: "/pathways/global-integration/boarding-schools",
-              linkLabel: "Переглянути British Boarding Schools",
             },
           ],
         },

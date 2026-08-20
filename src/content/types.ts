@@ -64,6 +64,7 @@ export type Block =
   | { type: "faq"; items: { question: string; answer: string }[] }
   | { type: "team"; members: TeamMember[] }
   | { type: "image"; alt: string; src?: string }
+  | { type: "logos"; items: { src: string; alt: string; href?: string; caption?: string }[] }
   | { type: "cta"; title: string; body?: string; note?: string; cta: Cta }
   | { type: "buttons"; ctas: Cta[] };
 
@@ -102,6 +103,7 @@ export const PROGRAMME_SLUGS = [
   "cambridge-english-qualifications",
   "ielts-preparation",
   "selt-preparation",
+  "languagecert",
   "functional-skills-english-maths",
   "esol",
 ] as const;
@@ -212,6 +214,7 @@ export interface FooterDict {
   contactHeading: string;
   addressLabel: string;
   followHeading: string;
+  copyright: string;
 }
 
 export interface UiDict {

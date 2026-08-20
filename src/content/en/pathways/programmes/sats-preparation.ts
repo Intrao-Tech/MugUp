@@ -108,7 +108,7 @@ export const page: ProgrammePage = {
           type: "cta",
           title: "Start with the Right Guidance",
           body: "Every learner has unique strengths, ambitions, and learning needs. Our personalised assessment helps us identify the pathway that will give your child the strongest foundation for long-term success.",
-          cta: { label: "Book Your Assessment", href: "/book-assessment" },
+          cta: { label: "Book an Assessment", href: "/book-assessment" },
         },
       ],
     },

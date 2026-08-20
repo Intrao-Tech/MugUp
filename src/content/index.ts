@@ -63,15 +63,17 @@ import { page as uaIelts } from "./ua/pathways/programmes/ielts-preparation";
 import { page as uaSelt } from "./ua/pathways/programmes/selt-preparation";
 import { page as uaFunctional } from "./ua/pathways/programmes/functional-skills-english-maths";
 import { page as uaEsol } from "./ua/pathways/programmes/esol";
+import { page as enLanguageCert } from "./en/pathways/programmes/languagecert";
+import { page as uaLanguageCert } from "./ua/pathways/programmes/languagecert";
 
 const PROGRAMMES: Record<Locale, ProgrammePage[]> = {
   en: [
     enSats, enElevenPlus, enSecondary, enGcse, enPost16, enUniversity,
-    enCambridge, enIelts, enSelt, enFunctional, enEsol,
+    enCambridge, enIelts, enSelt, enLanguageCert, enFunctional, enEsol,
   ],
   ua: [
     uaSats, uaElevenPlus, uaSecondary, uaGcse, uaPost16, uaUniversity,
-    uaCambridge, uaIelts, uaSelt, uaFunctional, uaEsol,
+    uaCambridge, uaIelts, uaSelt, uaLanguageCert, uaFunctional, uaEsol,
   ],
 };
 

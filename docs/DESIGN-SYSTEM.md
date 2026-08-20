@@ -76,12 +76,13 @@ intentionally dropped.
 
 ### Type
 
-Font: **Onest** (variable, geometric grotesque with native Cyrillic — the
-open stand-in for the legacy Geometria), loaded once in `src/lib/fonts.ts`
-via `next/font/google` and applied as `brandFont.variable` on every `<html>`
-(locale layout, admin layout, global 404). `--font-sans` maps to it, so plain
-text is already in the brand face. Build needs network to fetch the font
-(fine on Vercel); to go fully offline switch to `next/font/local`.
+Fonts (client-approved, 20 Aug 2026): **Glacial Indifference** (body,
+self-hosted TTF in `src/fonts`, OFL) and **Barlow Condensed Bold**
+(display — all h1/h2/h3 via the base layer + the `font-display` utility),
+with **Onest** kept in every stack as the per-glyph Cyrillic fallback
+(neither approved face covers Cyrillic) and as the admin font. All three
+load in `src/lib/fonts.ts`; apply `fontVariables` on every `<html>` (locale
+layout, admin layout, global 404).
 
 One class = size + line-height + tracking + weight:
 
@@ -139,11 +140,18 @@ type; `variant="article"` for Insights post bodies = plain lists).
 ## 4. Home page section map (ids fixed by the TZ)
 
 hero (owl + ring, one primary CTA) → `what-we-support` (check grid + cta
-panel) → `choose-your-path` (2 accent-barred pathway cards, stretched links)
-→ `how-it-works` (cream; numbered 3×2 grid) → `results` (teal stats strip,
-check grid, testimonial quote rail, review cta rule-row) → `for-parents` (cream) →
+rule-row) → `choose-your-path` (2 pathway study cards) → `how-it-works`
+(cream; numbered 3×2 grid) → `results` (teal stats strip, check grid,
+testimonial quote rail, review cta rule-row) → `for-parents` (cream) →
 `why-mugup` → `meet-our-team` (portrait cards; horizontal scroll-snap < sm)
-→ `insights-preview` (cream) → `final-cta` (ink closing band).
+→ `insights-preview` (cream) → `final-cta` (cream closing band — the client
+vetoed dark CTA bands for readability; dark ink belongs to the FOOTER only).
+
+Cross-page patterns: `meet-our-team` and any `team` block render as ONE
+horizontal `ScrollRail` (scroll-snap + arrow buttons — the Kaplan pattern the
+client referenced); the British `educational-journey` section renders its
+cards as the age-chip TIMELINE rail (nodes on a connecting line); partner
+logos use the `logos` block (ink-ruled tiles).
 
 ## 5. Do / Don't (grep-able)
 

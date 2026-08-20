@@ -42,13 +42,13 @@
   --color-cream-200: #fff1c7;
 
   /* Type scale: one class = size + line-height + tracking + weight. */
-  --text-display: clamp(2.125rem, 1.35rem + 3.4vw, 4rem);
+  --text-display: clamp(2.375rem, 1.5rem + 3.6vw, 4.5rem);
   --text-display--line-height: 1.05;
-  --text-display--letter-spacing: -0.02em;
-  --text-display--font-weight: 800;
-  --text-h2: clamp(1.75rem, 1.35rem + 1.6vw, 2.5rem);
+  --text-display--letter-spacing: 0.005em;
+  --text-display--font-weight: 700;
+  --text-h2: clamp(1.875rem, 1.4rem + 1.8vw, 2.75rem);
   --text-h2--line-height: 1.15;
-  --text-h2--letter-spacing: -0.015em;
+  --text-h2--letter-spacing: 0.005em;
   --text-h2--font-weight: 700;
   --text-h3: 1.25rem;
   --text-h3--line-height: 1.3;
@@ -69,8 +69,8 @@
   --text-quote--font-weight: 400;
   --text-stat: clamp(2.5rem, 2rem + 2vw, 3.5rem);
   --text-stat--line-height: 1;
-  --text-stat--letter-spacing: -0.02em;
-  --text-stat--font-weight: 800;
+  --text-stat--letter-spacing: 0.01em;
+  --text-stat--font-weight: 700;
 
   /* Elevation: flat by default, one hover shadow. */
   --shadow-card: 0 1px 2px rgb(11 30 58 / 0.04);
@@ -98,7 +98,11 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-onest, ui-sans-serif, system-ui, sans-serif);
+  /* Approved brand faces: Glacial Indifference (body) + Barlow Condensed
+     Bold (display). Neither covers Cyrillic — Onest is the per-glyph
+     fallback for the UA locale. */
+  --font-sans: var(--font-glacial, ui-sans-serif), var(--font-onest, ui-sans-serif), system-ui, sans-serif;
+  --font-display: var(--font-barlow, ui-sans-serif), var(--font-glacial, ui-sans-serif), var(--font-onest, ui-sans-serif), system-ui, sans-serif;
 
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
@@ -162,6 +166,18 @@
     html {
       scroll-behavior: auto;
     }
+  }
+  /* Toned bands re-point --body; re-resolve the inherited text colour at
+     the section level (otherwise children inherit the colour computed on
+     <body>, i.e. dark ink on a dark band). */
+  [data-tone] {
+    color: var(--body);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
   }
   body {
     background-color: var(--canvas);
