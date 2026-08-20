@@ -3,6 +3,7 @@ import type { Block, Card as CardData, Hero, Locale, Section as SectionData } fr
 import { localeHref } from "@/lib/links";
 import { cx } from "@/lib/cx";
 import { ImagePlaceholder } from "@/components/ImagePlaceholder";
+import { ScrollRail } from "@/components/ScrollRail";
 import { Button } from "@/components/ui/Button";
 import { Card, STRETCHED_LINK } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
@@ -21,13 +22,15 @@ import { Section, type SectionTone } from "@/components/ui/Section";
 const SECTION_TONES: Record<string, SectionTone> = {
   "how-it-works": "cream",
   "for-parents": "cream",
-  "final-cta": "ink",
+  // Client (20 Aug): the dark band hurt readability — closing CTAs sit on
+  // cream; dark ink is reserved for the footer.
+  "final-cta": "cream",
 };
 
 function toneFor(section: SectionData): SectionTone {
   if (SECTION_TONES[section.id]) return SECTION_TONES[section.id];
   // A section that is nothing but one CTA is a closing band on every page.
-  if (section.blocks.length === 1 && section.blocks[0].type === "cta" && !section.title) return "ink";
+  if (section.blocks.length === 1 && section.blocks[0].type === "cta" && !section.title) return "cream";
   return "default";
 }
 
@@ -163,6 +166,56 @@ function CardItem({ card, locale }: { card: CardData; locale: Locale }) {
   );
 }
 
+/** The "Your Educational Journey" timeline (client reference, 20 Aug 2026):
+    age chips over nodes on one connecting line, study cards beneath, one
+    horizontal rail with arrows. */
+function TimelineCards({ cards, locale }: { cards: CardData[]; locale: Locale }) {
+  return (
+    <ScrollRail label="Timeline" locale={locale}>
+      {cards.map((card, i) => (
+        <li key={card.title} className="relative w-[16.5rem] shrink-0 snap-start pt-12 sm:w-[18rem]">
+          {/* connecting line + node */}
+          <span
+            aria-hidden="true"
+            className={cx(
+              "absolute top-[2.375rem] h-0.5 bg-teal-200",
+              i === 0 ? "left-1/2 right-[-1.25rem]" : "left-[-1.25rem]",
+              i === cards.length - 1 ? "right-1/2" : "right-[-1.25rem]",
+            )}
+          />
+          <span
+            aria-hidden="true"
+            className="absolute left-1/2 top-8 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-ink bg-accent"
+          />
+          {card.eyebrow && (
+            <span className="absolute left-1/2 top-0 -translate-x-1/2 whitespace-nowrap rounded-sm border border-ink bg-surface px-2 py-0.5 text-eyebrow uppercase text-ink">
+              {card.eyebrow}
+            </span>
+          )}
+          <Card as="article" interactive={Boolean(card.href)} className="mt-4 h-full">
+            <h3 className="text-h3 text-ink">
+              {card.href ? (
+                <Link href={localeHref(locale, card.href)} className={STRETCHED_LINK}>
+                  {card.title}
+                </Link>
+              ) : (
+                card.title
+              )}
+            </h3>
+            {card.body && <p className="mt-2 text-sm">{card.body}</p>}
+            {card.href && (
+              <p className="mt-auto flex items-center gap-1.5 pt-4 text-sm font-bold text-primary">
+                {card.linkLabel ?? card.title}
+                <IconArrowRight size={16} />
+              </p>
+            )}
+          </Card>
+        </li>
+      ))}
+    </ScrollRail>
+  );
+}
+
 /* --------------------------------- Blocks -------------------------------- */
 
 export function BlockView({
@@ -232,7 +285,7 @@ export function BlockView({
           {block.stats.map((s) => (
             <div key={s.label} className="flex flex-col-reverse gap-2">
               <dt className="text-sm font-semibold text-muted">{s.label}</dt>
-              <dd className="text-stat text-ink">{s.value}</dd>
+              <dd className="font-display text-stat text-ink">{s.value}</dd>
             </div>
           ))}
         </dl>
@@ -274,14 +327,9 @@ export function BlockView({
       );
     case "team":
       return (
-        <ul
-          className={cx(
-            "-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3",
-            block.members.length % 4 === 0 && "xl:grid-cols-4",
-          )}
-        >
+        <ScrollRail label="Team" locale={locale}>
           {block.members.map((m) => (
-            <li key={m.name} className="w-[78%] shrink-0 snap-start sm:w-auto">
+            <li key={m.name} className="w-[17rem] shrink-0 snap-start sm:w-[19rem]">
               <Card as="article" padded={false} className="h-full">
                 {m.photo ? (
                   <img
@@ -302,6 +350,33 @@ export function BlockView({
               </Card>
             </li>
           ))}
+        </ScrollRail>
+      );
+    case "logos":
+      return (
+        <ul className="flex flex-wrap items-center gap-4">
+          {block.items.map((logo) => {
+            const tile = (
+              <span className="flex h-24 min-w-44 items-center justify-center rounded-card border border-ink bg-surface px-6 py-4">
+                <img src={logo.src} alt={logo.alt} loading="lazy" className="max-h-14 w-auto" />
+              </span>
+            );
+            return (
+              <li key={logo.src}>
+                {logo.href ? (
+                  <Link
+                    href={localeHref(locale, logo.href)}
+                    className="block transition-transform motion-safe:hover:-translate-y-0.5"
+                  >
+                    {tile}
+                    <span className="sr-only">{logo.alt}</span>
+                  </Link>
+                ) : (
+                  tile
+                )}
+              </li>
+            );
+          })}
         </ul>
       );
     case "image":
@@ -376,8 +451,9 @@ export function SectionView({
   tone?: SectionTone;
 }) {
   const t = tone ?? toneFor(section);
+  const timeline = section.id === "educational-journey";
   const closing =
-    t === "ink" && section.blocks.length === 1 && section.blocks[0].type === "cta" && !section.title;
+    section.blocks.length === 1 && section.blocks[0].type === "cta" && !section.title;
   return (
     <Section id={section.id} tone={t} className="overflow-hidden">
       <SectionHeading eyebrow={section.eyebrow} title={section.title} intro={section.intro} />
@@ -390,6 +466,8 @@ export function SectionView({
             <div key={`${section.id}-${i}`} className={cx(i > 0 && (flowing ? "mt-4" : "mt-8"))}>
               {closing && block.type === "cta" ? (
                 <ClosingCta block={block} locale={locale} />
+              ) : timeline && block.type === "cards" ? (
+                <TimelineCards cards={block.cards} locale={locale} />
               ) : (
                 <BlockView block={block} locale={locale} />
               )}

@@ -50,6 +50,9 @@ export const ORGANIZATION = {
 export const SOCIALS = {
   britain: [
     { label: "Instagram", href: "https://www.instagram.com/mug.up.britain" },
+    // Client (20 Aug): Britain must list Facebook too; the studio page is the
+    // only confirmed FB — swap in a dedicated Britain page if one appears.
+    { label: "Facebook", href: "https://www.facebook.com/share/163Nd9or3T/" },
   ],
   global: [
     { label: "Instagram", href: "https://www.instagram.com/mug.up.global" },

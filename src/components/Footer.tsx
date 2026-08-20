@@ -14,13 +14,13 @@ export function Footer({ locale, dict }: { locale: Locale; dict: CommonDict }) {
   const { footer } = dict;
   const link = "text-sm text-body transition-colors hover:text-ink hover:underline";
   return (
-    <footer className="mt-auto border-t border-line bg-surface-alt">
+    <footer data-tone="ink" className="mt-auto bg-ink-900">
       <Container size="wide" className="py-12 sm:py-16">
         <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(2,1fr)] lg:grid-cols-[1.6fr_repeat(4,1fr)]">
           <div className="max-w-xs">
             <p className="flex items-center font-bold text-ink">
               <img
-                src="/images/logo-nav.png"
+                src="/images/logo-nav-white.png"
                 alt=""
                 width={640}
                 height={562}
@@ -68,6 +68,8 @@ export function Footer({ locale, dict }: { locale: Locale; dict: CommonDict }) {
             ))}
           </div>
         </div>
+
+        <p className="mt-10 border-t border-line pt-6 text-sm text-muted">{footer.copyright}</p>
       </Container>
     </footer>
   );

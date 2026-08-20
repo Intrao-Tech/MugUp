@@ -3,13 +3,13 @@ import type { FormPage } from "@/content/types";
 // Copy source: client doc "BOOK_YOUR_ASSESSMENT.docx" (verbatim where provided).
 export const page: FormPage = {
   meta: {
-    title: "Book Your Assessment | Mug.Up",
+    title: "Book an Assessment | Mug.Up",
     description:
       "Book a free personalised assessment at Mug.Up Language Studio. Discuss your goals, review your level and leave with a clear learning pathway — no obligation.",
   },
   hero: {
     eyebrow: "Start with the Right Guidance",
-    title: "Book Your Assessment",
+    title: "Book an Assessment",
     subtitle: "Every successful journey begins with understanding where you are today.",
     body: [
       "Choosing the right educational or language pathway can feel overwhelming. Every learner has different goals, experience, strengths, and ambitions.",
@@ -107,7 +107,7 @@ export const page: FormPage = {
           type: "steps",
           steps: [
             {
-              title: "Book Your Assessment",
+              title: "Book an Assessment",
               body: "Choose a convenient date and time.",
             },
             {
@@ -134,9 +134,9 @@ export const page: FormPage = {
           type: "faq",
           items: [
             {
-              question: "Is the assessment free?",
+              question: "How much does the assessment cost?",
               answer:
-                "Yes. The assessment is free of charge and comes with no obligation to enrol on any programme.",
+                "The assessment is offered on separate terms — we will confirm the details when you book. It comes with no obligation to enrol on any programme.",
             },
             {
               question: "How long does the assessment take?",
@@ -164,7 +164,7 @@ export const page: FormPage = {
     },
   ],
   form: {
-    title: "Book Your Assessment",
+    title: "Book an Assessment",
     intro:
       "Complete the form below and we will get back to you to arrange a convenient date and time.",
     fields: [
@@ -240,7 +240,7 @@ export const page: FormPage = {
         required: true,
       },
     ],
-    submitLabel: "Book Your Assessment",
+    submitLabel: "Book an Assessment",
     disabledNote:
       "The form backend is not connected yet — submissions are disabled at this stage.",
   },

@@ -15,7 +15,7 @@ export const page: Page = {
       "Mug.Up is an international education platform helping learners build confidence, navigate educational pathways, and unlock opportunities in the UK and beyond.",
       "Whether you are preparing for examinations, pursuing higher education, developing professional skills, or adapting to life in a new country, we provide expert guidance and personalised support every step of the way.",
     ],
-    ctas: [{ label: "Book Assessment", href: "/book-assessment" }],
+    ctas: [{ label: "Book an Assessment", href: "/book-assessment" }],
   },
   sections: [
     {
@@ -36,7 +36,7 @@ export const page: Page = {
           type: "cta",
           title: "Start with a Personal Assessment",
           body: "Receive tailored recommendations and a clear pathway based on your goals and aspirations.",
-          cta: { label: "Book Assessment", href: "/book-assessment" },
+          cta: { label: "Book an Assessment", href: "/book-assessment" },
         },
       ],
     },
@@ -219,40 +219,49 @@ export const page: Page = {
           type: "team",
           members: [
             {
-              name: "Ievgeniia Angerchik, PhD, CELTA",
-              role: "Founder & Director | Education Consultant",
+              name: "Ievgeniia Angerchik",
+              photo: "/images/team/ievgeniia.jpg",
+              role: "Founder & Director | Educational Consultant",
               bio: "Founder of Mug.Up Language Studio Ltd, education expert, and language learning consultant with extensive experience supporting learners, families, and migrants in achieving their academic, professional, and integration goals. Specialising in GCSE, IELTS, ESOL, and SELT preparation, Ievgeniia helps students develop language confidence, navigate educational pathways, and successfully adapt to life and learning in the UK.",
             },
             {
-              name: "Ally Zomkowski, PGCE, CELTA",
-              role: "Academic Coordinator | IELTS & English Specialist",
+              name: "Ally Zomkowski",
+              role: "Academic Coordinator",
               bio: "Qualified British teacher with PGCE and CELTA qualifications. Specialist in IELTS preparation, GCSE programmes, Business English, Workplace English, and UK integration support.",
               photo: "/images/team/ally.png",
             },
             {
-              name: "Gabi",
-              role: "English Language, English Literature & Humanities Teacher",
+              name: "Tetiana Krytsun",
+              photo: "/images/team/tetiana.jpg",
+              role: "Studio Manager & Educational Consultant",
+              credentials:
+                "Master of Arts in Laws, Master of Arts in International Criminology | PhD candidate",
+              bio: "Tetiana is the Manager of Mug.Up Studio, overseeing operations and strategic development. As an Educational Consultant, she supports students and families in making confident academic choices and achieving their goals. With advanced degrees in Law and International Criminology and pursuing a PhD, Tetiana combines analytical expertise, leadership and a passion for education to help students succeed.",
+            },
+            {
+              name: "Gabi Rodgers",
+              role: "English Language & Literature Teacher",
               credentials: "Qualified Teacher | 10+ Years Teaching Experience (UK & International Schools)",
               bio: "Gabi specialises in English Language, English Literature, Humanities, Key Stage 3 and GCSE programmes. She has extensive experience supporting students from diverse backgrounds, including learners for whom English is an additional language.",
               photo: "/images/team/gabi.jpg",
             },
             {
-              name: "Luisa Deragon, PhD",
-              role: "English Language Tutor",
+              name: "Luisa Deragon",
+              role: "English Language Teacher",
               credentials: "PhD, University of Cambridge | Cambridge-Educated Tutor",
               bio: "Fluent in English, Portuguese, and Spanish, Luisa specialises in 11+ preparation, ESL support, academic skills development, and general English. Her international experience supporting students across the UK, US, and Canada allows her to create highly personalised learning programmes.",
               photo: "/images/team/luisa.jpeg",
             },
             {
               name: "Anca Maria Gherghel",
-              role: "Business, Finance & Mathematics Specialist",
+              role: "Business, Finance & Mathematics Teacher",
               credentials: "Senior Research Manager | PhD Researcher",
               bio: "Anca specialises in Business, Finance, Mathematics, Analytical Thinking, and Financial Education. She combines academic research with practical expertise, helping students develop strong analytical skills, logical reasoning, and confidence in applying knowledge to real-world situations.",
               photo: "/images/team/anca.jpg",
             },
             {
               name: "Samuel Dicks",
-              role: "Chemistry & STEM Tutor",
+              role: "Chemistry & STEM Teacher",
               credentials:
                 "MChem (Hons) Chemistry with International Study, First-Class Honours, The University of Manchester | PhD Offer Holder in Atomic & Laser Physics, University of Oxford",
               bio: "Samuel specialises in 11+ Mathematics, GCSE and A-Level Chemistry, Physics and Mathematics, helping students develop strong subject knowledge, confidence and effective exam techniques. His structured, exam-focused lessons combine clear explanations with practical problem-solving strategies.",
@@ -260,7 +269,7 @@ export const page: Page = {
             },
             {
               name: "Saffron George",
-              role: "Primary & 11+ Tutor | Spanish Language Tutor",
+              role: "Primary, 11+ & Spanish Teacher",
               credentials: "Qualified Teacher (QTS, PGCE)",
               bio: "Saffron is a qualified primary school teacher specialising in Primary English and Maths, 11+ preparation, and Spanish GCSE. As a fluent Spanish speaker, she combines strong subject knowledge with a supportive and engaging teaching style.",
               photo: "/images/team/saffron.jpeg",
@@ -268,18 +277,10 @@ export const page: Page = {
             {
               name: "Djennè Stephens",
               photo: "/images/team/djenne.jpg",
-              role: "GCSE English | Functional Skills | ESOL",
+              role: "GCSE English & ESOL Teacher",
               credentials:
                 "Qualified Further Education English Lecturer | CELTA Qualified | PGCE in Progress",
               bio: "Djennè specialises in GCSE English, Functional Skills English and ESOL, working with children, young people and adults. She holds a First Class BA (Hons) in Childhood and Youth Studies with Psychology and has experience supporting learners with SEND, GCSE resits and English as an additional language. Her teaching combines academic progress with confidence-building through engaging, personalised lessons.",
-            },
-            {
-              name: "Tetiana Krytsun",
-              photo: "/images/team/tetiana.jpg",
-              role: "Manager of Mug.Up Studio | Educational Consultant",
-              credentials:
-                "Master of Arts in Laws, Master of Arts in International Criminology | PhD candidate",
-              bio: "Tetiana is the Manager of Mug.Up Studio, overseeing operations and strategic development. As an Educational Consultant, she supports students and families in making confident academic choices and achieving their goals. With advanced degrees in Law and International Criminology and pursuing a PhD, Tetiana combines analytical expertise, leadership and a passion for education to help students succeed.",
             },
           ],
         },
@@ -291,9 +292,9 @@ export const page: Page = {
         {
           type: "cta",
           title: "Ready to Take the Next Step?",
-          body: "Every successful journey starts with understanding where you are today and where you want to go tomorrow. Book a free assessment and receive personalised recommendations tailored to your goals. Whether you are preparing for exams, planning university applications, developing professional skills, or adapting to life in the UK, we are here to help.",
+          body: "Every successful journey starts with understanding where you are today and where you want to go tomorrow. Book an assessment and receive personalised recommendations tailored to your goals. Whether you are preparing for exams, planning university applications, developing professional skills, or adapting to life in the UK, we are here to help.",
           note: "No obligation. Personalised guidance. Clear next steps.",
-          cta: { label: "Book Your Free Assessment", href: "/book-assessment" },
+          cta: { label: "Book an Assessment", href: "/book-assessment" },
         },
       ],
     },

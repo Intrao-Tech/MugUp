@@ -9,12 +9,13 @@ import { Container } from "@/components/ui/Container";
 
 export function Header({ locale, dict }: { locale: Locale; dict: CommonDict }) {
   const { nav } = dict;
+  // Order per client (20 Aug): Home | About | British Education | …
   const links = [
     { href: `/${locale}`, label: nav.home, exact: true },
+    { href: localeHref(locale, "/about"), label: nav.about },
     { href: localeHref(locale, "/pathways/british-education"), label: nav.pathwaysBritish },
     { href: localeHref(locale, "/pathways/global-integration"), label: nav.pathwaysGlobal },
     { href: localeHref(locale, "/courses"), label: nav.courses },
-    { href: localeHref(locale, "/about"), label: nav.about },
     { href: localeHref(locale, "/insights"), label: nav.insights },
     { href: localeHref(locale, "/contact"), label: nav.contact },
   ];

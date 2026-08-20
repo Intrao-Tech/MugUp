@@ -9,7 +9,7 @@ export const common: CommonDict = {
     pathwaysGlobal: "Global Integration",
     courses: "Courses & Programmes",
     insights: "Insights",
-    bookAssessment: "Book Assessment",
+    bookAssessment: "Book an Assessment",
     contact: "Contact",
   },
   footer: {
@@ -34,7 +34,7 @@ export const common: CommonDict = {
         title: "Support",
         links: [
           { label: "Contact", href: "/contact" },
-          { label: "Book Assessment", href: "/book-assessment" },
+          { label: "Book an Assessment", href: "/book-assessment" },
           { label: "Leave a review", href: "/review" },
         ],
       },
@@ -49,6 +49,7 @@ export const common: CommonDict = {
     contactHeading: "Contact Information",
     addressLabel: "Learning Centre Address",
     followHeading: "Follow Us",
+    copyright: "© 2026 Mug.Up Language Studio LTD. All rights reserved.",
   },
   ui: {
     skipToContent: "Skip to content",

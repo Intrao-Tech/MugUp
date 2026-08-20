@@ -49,6 +49,7 @@ export const common: CommonDict = {
     contactHeading: "Контактна інформація",
     addressLabel: "Адреса навчального центру",
     followHeading: "Ми в соцмережах",
+    copyright: "© 2026 Mug.Up Language Studio LTD. All rights reserved.",
   },
   ui: {
     skipToContent: "Перейти до вмісту",
