@@ -36,8 +36,9 @@ export const ORGANIZATION = {
     "https://www.instagram.com/mug.up.britain",
     "https://www.instagram.com/mug.up.global",
     "https://www.tiktok.com/@mug.up.global",
-    "https://t.me/LS_MugUp",
+    "https://t.me/mugupLang",
     "https://www.facebook.com/share/163Nd9or3T/",
+    "https://www.facebook.com/profile.php?id=61573460977118",
   ],
 } as const;
 
@@ -50,9 +51,8 @@ export const ORGANIZATION = {
 export const SOCIALS = {
   britain: [
     { label: "Instagram", href: "https://www.instagram.com/mug.up.britain" },
-    // Client (20 Aug): Britain must list Facebook too; the studio page is the
-    // only confirmed FB — swap in a dedicated Britain page if one appears.
-    { label: "Facebook", href: "https://www.facebook.com/share/163Nd9or3T/" },
+    // Dedicated Mug.Up Britain page (client, 21 Aug 2026).
+    { label: "Facebook", href: "https://www.facebook.com/profile.php?id=61573460977118" },
   ],
   global: [
     { label: "Instagram", href: "https://www.instagram.com/mug.up.global" },
@@ -60,7 +60,7 @@ export const SOCIALS = {
   ],
   shared: [
     { label: "TikTok", href: "https://www.tiktok.com/@mug.up.global" },
-    { label: "Telegram", href: "https://t.me/LS_MugUp" },
+    { label: "Telegram", href: "https://t.me/mugupLang" },
     // New WhatsApp Business account (decoded from the client's QR, 14 Aug 2026).
     { label: "WhatsApp", href: "https://wa.me/message/PR7BAKHTTTFWK1" },
   ],

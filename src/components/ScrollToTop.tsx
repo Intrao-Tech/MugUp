@@ -11,6 +11,9 @@ export function ScrollToTop() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    // A hash navigation (e.g. Home → /about#our-educators) must land on the
+    // anchored section — don't yank the page back to the top.
+    if (window.location.hash) return;
     window.scrollTo(0, 0);
   }, [pathname, searchParams]);
 
