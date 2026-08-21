@@ -291,25 +291,30 @@ export function BlockView({
         </dl>
       );
     case "testimonials":
+      // Featured reviews (any count, database-driven): one editorial quote
+      // per slide in a scroll rail — arrows appear only when there is more
+      // than fits (client, 21 Aug 2026).
       return (
-        <div className="divide-y divide-line border-t border-line">
+        <ScrollRail label="Reviews" locale={locale}>
           {block.items.map((t) => (
-            <figure
+            <li
               key={t.author + (t.tag ?? "")}
-              className="grid gap-4 py-8 md:grid-cols-12 md:gap-8 md:py-10"
+              className="w-[88%] shrink-0 snap-start border-t-2 border-ink pt-6 sm:w-[34rem] lg:w-[38rem]"
             >
-              <figcaption className="order-2 md:order-1 md:col-span-4 lg:col-span-3">
-                <span className="block text-sm font-bold text-ink">{t.author}</span>
-                {t.tag && (
-                  <span className="mt-1 block text-eyebrow uppercase text-muted">{t.tag}</span>
-                )}
-              </figcaption>
-              <blockquote className="order-1 text-quote text-ink md:order-2 md:col-span-8 lg:col-span-9 lg:max-w-[52ch] [hanging-punctuation:first]">
-                “{t.quote}”
-              </blockquote>
-            </figure>
+              <figure className="flex h-full flex-col">
+                <blockquote className="text-quote grow text-ink [hanging-punctuation:first]">
+                  “{t.quote}”
+                </blockquote>
+                <figcaption className="mt-6">
+                  <span className="block text-sm font-bold text-ink">{t.author}</span>
+                  {t.tag && (
+                    <span className="mt-1 block text-eyebrow uppercase text-muted">{t.tag}</span>
+                  )}
+                </figcaption>
+              </figure>
+            </li>
           ))}
-        </div>
+        </ScrollRail>
       );
     case "faq":
       return (
