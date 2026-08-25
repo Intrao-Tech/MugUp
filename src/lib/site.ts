@@ -39,6 +39,7 @@ export const ORGANIZATION = {
     "https://t.me/mugupLang",
     "https://www.facebook.com/share/163Nd9or3T/",
     "https://www.facebook.com/profile.php?id=61573460977118",
+    "https://www.linkedin.com/company/mug-up-language-studio/",
   ],
 } as const;
 
@@ -63,5 +64,7 @@ export const SOCIALS = {
     { label: "Telegram", href: "https://t.me/mugupLang" },
     // New WhatsApp Business account (decoded from the client's QR, 14 Aug 2026).
     { label: "WhatsApp", href: "https://wa.me/message/PR7BAKHTTTFWK1" },
+    // Client, 21 Aug 2026 (tracking param stripped from the shared URL).
+    { label: "LinkedIn", href: "https://www.linkedin.com/company/mug-up-language-studio/" },
   ],
 } as const;
