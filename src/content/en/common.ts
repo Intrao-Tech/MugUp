@@ -9,7 +9,7 @@ export const common: CommonDict = {
     pathwaysGlobal: "Global Integration",
     courses: "Courses & Programmes",
     insights: "Insights",
-    bookAssessment: "Book an Assessment",
+    bookAssessment: "Get Expert Guidance",
     contact: "Contact",
   },
   footer: {
@@ -34,7 +34,7 @@ export const common: CommonDict = {
         title: "Support",
         links: [
           { label: "Contact", href: "/contact" },
-          { label: "Book an Assessment", href: "/book-assessment" },
+          { label: "Get Expert Guidance", href: "/book-assessment" },
           { label: "Leave a review", href: "/review" },
         ],
       },

@@ -53,7 +53,8 @@ export function ScrollRail({
   };
 
   const arrow =
-    "flex h-11 w-11 items-center justify-center rounded-full border border-ink bg-surface text-ink transition-[box-shadow,transform] shadow-plate hover:shadow-plate-lg motion-safe:hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-30 disabled:shadow-none";
+    // One quiet outline, no backplate (client, 25 Aug: the double circle read as decoration).
+    "flex h-11 w-11 items-center justify-center rounded-full border border-ink bg-surface text-ink transition-colors hover:bg-ink hover:text-surface disabled:pointer-events-none disabled:opacity-30";
 
   const [prevLabel, nextLabel] = ARROW_LABELS[locale] ?? ARROW_LABELS.en;
   return (

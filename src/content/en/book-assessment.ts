@@ -9,7 +9,7 @@ export const page: FormPage = {
   },
   hero: {
     eyebrow: "Start with the Right Guidance",
-    title: "Book an Assessment",
+    title: "Get Expert Guidance",
     subtitle: "Every successful journey begins with understanding where you are today.",
     body: [
       "Choosing the right educational or language pathway can feel overwhelming. Every learner has different goals, experience, strengths, and ambitions.",
@@ -107,7 +107,7 @@ export const page: FormPage = {
           type: "steps",
           steps: [
             {
-              title: "Book an Assessment",
+              title: "Get Expert Guidance",
               body: "Choose a convenient date and time.",
             },
             {
@@ -164,42 +164,31 @@ export const page: FormPage = {
     },
   ],
   form: {
-    title: "Book an Assessment",
+    title: "Get Expert Guidance",
     intro:
       "Complete the form below and we will get back to you to arrange a convenient date and time.",
     fields: [
       { name: "fullName", label: "Full Name", type: "text", required: true },
       { name: "email", label: "Email Address", type: "email", required: true },
-      { name: "phone", label: "Phone Number", type: "tel" },
+      { name: "phone", label: "WhatsApp Phone Number", type: "tel" },
       {
         name: "whoFor",
         label: "Who is the assessment for?",
         type: "select",
         required: true,
-        options: [
-          "Parent — for my child",
-          "Student",
-          "Adult learner",
-          "Professional",
-          "Newcomer to the UK",
-        ],
+        options: ["My child", "Myself", "Someone else"],
       },
       {
         name: "pathwayInterest",
-        label: "Which pathway are you interested in?",
+        label: "What would you like support with?",
         type: "select",
         options: [
           "British Education",
-          "English Qualifications",
-          "Global Integration",
-          "Not sure yet",
+          "English & UK Qualifications",
+          "Languages & Global Integration",
+          "International Education",
+          "Not sure — I'd like guidance",
         ],
-      },
-      {
-        name: "preferredFormat",
-        label: "Preferred format",
-        type: "select",
-        options: ["Online", "In person (Bedford)", "No preference"],
       },
       {
         name: "source",
@@ -240,7 +229,7 @@ export const page: FormPage = {
         required: true,
       },
     ],
-    submitLabel: "Book an Assessment",
+    submitLabel: "Get Expert Guidance",
     disabledNote:
       "The form backend is not connected yet — submissions are disabled at this stage.",
   },

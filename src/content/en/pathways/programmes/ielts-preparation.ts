@@ -20,7 +20,7 @@ export const page: ProgrammePage = {
       "Whether you're applying to university, pursuing professional registration, or preparing for UK immigration, IELTS is one of the world's most recognised English language qualifications.",
       "At Mug.Up, we combine personalised learning, expert guidance, and realistic exam practice to help you achieve your target score with confidence.",
     ],
-    ctas: [{ label: "Book an Assessment", href: "/book-assessment" }],
+    ctas: [{ label: "Get Expert Guidance", href: "/book-assessment" }],
   },
   atAGlance: [
     { label: "Level", value: "B1–C1" },
@@ -98,7 +98,7 @@ export const page: ProgrammePage = {
           type: "cta",
           title: "Start with the Right Guidance",
           body: "Every learner has different goals, timelines, and target scores. Our personalised assessment helps us identify your current English level, recommend the most suitable IELTS pathway, and create a preparation plan tailored to your individual objectives.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },

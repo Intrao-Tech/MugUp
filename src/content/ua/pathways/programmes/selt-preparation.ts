@@ -19,7 +19,7 @@ export const page: ProgrammePage = {
       "Secure English Language Test (SELT) є обов'язковим для багатьох заяв на візу, постійне проживання та громадянство Великої Британії.",
       "Як офіційний партнер LanguageCert, Mug.Up готує до іспитів SELT, схвалених UK Visas and Immigration (UKVI). Ми допоможемо обрати правильну кваліфікацію, розібратися у вимогах і підійти до тесту впевнено.",
     ],
-    ctas: [{ label: "Записатися на оцінювання", href: "/book-assessment" }],
+    ctas: [{ label: "Отримати консультацію", href: "/book-assessment" }],
   },
   atAGlance: [
     { label: "Рівень", value: "A1–C1" },
@@ -92,7 +92,7 @@ export const page: ProgrammePage = {
           type: "cta",
           title: "Почніть із правильного супроводу",
           body: "Кожна візова заява інша. Персоналізоване оцінювання допомагає нам зрозуміти ваші візові вимоги, порадити правильну кваліфікацію SELT і скласти план підготовки з урахуванням ваших потреб і термінів.",
-          cta: { label: "Записатися на оцінювання", href: "/book-assessment" },
+          cta: { label: "Отримати консультацію", href: "/book-assessment" },
         },
       ],
     },

@@ -16,7 +16,7 @@ export const page: Page = {
       "At Mug.Up, we help children, teenagers, and families make informed educational decisions, build strong academic foundations, and confidently progress through every stage of the UK education system.",
       "From Primary School and SATs to GCSEs, A-Levels, college, and university preparation, our programmes are designed to support each learner’s individual goals and future opportunities.",
     ],
-    ctas: [{ label: "Book an Assessment", href: "/book-assessment" }],
+    ctas: [{ label: "Get Expert Guidance", href: "/book-assessment" }],
   },
   sections: [
     {
@@ -164,7 +164,7 @@ export const page: Page = {
           title: "Your Child. Their Journey. Our Support.",
           body: "Education. Guidance. Opportunity.",
           note: "Trusted by families across Bedford and beyond.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },

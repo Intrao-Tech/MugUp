@@ -62,22 +62,7 @@ export default async function ProgrammePage({ params }: Props) {
           { label: page.cardTitle },
         ]}
       />
-      <HeroSection hero={page.hero} locale={locale} />
-      <section
-        id="at-a-glance"
-        aria-label={dict.ui.atAGlance}
-        className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8"
-      >
-        <h2 className="text-h3 text-ink">{dict.ui.atAGlance}</h2>
-        <dl className="mt-3 flex flex-wrap gap-x-10 gap-y-3">
-          {page.atAGlance.map((item) => (
-            <div key={item.label}>
-              <dt className="text-sm text-muted">{item.label}</dt>
-              <dd className="font-medium">{item.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      <HeroSection hero={page.hero} locale={locale} glance={page.atAGlance} />
       <PageSections sections={page.sections} locale={locale} />
     </>
   );

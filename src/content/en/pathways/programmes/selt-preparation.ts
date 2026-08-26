@@ -19,7 +19,7 @@ export const page: ProgrammePage = {
       "A Secure English Language Test (SELT) is required for many UK visa, settlement, and citizenship applications.",
       "As an official LanguageCert Partner, Mug.Up prepares learners for SELT examinations approved by UK Visas and Immigration (UKVI). We help you choose the right qualification, understand the requirements, and approach your test with confidence.",
     ],
-    ctas: [{ label: "Book an Assessment", href: "/book-assessment" }],
+    ctas: [{ label: "Get Expert Guidance", href: "/book-assessment" }],
   },
   atAGlance: [
     { label: "Level", value: "A1–C1" },
@@ -92,7 +92,7 @@ export const page: ProgrammePage = {
           type: "cta",
           title: "Start with the Right Guidance",
           body: "Every visa application is different. Our personalised assessment helps us understand your visa requirements, recommend the correct SELT qualification, and create a preparation plan tailored to your individual needs and timeline.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },

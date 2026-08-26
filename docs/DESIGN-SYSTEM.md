@@ -207,3 +207,26 @@ at 390 / 768 / 1280 / 1440 for `/en` and `/ua`.
   (replace `ImagePlaceholder` calls; keep alt text = card title).
 - Admin panel keeps the skeleton styling; migrating it to these tokens is a
   separate, optional pass.
+
+## Editorial layouts (v2, client brief 25 Aug 2026)
+
+Content stays block-based; **composition is chosen per section id** in
+`src/components/BlockRenderer.tsx` (`LAYOUTS` table) and implemented in
+`src/components/Editorial.tsx`. Unlisted ids fall back to the generic flow.
+
+| Layout | Used for | What it is |
+| --- | --- | --- |
+| `panels` | `choose-your-path`, `boarding-crosslink` | two big ink/teal blocks with photo, list, link |
+| `icon-list` / `icon-row` | lists & short cards | no boxes: icon, hairline, text |
+| `typo-results` | `results` | stats as display typography on cream |
+| `split-photo` | `for-parents`, `supporting-families` | 50/50 photo \| text |
+| `goal-row` / `rows` / `grid-2` | Global goals, languages, catalogues, 2×2 | strips and ruled rows |
+| `statement` / `word-stack` | About mission & philosophy | `text-statement` words as the graphic |
+| `journey` + `steps` block | all "how it works" | **PathwayTrack** — the signature line 01→06 |
+| `trust-strip` | `professional-standards` | one ruled uppercase row on ink |
+| `closing` | any single-CTA section | teal band, statement headline, yellow button |
+
+Rules: hero = text + big visual (`ImagePlaceholder` until client photos
+arrive; never AI/stock); the `teal` tone's primary button is **sun**; team
+cards are frameless (photo, name, role, `Read more`); rail arrows are one
+outline circle. Programme pages put `atAGlance` over the hero visual.

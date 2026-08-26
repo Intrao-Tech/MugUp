@@ -4,10 +4,28 @@ import { localeHref } from "@/lib/links";
 import { cx } from "@/lib/cx";
 import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import { ScrollRail } from "@/components/ScrollRail";
+import {
+  blockOf,
+  CatalogueRows,
+  ChipRow,
+  ClosingBand,
+  GoalRow,
+  GridTwo,
+  IconList,
+  IconRow,
+  JourneyTrack,
+  PathwayPanels,
+  PathwayTrack,
+  SplitPhoto,
+  Statement,
+  TeamRail,
+  TrustStrip,
+  TypoStats,
+  VideoPlaceholder,
+} from "@/components/Editorial";
 import { Button } from "@/components/ui/Button";
 import { Card, STRETCHED_LINK } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
-import { BrandRing } from "@/components/ui/decor";
 import { Eyebrow, SectionHeading } from "@/components/ui/Heading";
 import { IconArrowRight, IconCheck, IconChevronDown } from "@/components/ui/icons";
 import { Section, type SectionTone } from "@/components/ui/Section";
@@ -15,57 +33,45 @@ import { Section, type SectionTone } from "@/components/ui/Section";
 /* -------------------------------------------------------------------------
    Content → design. Copy and structure come from src/content and are never
    altered here; this file decides only how each block LOOKS.
-   Design rules: docs/DESIGN-SYSTEM.md.
+   Design rules: docs/DESIGN-SYSTEM.md. Editorial layouts: Editorial.tsx.
    ------------------------------------------------------------------------- */
-
-/** Home-page section tones (ids are fixed by the TZ). Unlisted sections use the heuristic below. */
-const SECTION_TONES: Record<string, SectionTone> = {
-  "how-it-works": "cream",
-  "for-parents": "cream",
-  // Client (20 Aug): the dark band hurt readability — closing CTAs sit on
-  // cream; dark ink is reserved for the footer.
-  "final-cta": "cream",
-};
-
-function toneFor(section: SectionData): SectionTone {
-  if (SECTION_TONES[section.id]) return SECTION_TONES[section.id];
-  // A section that is nothing but one CTA is a closing band on every page.
-  if (section.blocks.length === 1 && section.blocks[0].type === "cta" && !section.title) return "cream";
-  return "default";
-}
 
 /* ---------------------------------- Hero --------------------------------- */
 
 export function HeroSection({
   hero,
   locale,
-  visual,
+  visual = "photo",
+  glance,
+  statement = false,
 }: {
   hero: Hero;
   locale: Locale;
-  /** "owl" = brand mark + ring on the right (Home). Default = text only. */
-  visual?: "owl";
+  /** "photo" = big editorial visual on the right (placeholder until the client supplies photography). */
+  visual?: "photo" | "none";
+  /** Programme facts stacked over the visual (Age · Years · Format · Assessment). */
+  glance?: { label: string; value: string }[];
+  /** The title is the graphic (About): display size, uppercase. */
+  statement?: boolean;
 }) {
+  const photo = visual === "photo";
   return (
     <section aria-labelledby="page-title" className="relative overflow-hidden">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-teal-100/70 blur-3xl"
-      />
       <Container
-        className={cx(
-          "relative py-12 sm:py-16",
-          visual ? "grid gap-10 lg:grid-cols-12 lg:items-center lg:py-24" : "lg:py-20",
-        )}
+        size={photo ? "wide" : "content"}
+        className={cx("relative py-10 sm:py-14", photo ? "grid gap-10 lg:grid-cols-12 lg:items-center" : "lg:py-20")}
       >
-        <div className={cx("max-w-3xl", visual && "lg:col-span-7")}>
+        <div className={cx("min-w-0", photo ? "lg:col-span-6 lg:py-10" : "max-w-3xl")}>
           {hero.eyebrow && <Eyebrow className="mb-4">{hero.eyebrow}</Eyebrow>}
-          <h1 id="page-title" className="text-display text-balance text-ink">
+          <h1
+            id="page-title"
+            className={cx("text-balance break-words text-ink", statement ? "text-statement uppercase" : "text-display")}
+          >
             {hero.title}
           </h1>
-          {hero.subtitle && <p className="mt-5 text-lead">{hero.subtitle}</p>}
+          {hero.subtitle && <p className="mt-5 text-lead font-medium text-ink">{hero.subtitle}</p>}
           {hero.body?.map((p) => (
-            <p key={p.slice(0, 40)} className="mt-4 max-w-prose text-base text-muted">
+            <p key={p.slice(0, 40)} className="mt-4 max-w-prose text-base">
               {p}
             </p>
           ))}
@@ -85,20 +91,19 @@ export function HeroSection({
             </p>
           )}
         </div>
-        {visual === "owl" && (
-          <div className="relative hidden aspect-square lg:col-span-5 lg:block" aria-hidden="true">
-            <BrandRing className="absolute inset-0 h-full w-full" />
-            <picture>
-              {/* The visual is lg-only; stop small screens from downloading it. */}
-              <source media="(max-width: 63.99rem)" srcSet="data:," />
-              <img
-                src="/images/owl-mark.png"
-                alt=""
-                width={476}
-                height={720}
-                className="absolute left-1/2 top-1/2 h-[62%] w-auto -translate-x-1/2 -translate-y-1/2"
-              />
-            </picture>
+        {photo && (
+          <div className="relative min-w-0 lg:col-span-6">
+            <ImagePlaceholder alt={hero.title} aspect="aspect-[4/3] lg:aspect-[5/4]" />
+            {glance && glance.length > 0 && (
+              <dl className="mt-4 grid grid-cols-2 gap-2 sm:absolute sm:bottom-6 sm:right-6 sm:mt-0 sm:grid-cols-1 sm:gap-0 sm:divide-y sm:divide-line sm:rounded-card sm:border sm:border-ink sm:bg-surface">
+                {glance.map((g) => (
+                  <div key={g.label} className="rounded-card border border-ink bg-surface px-4 py-3 sm:rounded-none sm:border-0">
+                    <dt className="text-eyebrow uppercase text-muted">{g.label}</dt>
+                    <dd className="mt-0.5 font-display text-h3 text-ink">{g.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
           </div>
         )}
       </Container>
@@ -166,56 +171,6 @@ function CardItem({ card, locale }: { card: CardData; locale: Locale }) {
   );
 }
 
-/** The "Your Educational Journey" timeline (client reference, 20 Aug 2026):
-    age chips over nodes on one connecting line, study cards beneath, one
-    horizontal rail with arrows. */
-function TimelineCards({ cards, locale }: { cards: CardData[]; locale: Locale }) {
-  return (
-    <ScrollRail label="Timeline" locale={locale}>
-      {cards.map((card, i) => (
-        <li key={card.title} className="relative w-[16.5rem] shrink-0 snap-start pt-12 sm:w-[18rem]">
-          {/* connecting line + node */}
-          <span
-            aria-hidden="true"
-            className={cx(
-              "absolute top-[2.375rem] h-0.5 bg-teal-200",
-              i === 0 ? "left-1/2 right-[-1.25rem]" : "left-[-1.25rem]",
-              i === cards.length - 1 ? "right-1/2" : "right-[-1.25rem]",
-            )}
-          />
-          <span
-            aria-hidden="true"
-            className="absolute left-1/2 top-8 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-ink bg-accent"
-          />
-          {card.eyebrow && (
-            <span className="absolute left-1/2 top-0 -translate-x-1/2 whitespace-nowrap rounded-sm border border-ink bg-surface px-2 py-0.5 text-eyebrow uppercase text-ink">
-              {card.eyebrow}
-            </span>
-          )}
-          <Card as="article" interactive={Boolean(card.href)} className="mt-4 h-full">
-            <h3 className="text-h3 text-ink">
-              {card.href ? (
-                <Link href={localeHref(locale, card.href)} className={STRETCHED_LINK}>
-                  {card.title}
-                </Link>
-              ) : (
-                card.title
-              )}
-            </h3>
-            {card.body && <p className="mt-2 text-sm">{card.body}</p>}
-            {card.href && (
-              <p className="mt-auto flex items-center gap-1.5 pt-4 text-sm font-bold text-primary">
-                {card.linkLabel ?? card.title}
-                <IconArrowRight size={16} />
-              </p>
-            )}
-          </Card>
-        </li>
-      ))}
-    </ScrollRail>
-  );
-}
-
 /* --------------------------------- Blocks -------------------------------- */
 
 export function BlockView({
@@ -258,38 +213,9 @@ export function BlockView({
         </div>
       );
     case "steps":
-      return (
-        <ol role="list" className="grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-          {block.steps.map((step, i) => (
-            <li key={step.title} className="flex gap-4">
-              <span
-                aria-hidden="true"
-                className="text-h2 shrink-0 font-extrabold tabular-nums leading-none text-brand"
-              >
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <div className="border-l border-line pl-4">
-                <span className="text-h3 block text-ink">{step.title}</span>
-                {step.body && <p className="mt-1.5 text-base">{step.body}</p>}
-              </div>
-            </li>
-          ))}
-        </ol>
-      );
+      return <PathwayTrack stops={block.steps} locale={locale} />;
     case "stats":
-      return (
-        <dl
-          data-tone="teal"
-          className="grid gap-8 rounded-card bg-teal-600 px-8 py-10 sm:grid-cols-3 sm:gap-6"
-        >
-          {block.stats.map((s) => (
-            <div key={s.label} className="flex flex-col-reverse gap-2">
-              <dt className="text-sm font-semibold text-muted">{s.label}</dt>
-              <dd className="font-display text-stat text-ink">{s.value}</dd>
-            </div>
-          ))}
-        </dl>
-      );
+      return <TypoStats stats={block.stats} />;
     case "testimonials":
       // Featured reviews (any count, database-driven): one editorial quote
       // per slide in a scroll rail — arrows appear only when there is more
@@ -318,9 +244,9 @@ export function BlockView({
       );
     case "faq":
       return (
-        <div className="max-w-3xl divide-y divide-line rounded-card border border-line bg-surface">
+        <div className="max-w-3xl divide-y divide-line border-y border-ink">
           {block.items.map((f) => (
-            <details key={f.question} className="group px-6 py-4">
+            <details key={f.question} className="group py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-1 text-base font-bold text-ink [&::-webkit-details-marker]:hidden">
                 {f.question}
                 <IconChevronDown className="shrink-0 text-brand transition-transform group-open:rotate-180" />
@@ -331,53 +257,21 @@ export function BlockView({
         </div>
       );
     case "team":
-      return (
-        <ScrollRail label="Team" locale={locale}>
-          {block.members.map((m) => (
-            <li key={m.name} className="w-[17rem] shrink-0 snap-start sm:w-[19rem]">
-              <Card as="article" padded={false} className="h-full">
-                {m.photo ? (
-                  <img
-                    src={m.photo}
-                    alt={m.name}
-                    loading="lazy"
-                    className="aspect-[4/5] w-full border-b border-ink object-cover object-top"
-                  />
-                ) : (
-                  <ImagePlaceholder alt={m.name} aspect="aspect-[4/5]" className="rounded-none border-0 border-b" />
-                )}
-                <div className="p-5">
-                  <h3 className="text-h3 text-ink">{m.name}</h3>
-                  <p className="mt-1 text-sm font-semibold text-primary">{m.role}</p>
-                  {m.credentials && <p className="mt-2 text-sm text-muted">{m.credentials}</p>}
-                  {m.bio && <p className="mt-3 text-sm">{m.bio}</p>}
-                </div>
-              </Card>
-            </li>
-          ))}
-        </ScrollRail>
-      );
+      return <TeamRail members={block.members} locale={locale} />;
     case "logos":
       return (
-        <ul className="flex flex-wrap items-center gap-4">
+        <ul className="flex flex-wrap items-center gap-6">
           {block.items.map((logo) => {
-            const tile = (
-              <span className="flex h-24 min-w-44 items-center justify-center rounded-card border border-ink bg-surface px-6 py-4">
-                <img src={logo.src} alt={logo.alt} loading="lazy" className="max-h-14 w-auto" />
-              </span>
-            );
+            const img = <img src={logo.src} alt={logo.alt} loading="lazy" className="h-20 w-auto" />;
             return (
               <li key={logo.src}>
                 {logo.href ? (
-                  <Link
-                    href={localeHref(locale, logo.href)}
-                    className="block transition-transform motion-safe:hover:-translate-y-0.5"
-                  >
-                    {tile}
+                  <Link href={localeHref(locale, logo.href)} className="block">
+                    {img}
                     <span className="sr-only">{logo.alt}</span>
                   </Link>
                 ) : (
-                  tile
+                  img
                 )}
               </li>
             );
@@ -424,61 +318,366 @@ export function BlockView({
   }
 }
 
-/* -------------------------------- Sections ------------------------------- */
+/* --------------------------- Section layouts ----------------------------- */
+
+/**
+ * Each section id (fixed by the content contract, shared across locales
+ * and pages) gets one editorial composition. Unlisted ids fall back to the
+ * generic block flow. Keep this table in sync with docs/DESIGN-SYSTEM.md.
+ */
+type Layout =
+  | "flow"
+  | "panels" // two big contrasting pathway blocks
+  | "icon-list" // list → open icon grid, inline CTA
+  | "typo-results" // stats as typography + open list + quotes
+  | "split-photo" // 50/50 photo | text
+  | "icon-row" // cards → icon, title, text in one ruled row
+  | "goal-row" // cards → one horizontal strip of big words
+  | "rows" // cards → catalogue rows
+  | "grid-2" // cards → open 2×2
+  | "statement" // lead as a huge graphic + text columns + chips
+  | "word-stack" // LEARN. ADAPT. GROW. ACHIEVE. + compact points
+  | "founder" // photo | story, video below
+  | "educators" // qualifications chips + light team rail
+  | "trust-strip" // list → one ruled uppercase row
+  | "partners" // paragraphs + logo + short note + links
+  | "journey" // cards → pathway track with age chips
+  | "closing"; // one CTA on a teal band
+
+const LAYOUTS: Record<string, Layout> = {
+  "what-we-support": "icon-list",
+  "choose-your-path": "panels",
+  "boarding-crosslink": "panels",
+  results: "typo-results",
+  "for-parents": "split-photo",
+  "why-mugup": "icon-row",
+  "meet-our-team": "educators",
+  "mission-values": "statement",
+  "philosophy-methodology": "word-stack",
+  "supporting-families": "split-photo",
+  "founder-story": "founder",
+  "our-educators": "educators",
+  "professional-standards": "trust-strip",
+  partnerships: "partners",
+  "educational-journey": "journey",
+  "uk-qualifications": "grid-2",
+  "start-with-your-goal": "goal-row",
+  "explore-languages-destinations": "rows",
+  "why-mugup-global": "icon-row",
+  "international-education": "rows",
+  "what-you-will-learn": "grid-2",
+  "what-you-will-achieve": "icon-list",
+  beyond: "icon-row",
+  "exams-available": "rows",
+  "flexible-online-exams": "icon-row",
+  "final-cta": "closing",
+  "start-cta": "closing",
+};
+
+const TONES: Partial<Record<Layout, SectionTone>> = {
+  "typo-results": "cream",
+  "icon-row": "cream",
+  "trust-strip": "ink",
+  closing: "teal",
+  educators: "default",
+};
+
+/** Sections that are nothing but one CTA close the page on a teal band. */
+function isClosing(section: SectionData) {
+  return section.blocks.length === 1 && section.blocks[0].type === "cta" && !section.title;
+}
+
+function layoutFor(section: SectionData): Layout {
+  if (isClosing(section)) return "closing";
+  return LAYOUTS[section.id] ?? "flow";
+}
 
 const TEXT_BLOCKS = new Set<Block["type"]>(["lead", "paragraph", "list"]);
 
-/** Closing band: one CTA, centred, big. Same DOM as the inline `cta` block. */
-function ClosingCta({ block, locale }: { block: Extract<Block, { type: "cta" }>; locale: Locale }) {
+/** Generic block flow (prose gaps between prose blocks). */
+function Flow({ section, locale, skip }: { section: SectionData; locale: Locale; skip?: Set<Block["type"]> }) {
+  const blocks = section.blocks.filter((b) => !skip?.has(b.type));
   return (
-    <aside className="relative mx-auto max-w-3xl text-center">
-      <BrandRing className="absolute -left-24 -top-24 h-64 w-64 opacity-40 sm:-left-40" />
-      <h3 className="text-h2 relative text-balance text-ink">{block.title}</h3>
-      {block.body && <p className="relative mt-5 text-lead">{block.body}</p>}
-      <p className="relative mt-8">
-        <Button href={localeHref(locale, block.cta.href)} size="lg">
-          {block.cta.label}
-          <IconArrowRight />
-        </Button>
-      </p>
-      {block.note && <p className="relative mt-4 text-sm text-muted">{block.note}</p>}
-    </aside>
+    <>
+      {blocks.map((block, i) => {
+        const prev = blocks[i - 1];
+        const flowing = i > 0 && TEXT_BLOCKS.has(block.type) && TEXT_BLOCKS.has(prev.type);
+        return (
+          <div key={`${section.id}-${block.type}-${i}`} className={cx(i > 0 && (flowing ? "mt-4" : "mt-8"))}>
+            <BlockView block={block} locale={locale} />
+          </div>
+        );
+      })}
+    </>
   );
+}
+
+function Prose({ blocks, className }: { blocks: Block[]; className?: string }) {
+  return (
+    <div className={cx("space-y-4", className)}>
+      {blocks.map((b, i) =>
+        b.type === "paragraph" ? (
+          <p key={i} className="text-base">
+            {b.text}
+          </p>
+        ) : b.type === "lead" ? (
+          <p key={i} className="text-lead font-medium text-ink">
+            {b.text}
+          </p>
+        ) : null,
+      )}
+    </div>
+  );
+}
+
+function Body({ section, locale, layout }: { section: SectionData; locale: Locale; layout: Layout }) {
+  const { blocks } = section;
+  const cards = blockOf(blocks, "cards");
+  const list = blockOf(blocks, "list");
+  const cta = blockOf(blocks, "cta");
+  const paragraphs = blocks.filter((b) => b.type === "paragraph" || b.type === "lead");
+
+  switch (layout) {
+    case "closing": {
+      const c = cta ?? { type: "cta" as const, title: section.title ?? "", cta: blockOf(blocks, "buttons")?.ctas[0] ?? { label: "", href: "/" } };
+      const buttons = blockOf(blocks, "buttons")?.ctas ?? [];
+      const body = c.body ?? paragraphs.map((p) => p.text).join(" ");
+      return (
+        <ClosingBand
+          title={c.title}
+          body={body || undefined}
+          note={c.note}
+          cta={cta ? c.cta : buttons[0] ?? c.cta}
+          extra={cta ? undefined : buttons.slice(1)}
+          locale={locale}
+        />
+      );
+    }
+    case "panels":
+      return cards ? <PathwayPanels cards={cards.cards} locale={locale} /> : <Flow section={section} locale={locale} />;
+    case "icon-list":
+      return (
+        <>
+          {list && <IconList items={list.items} columns={list.items.length > 4 ? 3 : 2} />}
+          <Flow section={section} locale={locale} skip={new Set(["list"])} />
+        </>
+      );
+    case "typo-results":
+      return <Flow section={section} locale={locale} />;
+    case "split-photo":
+      return (
+        <SplitPhoto alt={section.title ?? section.id} side={section.id === "for-parents" ? "right" : "left"}>
+          {list && <CheckList items={list.items} columns={false} />}
+          {paragraphs.length > 0 && <Prose blocks={paragraphs} className="mt-6" />}
+        </SplitPhoto>
+      );
+    case "icon-row":
+      return (
+        <>
+          {paragraphs.length > 0 && <Prose blocks={paragraphs} className="mb-10 max-w-3xl" />}
+          {cards && <IconRow cards={cards.cards} />}
+          {list && <IconList items={list.items} />}
+        </>
+      );
+    case "goal-row":
+      return (
+        <>
+          {cards && <GoalRow cards={cards.cards} />}
+          {paragraphs.length > 0 && <Prose blocks={paragraphs} className="mt-6 max-w-3xl" />}
+        </>
+      );
+    case "rows":
+      return (
+        <>
+          {cards && <CatalogueRows cards={cards.cards} locale={locale} />}
+          <Flow section={section} locale={locale} skip={new Set(["cards"])} />
+        </>
+      );
+    case "grid-2":
+      return cards ? <GridTwo cards={cards.cards} /> : <Flow section={section} locale={locale} />;
+    case "statement": {
+      const lead = blockOf(blocks, "lead");
+      const ps = blocks.filter((b) => b.type === "paragraph");
+      return (
+        <div className="grid gap-10 lg:grid-cols-2">
+          <div className="min-w-0">{lead && <Statement text={lead.text} className="text-[clamp(2.5rem,1.25rem+4vw,4.75rem)]" />}</div>
+          <div className="min-w-0">
+            <Prose blocks={ps} />
+            {cards && (
+              <div className="mt-8">
+                <ChipRow items={cards.cards.map((c) => c.title)} />
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+    case "word-stack": {
+      const lead = blockOf(blocks, "lead");
+      const words = lead ? lead.text.split(":").pop()!.trim() : "";
+      const ps = blocks.filter((b) => b.type === "paragraph");
+      return (
+        <div className="grid gap-10 lg:grid-cols-12">
+          <div className="min-w-0 lg:col-span-5">
+            {lead && <Statement text={words} className="lg:sticky lg:top-24" />}
+          </div>
+          <div className="min-w-0 lg:col-span-7">
+            <Prose blocks={ps} className="columns-1 md:columns-2 md:gap-10 [&>p]:break-inside-avoid" />
+            {cards && (
+              <ul className="mt-10 divide-y divide-line border-t border-ink">
+                {cards.cards.map((c) => (
+                  <li key={c.title} className="grid gap-1 py-4 sm:grid-cols-12 sm:gap-6">
+                    <h3 className="text-base font-bold text-ink sm:col-span-5">{c.title}</h3>
+                    {c.body && <p className="text-sm sm:col-span-7">{c.body}</p>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      );
+    }
+    case "founder": {
+      const video = blockOf(blocks, "image");
+      const ps = blocks.filter((b) => b.type === "paragraph");
+      return (
+        <div className="grid gap-10 lg:grid-cols-12">
+          <div className="lg:col-span-4">
+            <img
+              src="/images/team/ievgeniia.jpg"
+              alt="Ievgeniia Angerchik"
+              loading="lazy"
+              className="aspect-[4/5] w-full rounded-card object-cover object-top"
+            />
+          </div>
+          <div className="lg:col-span-8">
+            <Prose blocks={ps} className="max-w-2xl" />
+            {video && (
+              <div className="mt-8">
+                <VideoPlaceholder alt={video.alt} />
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+    case "educators": {
+      const team = blockOf(blocks, "team");
+      return (
+        <>
+          {list && <ChipRow items={list.items} />}
+          {paragraphs.length > 0 && <Prose blocks={paragraphs} className="mt-4 max-w-3xl" />}
+          {team && (
+            <div className={cx((list || paragraphs.length > 0) && "mt-10")}>
+              <TeamRail members={team.members} locale={locale} />
+            </div>
+          )}
+          <Flow section={section} locale={locale} skip={new Set(["list", "paragraph", "lead", "team"])} />
+        </>
+      );
+    }
+    case "trust-strip":
+      return (
+        <>
+          {list && <TrustStrip items={list.items} />}
+          {paragraphs.length > 0 && <Prose blocks={paragraphs} className="mx-auto mt-6 max-w-3xl text-center text-sm" />}
+        </>
+      );
+    case "partners": {
+      const logos = blockOf(blocks, "logos");
+      const buttons = blockOf(blocks, "buttons");
+      const logosIdx = blocks.findIndex((b) => b.type === "logos");
+      const before = blocks.filter((b, i) => b.type === "paragraph" && (logosIdx < 0 || i < logosIdx));
+      const after = logosIdx >= 0 ? blocks.filter((b, i) => b.type === "paragraph" && i > logosIdx) : [];
+      return (
+        <div className="grid gap-10 lg:grid-cols-12">
+          <div className="lg:col-span-7">
+            <Prose blocks={before} />
+            {buttons && (
+              <div className="mt-6">
+                <BlockView block={buttons} locale={locale} />
+              </div>
+            )}
+          </div>
+          {logos && (
+            <div className="border-t border-ink pt-6 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
+              <BlockView block={logos} locale={locale} />
+              <Prose blocks={after} className="mt-4 text-sm" />
+              {logos.items[0]?.href && (
+                <p className="mt-4">
+                  <Button href={localeHref(locale, logos.items[0].href)} variant="ghost">
+                    {locale === "ua" ? "Докладніше" : "Learn more"}
+                    <IconArrowRight size={18} />
+                  </Button>
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+    case "journey":
+      return cards ? <JourneyTrack stops={cards.cards} locale={locale} /> : <Flow section={section} locale={locale} />;
+    case "flow":
+    default:
+      return <Flow section={section} locale={locale} />;
+  }
+}
+
+/** A section's composition without the band/heading (for hand-composed pages). */
+export function SectionBody({ section, locale }: { section: SectionData; locale: Locale }) {
+  return <Body section={section} locale={locale} layout={layoutFor(section)} />;
 }
 
 export function SectionView({
   section,
   locale,
   tone,
+  layout: forced,
 }: {
   section: SectionData;
   locale: Locale;
   tone?: SectionTone;
+  layout?: Layout;
 }) {
-  const t = tone ?? toneFor(section);
-  const timeline = section.id === "educational-journey";
-  const closing =
-    section.blocks.length === 1 && section.blocks[0].type === "cta" && !section.title;
+  const layout = forced ?? layoutFor(section);
+  const t = tone ?? TONES[layout] ?? "default";
+  const closing = layout === "closing";
+  const heading = !closing && (section.title || section.eyebrow || section.intro);
   return (
-    <Section id={section.id} tone={t} className="overflow-hidden">
-      <SectionHeading eyebrow={section.eyebrow} title={section.title} intro={section.intro} />
-      <div className={cx(section.title || section.intro ? "mt-8" : undefined)}>
-        {section.blocks.map((block, i) => {
-          // Prose blocks that follow prose blocks read as one text: paragraph gap.
-          const prev = section.blocks[i - 1];
-          const flowing = i > 0 && TEXT_BLOCKS.has(block.type) && TEXT_BLOCKS.has(prev.type);
-          return (
-            <div key={`${section.id}-${i}`} className={cx(i > 0 && (flowing ? "mt-4" : "mt-8"))}>
-              {closing && block.type === "cta" ? (
-                <ClosingCta block={block} locale={locale} />
-              ) : timeline && block.type === "cards" ? (
-                <TimelineCards cards={block.cards} locale={locale} />
-              ) : (
-                <BlockView block={block} locale={locale} />
-              )}
-            </div>
-          );
-        })}
+    <Section
+      id={section.id}
+      tone={t}
+      size={layout === "panels" || layout === "journey" ? "wide" : "content"}
+      pad={layout === "trust-strip" ? "sm" : closing ? "lg" : "md"}
+      className="overflow-hidden"
+    >
+      {heading && <SectionHeading eyebrow={section.eyebrow} title={section.title} intro={section.intro} />}
+      <div className={cx(heading && "mt-10")}>
+        <Body section={section} locale={locale} layout={layout} />
+      </div>
+    </Section>
+  );
+}
+
+/**
+ * Two sections side by side in one band (client: British boarding | UK
+ * qualifications; Global beyond-language | employers).
+ */
+export function TwoUp({ left, right, locale, tone = "default" }: { left: SectionData; right: SectionData; locale: Locale; tone?: SectionTone }) {
+  const Col = ({ s }: { s: SectionData }) => (
+    <div id={s.id} className="scroll-mt-20">
+      <SectionHeading eyebrow={s.eyebrow} title={s.title} intro={s.intro} as="h2" />
+      <div className="mt-8">
+        <Body section={s} locale={locale} layout={layoutFor(s)} />
+      </div>
+    </div>
+  );
+  return (
+    <Section tone={tone} className="overflow-hidden">
+      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+        <Col s={left} />
+        <Col s={right} />
       </div>
     </Section>
   );

@@ -148,30 +148,6 @@ export const page: Page = {
           text: "I firmly believe that every learner has potential. Sometimes all they need is the right support, the right environment, and someone who believes in them.",
         },
         { type: "image", alt: "Founder video" },
-        {
-          type: "paragraph",
-          text: "Hello, I'm Ievgeniia Angerchik, Founder and Director of Mug.Up. People often ask me why I created Mug.Up. The answer is simple.",
-        },
-        {
-          type: "paragraph",
-          text: "Over the years, I worked with many international students, migrant families, and learners adapting to new educational systems and cultures. What I saw again and again was that language was rarely the biggest challenge. The real challenge was confidence. Understanding how the education system works. Knowing which opportunities are available. Feeling capable of taking the next step.",
-        },
-        {
-          type: "paragraph",
-          text: "Many learners needed more than lessons. They needed guidance, encouragement, and someone who could help them navigate their journey. That is why I created Mug.Up. A place where education goes beyond language learning and becomes a pathway to opportunity.",
-        },
-        {
-          type: "paragraph",
-          text: "Today, we help children, teenagers, adults, and families build confidence, achieve academic success, integrate into life in the UK, and create new opportunities for their future.",
-        },
-        {
-          type: "paragraph",
-          text: "What inspires me most is seeing our learners grow—not only in their knowledge and skills, but in their belief in themselves.",
-        },
-        {
-          type: "paragraph",
-          text: "Thank you for being here. We would be delighted to be part of your journey. Education. Integration. Opportunities.",
-        },
       ],
     },
     {
@@ -309,6 +285,9 @@ export const page: Page = {
           type: "paragraph",
           text: "Through partnership, we strengthen the learning experience and create meaningful pathways for future success.",
         },
+        // Client (25 Aug 2026): partner form link, then the LanguageCert logo
+        // with the short note and a "Learn more" link (rendered by the layout).
+        { type: "buttons", ctas: [{ label: "Become a Partner", href: "/contact" }] },
         {
           type: "logos",
           items: [
@@ -321,7 +300,7 @@ export const page: Page = {
         },
         {
           type: "paragraph",
-          text: "Mug.Up Studio is an official LanguageCert Registration and Preparation Centre, supporting candidates with access to internationally recognised English language qualifications for study, work and UK visa and immigration purposes. We provide guidance on choosing the appropriate exam and support candidates throughout the registration process.",
+          text: "Mug.Up Studio is an official LanguageCert Registration and Preparation Centre.",
         },
       ],
     },
@@ -333,7 +312,7 @@ export const page: Page = {
           title: "Every Opportunity Starts with the Right Guidance",
           body: "Whether you are preparing for examinations, exploring educational pathways, developing professional skills, or building a future in the UK, we are here to help. Book a Personal Assessment and receive expert guidance tailored to your goals, ambitions, and individual circumstances.",
           note: "Your assessment includes: personal consultation, educational pathway recommendations, skills and needs review, clear next steps. No obligation.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },

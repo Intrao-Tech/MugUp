@@ -19,7 +19,7 @@ export const page: ProgrammePage = {
       "Gain a recognised English language qualification for education, employment, career development or international opportunities.",
       "Mug.Up Studio is an official LanguageCert Registration Centre, providing guidance and registration support for a range of LanguageCert examinations.",
     ],
-    ctas: [{ label: "Book an Assessment", href: "/book-assessment" }],
+    ctas: [{ label: "Get Expert Guidance", href: "/book-assessment" }],
   },
   atAGlance: [
     { label: "Levels", value: "CEFR A1–C2" },

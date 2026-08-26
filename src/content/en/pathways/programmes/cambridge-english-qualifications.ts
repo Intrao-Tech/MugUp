@@ -90,7 +90,7 @@ export const page: ProgrammePage = {
           type: "cta",
           title: "Start with the Right Guidance",
           body: "Every learner has different goals, ambitions, and starting points. Our personalised assessment helps us identify your current English level and recommend the Cambridge qualification that best supports your future plans.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },

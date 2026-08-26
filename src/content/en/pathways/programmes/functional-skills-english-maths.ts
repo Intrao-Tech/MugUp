@@ -19,7 +19,7 @@ export const page: ProgrammePage = {
       "Functional Skills qualifications provide the practical English and Maths skills needed to succeed in work, further education, apprenticeships, and everyday life in the UK.",
       "At Mug.Up, we help learners build confidence, develop real-world skills, and achieve nationally recognised qualifications that open doors to future opportunities.",
     ],
-    ctas: [{ label: "Book an Assessment", href: "/book-assessment" }],
+    ctas: [{ label: "Get Expert Guidance", href: "/book-assessment" }],
   },
   atAGlance: [
     { label: "Level", value: "Entry Level – Level 2" },
@@ -89,7 +89,7 @@ export const page: ProgrammePage = {
           type: "cta",
           title: "Start with the Right Guidance",
           body: "Every learner starts from a different point. Our personalised assessment helps us identify your current level, understand your goals, and recommend the Functional Skills pathway that best supports your education, employment, or career ambitions.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },
