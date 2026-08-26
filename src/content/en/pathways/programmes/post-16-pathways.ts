@@ -104,7 +104,7 @@ export const page: ProgrammePage = {
           type: "cta",
           title: "Start with the Right Guidance",
           body: "Every student has unique ambitions, strengths, and aspirations. Our personalised assessment helps us recommend the Post-16 pathway that best supports your child's long-term educational and career goals.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },

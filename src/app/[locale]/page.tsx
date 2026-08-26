@@ -3,10 +3,12 @@ import type { Metadata } from "next";
 import { getCommon, getHome } from "@/content";
 import type { Locale } from "@/content/types";
 import { HeroSection, SectionView } from "@/components/BlockRenderer";
-import { Card, STRETCHED_LINK } from "@/components/ui/Card";
+import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import { Chip } from "@/components/ui/Chip";
 import { SectionHeading } from "@/components/ui/Heading";
 import { Section } from "@/components/ui/Section";
+import { IconArrowRight } from "@/components/ui/icons";
+import { cx } from "@/lib/cx";
 import { localeHref } from "@/lib/links";
 import { getPublicPosts } from "@/lib/insights";
 import { getFeaturedReviews } from "@/lib/reviews";
@@ -77,27 +79,65 @@ export default async function HomePage({ params }: Props) {
 
   return (
     <>
-      <HeroSection hero={page.hero} locale={locale} visual="owl" />
+      <HeroSection hero={page.hero} locale={locale} />
       {sections.map((section) => (
         <SectionView key={section.id} section={section} locale={locale} />
       ))}
+      {/* Insights: one featured post, the rest compact (client, 25 Aug 2026). */}
       <Section id="insights-preview" tone="cream">
         <SectionHeading title={dict.nav.insights} />
-        <ul className="mt-10 grid gap-6 sm:grid-cols-3">
-          {posts.map((post) => (
-            <Card as="li" key={post.slug} interactive className="h-full">
-              <p>
-                <Chip>{new Date(post.date).toLocaleDateString(locale === "ua" ? "uk-UA" : "en-GB")}</Chip>
-              </p>
-              <h3 className="text-h3 mt-4 text-ink">
-                <Link href={localeHref(locale, `/insights/${post.slug}`)} className={STRETCHED_LINK}>
-                  {post.title}
-                </Link>
-              </h3>
-              <p className="mt-2 text-sm">{post.description}</p>
-            </Card>
-          ))}
-        </ul>
+        {posts.length > 0 && (
+          <ul className="mt-10 grid gap-10 lg:grid-cols-12">
+            {posts.slice(0, 3).map((post, i) => {
+              const date = new Date(post.date).toLocaleDateString(locale === "ua" ? "uk-UA" : "en-GB");
+              const href = localeHref(locale, `/insights/${post.slug}`);
+              return i === 0 ? (
+                <li key={post.slug} className="lg:col-span-7">
+                  <article className="group">
+                    <Link href={href} className="block" tabIndex={-1} aria-hidden="true">
+                      <ImagePlaceholder alt={post.title} aspect="aspect-[16/9]" />
+                    </Link>
+                    <p className="mt-5">
+                      <Chip>{date}</Chip>
+                    </p>
+                    <h3 className="text-h2 mt-3 text-ink">
+                      <Link href={href} className="decoration-brand decoration-2 underline-offset-4 group-hover:underline">
+                        {post.title}
+                      </Link>
+                    </h3>
+                    <p className="mt-3 max-w-2xl text-base">{post.description}</p>
+                  </article>
+                </li>
+              ) : (
+                <li
+                  key={post.slug}
+                  className={cx("lg:col-span-5", i === 1 ? "lg:col-start-8" : "lg:col-start-8")}
+                >
+                  <article className="group border-t border-ink pt-5">
+                    <p>
+                      <Chip>{date}</Chip>
+                    </p>
+                    <h3 className="text-h3 mt-3 text-ink">
+                      <Link href={href} className="decoration-brand decoration-2 underline-offset-4 group-hover:underline">
+                        {post.title}
+                      </Link>
+                    </h3>
+                    <p className="mt-2 text-sm">{post.description}</p>
+                  </article>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <p className="mt-10">
+          <Link
+            href={localeHref(locale, "/insights")}
+            className="inline-flex items-center gap-2 text-base font-bold text-primary underline decoration-brand/40 decoration-2 underline-offset-[6px] hover:decoration-brand"
+          >
+            {dict.ui.readMore}
+            <IconArrowRight size={18} />
+          </Link>
+        </p>
       </Section>
       {finalCta && <SectionView section={finalCta} locale={locale} />}
     </>

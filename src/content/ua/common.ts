@@ -9,7 +9,7 @@ export const common: CommonDict = {
     pathwaysGlobal: "Глобальна інтеграція",
     courses: "Курси та програми",
     insights: "Insights",
-    bookAssessment: "Записатися на оцінювання",
+    bookAssessment: "Отримати консультацію",
     contact: "Контакти",
   },
   footer: {
@@ -34,7 +34,7 @@ export const common: CommonDict = {
         title: "Підтримка",
         links: [
           { label: "Контакти", href: "/contact" },
-          { label: "Записатися на оцінювання", href: "/book-assessment" },
+          { label: "Отримати консультацію", href: "/book-assessment" },
           { label: "Залишити відгук", href: "/review" },
         ],
       },

@@ -112,7 +112,7 @@ export const page: ProgrammePage = {
           type: "cta",
           title: "Start with the Right Guidance",
           body: "Every child's strengths are different. Our personalised assessment helps us evaluate your child's academic readiness, reasoning skills, and potential, allowing us to recommend the preparation pathway that gives them the best opportunity to succeed in the 11+ examination.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },

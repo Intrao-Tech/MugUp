@@ -25,7 +25,7 @@ export default async function AboutPage({ params }: Props) {
           { label: dict.nav.about },
         ]}
       />
-      <HeroSection hero={page.hero} locale={locale} />
+      <HeroSection hero={page.hero} locale={locale} statement />
       <PageSections sections={page.sections} locale={locale} />
     </>
   );

@@ -15,7 +15,7 @@ export const page: Page = {
       "Mug.Up is an international education platform helping learners build confidence, navigate educational pathways, and unlock opportunities in the UK and beyond.",
       "Whether you are preparing for examinations, pursuing higher education, developing professional skills, or adapting to life in a new country, we provide expert guidance and personalised support every step of the way.",
     ],
-    ctas: [{ label: "Book an Assessment", href: "/book-assessment" }],
+    ctas: [{ label: "Get Expert Guidance", href: "/book-assessment" }],
   },
   sections: [
     {
@@ -36,7 +36,7 @@ export const page: Page = {
           type: "cta",
           title: "Start with a Personal Assessment",
           body: "Receive tailored recommendations and a clear pathway based on your goals and aspirations.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },
@@ -111,6 +111,7 @@ export const page: Page = {
             { value: "15+", label: "Years of Educational Experience" },
             { value: "250+", label: "Supported learners" },
             { value: "60%", label: "of Students Study with Us for 12+ Months" },
+            { value: "82%", label: "of students achieved or exceeded their predicted GCSE grades" },
           ],
         },
         {
@@ -294,7 +295,7 @@ export const page: Page = {
           title: "Ready to Take the Next Step?",
           body: "Every successful journey starts with understanding where you are today and where you want to go tomorrow. Book an assessment and receive personalised recommendations tailored to your goals. Whether you are preparing for exams, planning university applications, developing professional skills, or adapting to life in the UK, we are here to help.",
           note: "No obligation. Personalised guidance. Clear next steps.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },

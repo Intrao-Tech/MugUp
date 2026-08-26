@@ -109,7 +109,7 @@ export const page: ProgrammePage = {
           type: "cta",
           title: "Start with the Right Guidance",
           body: "Every student's educational journey is unique. Our personalised assessment helps us identify current strengths, highlight opportunities for improvement, and recommend the pathway that will maximise future GCSE success.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },

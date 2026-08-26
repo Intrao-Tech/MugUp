@@ -19,7 +19,7 @@ export const page: ProgrammePage = {
       "Отримайте визнану кваліфікацію з англійської мови для освіти, працевлаштування, кар'єрного розвитку чи міжнародних можливостей.",
       "Mug.Up Studio — офіційний реєстраційний центр LanguageCert: ми консультуємо та супроводжуємо реєстрацію на низку іспитів LanguageCert.",
     ],
-    ctas: [{ label: "Записатися на оцінювання", href: "/book-assessment" }],
+    ctas: [{ label: "Отримати консультацію", href: "/book-assessment" }],
   },
   atAGlance: [
     { label: "Рівні", value: "CEFR A1–C2" },

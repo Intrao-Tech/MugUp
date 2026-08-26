@@ -13,7 +13,7 @@ export const page: Page = {
     body: [
       "Preparation for internationally recognised language tests for study, work, migration and international mobility.",
     ],
-    ctas: [{ label: "Book an Assessment", href: "/book-assessment" }],
+    ctas: [{ label: "Get Expert Guidance", href: "/book-assessment" }],
   },
   sections: [
     {
@@ -42,7 +42,7 @@ export const page: Page = {
           type: "cta",
           title: "Not sure which test you need?",
           body: "A short assessment matches your goal — university, work, visa or mobility — to the right test and preparation plan.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },

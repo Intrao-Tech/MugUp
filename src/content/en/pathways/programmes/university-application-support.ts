@@ -104,7 +104,7 @@ export const page: ProgrammePage = {
           type: "cta",
           title: "Start with the Right Guidance",
           body: "Every student's journey is different. Our personalised assessment helps us understand academic strengths, career aspirations, and university goals, allowing us to recommend the admissions strategy and educational pathway best suited to long-term success.",
-          cta: { label: "Book an Assessment", href: "/book-assessment" },
+          cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
     },
