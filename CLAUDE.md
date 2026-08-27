@@ -59,7 +59,8 @@ letters land in Mailpit: http://localhost:54324. DB GUI: :54323.
   `max-w-*` wrappers, every CTA is `<Button>`.
 - Keep SEO invariants (`docs/SEO-REQUIREMENTS.md`): one H1 per page, unique
   meta, canonical + hreflang, JSON-LD, real 404s, readable slugs.
-- Images: client-provided assets or the grey `ImagePlaceholder` — never
+- Images: client-provided assets, licensed stock registered in `src/lib/photos.ts`
+  (sources in `docs/PHOTO-CREDITS.md`) or the grey `ImagePlaceholder` — never
   AI-generated, never hotlinked.
 - Run ONE dev server at a time; never `next build` while dev runs (both write
   `.next` and corrupt it — symptom: phantom 404s/stale pages; fix: delete
