@@ -48,7 +48,7 @@ export default async function BookAssessmentPage({ params }: Props) {
           { label: dict.nav.bookAssessment },
         ]}
       />
-      <HeroSection hero={page.hero} locale={locale} />
+      <HeroSection hero={page.hero} locale={locale} visual="none" />
       {sections.map((section) => (
         <SectionView key={section.id} section={section} locale={locale} />
       ))}

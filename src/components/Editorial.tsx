@@ -5,6 +5,7 @@ import { localeHref } from "@/lib/links";
 import { cx } from "@/lib/cx";
 import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import { ScrollRail } from "@/components/ScrollRail";
+import { photoFor } from "@/lib/photos";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Eyebrow } from "@/components/ui/Heading";
@@ -183,6 +184,7 @@ export function PathwayPanels({ cards, locale }: { cards: CardData[]; locale: Lo
     <div className="grid overflow-hidden rounded-card md:grid-cols-2">
       {cards.map((card, i) => {
         const tone = tones[i % tones.length];
+        const img = card.href ? photoFor(`panel:${card.href}`) : undefined;
         return (
           <article
             key={card.title}
@@ -193,7 +195,17 @@ export function PathwayPanels({ cards, locale }: { cards: CardData[]; locale: Lo
               "has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-[-4px] has-[a:focus-visible]:outline-ring",
             )}
           >
-            <ImagePlaceholder alt={card.title} aspect="aspect-[16/9]" className="rounded-none border-0 border-b border-line" />
+            {img ? (
+              <img
+                src={img.src}
+                alt={img.alt[locale]}
+                loading="lazy"
+                className="aspect-[16/9] w-full border-b border-line object-cover"
+                style={img.position ? { objectPosition: img.position } : undefined}
+              />
+            ) : (
+              <ImagePlaceholder alt={card.title} aspect="aspect-[16/9]" className="rounded-none border-0 border-b border-line" />
+            )}
             <div className="flex grow flex-col p-7 sm:p-10">
               {card.eyebrow && <Eyebrow className="mb-3">{card.eyebrow}</Eyebrow>}
               <h3 className="text-h2 text-ink">

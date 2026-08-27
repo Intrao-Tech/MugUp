@@ -60,7 +60,7 @@ export default async function QualificationProgrammePage({ params }: Props) {
           { label: page.cardTitle },
         ]}
       />
-      <HeroSection hero={page.hero} locale={locale} glance={page.atAGlance} />
+      <HeroSection hero={page.hero} locale={locale} glance={page.atAGlance} route={`/pathways/global-integration/qualifications/${slug}`} />
       <PageSections sections={page.sections} locale={locale} />
     </>
   );

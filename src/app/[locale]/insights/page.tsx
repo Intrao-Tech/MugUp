@@ -37,7 +37,7 @@ export default async function InsightsPage({ params }: Props) {
           { label: dict.nav.insights },
         ]}
       />
-      <HeroSection hero={page.hero} locale={locale} />
+      <HeroSection hero={page.hero} locale={locale} visual="none" />
       <nav aria-label={dict.ui.allCategories} className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <ul className="flex flex-wrap gap-3 text-sm">
           {categories.map((cat) => (

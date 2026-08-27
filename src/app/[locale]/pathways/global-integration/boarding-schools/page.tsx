@@ -49,7 +49,7 @@ export default async function BoardingSchoolsPage({ params }: Props) {
           { label: page.hero.title },
         ]}
       />
-      <HeroSection hero={page.hero} locale={locale} />
+      <HeroSection hero={page.hero} locale={locale} route="/pathways/global-integration/boarding-schools" />
       <PageSections sections={page.sections} locale={locale} />
     </>
   );

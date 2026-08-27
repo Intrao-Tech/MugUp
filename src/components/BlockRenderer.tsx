@@ -29,6 +29,7 @@ import { Container } from "@/components/ui/Container";
 import { Eyebrow, SectionHeading } from "@/components/ui/Heading";
 import { IconArrowRight, IconCheck, IconChevronDown } from "@/components/ui/icons";
 import { Section, type SectionTone } from "@/components/ui/Section";
+import { photoFor } from "@/lib/photos";
 
 /* -------------------------------------------------------------------------
    Content → design. Copy and structure come from src/content and are never
@@ -44,9 +45,12 @@ export function HeroSection({
   visual = "photo",
   glance,
   statement = false,
+  route,
 }: {
   hero: Hero;
   locale: Locale;
+  /** Locale-relative route ("/about") — looks up `hero:<route>` in the photo registry. */
+  route?: string;
   /** "photo" = big editorial visual on the right (placeholder until the client supplies photography). */
   visual?: "photo" | "none";
   /** Programme facts stacked over the visual (Age · Years · Format · Assessment). */
@@ -55,6 +59,7 @@ export function HeroSection({
   statement?: boolean;
 }) {
   const photo = visual === "photo";
+  const img = route ? photoFor(`hero:${route}`) : undefined;
   return (
     <section aria-labelledby="page-title" className="relative overflow-hidden">
       <Container
@@ -93,7 +98,19 @@ export function HeroSection({
         </div>
         {photo && (
           <div className="relative min-w-0 lg:col-span-6">
-            <ImagePlaceholder alt={hero.title} aspect="aspect-[4/3] lg:aspect-[5/4]" />
+            {img ? (
+              <img
+                src={img.src}
+                alt={img.alt[locale]}
+                width={1600}
+                height={1280}
+                fetchPriority="high"
+                className="aspect-[4/3] w-full rounded-card object-cover lg:aspect-[5/4]"
+                style={img.position ? { objectPosition: img.position } : undefined}
+              />
+            ) : (
+              <ImagePlaceholder alt={hero.title} aspect="aspect-[4/3] lg:aspect-[5/4]" />
+            )}
             {glance && glance.length > 0 && (
               <dl className="mt-4 grid grid-cols-2 gap-2 sm:absolute sm:bottom-6 sm:right-6 sm:mt-0 sm:grid-cols-1 sm:gap-0 sm:divide-y sm:divide-line sm:rounded-card sm:border sm:border-ink sm:bg-surface">
                 {glance.map((g) => (
@@ -466,7 +483,11 @@ function Body({ section, locale, layout }: { section: SectionData; locale: Local
       return <Flow section={section} locale={locale} />;
     case "split-photo":
       return (
-        <SplitPhoto alt={section.title ?? section.id} side={section.id === "for-parents" ? "right" : "left"}>
+        <SplitPhoto
+          alt={photoFor(`split:${section.id}`)?.alt[locale] ?? section.title ?? section.id}
+          src={photoFor(`split:${section.id}`)?.src}
+          side={section.id === "for-parents" ? "right" : "left"}
+        >
           {list && <CheckList items={list.items} columns={false} />}
           {paragraphs.length > 0 && <Prose blocks={paragraphs} className="mt-6" />}
         </SplitPhoto>

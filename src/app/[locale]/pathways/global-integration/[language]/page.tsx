@@ -57,7 +57,7 @@ export default async function LanguagePage({ params }: Props) {
           { label: page.cardTitle },
         ]}
       />
-      <HeroSection hero={page.hero} locale={locale} />
+      <HeroSection hero={page.hero} locale={locale} route={`/pathways/global-integration/${language}`} />
       <PageSections sections={page.sections} locale={locale} />
     </>
   );
