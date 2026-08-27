@@ -31,7 +31,7 @@ export default async function BritishEducationHub({ params }: Props) {
           { label: dict.nav.pathwaysBritish },
         ]}
       />
-      <HeroSection hero={page.hero} locale={locale} />
+      <HeroSection hero={page.hero} locale={locale} route={"/pathways/british-education"} />
       {page.sections.map((section) => {
         // Client (25 Aug 2026): under the journey, boarding on the left and
         // the four UK qualifications 2×2 on the right — one band.

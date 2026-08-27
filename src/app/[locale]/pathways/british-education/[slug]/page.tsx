@@ -62,7 +62,7 @@ export default async function ProgrammePage({ params }: Props) {
           { label: page.cardTitle },
         ]}
       />
-      <HeroSection hero={page.hero} locale={locale} glance={page.atAGlance} />
+      <HeroSection hero={page.hero} locale={locale} glance={page.atAGlance} route={`/pathways/british-education/${slug}`} />
       <PageSections sections={page.sections} locale={locale} />
     </>
   );

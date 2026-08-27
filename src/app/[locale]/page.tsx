@@ -8,6 +8,7 @@ import { Chip } from "@/components/ui/Chip";
 import { SectionHeading } from "@/components/ui/Heading";
 import { Section } from "@/components/ui/Section";
 import { IconArrowRight } from "@/components/ui/icons";
+import { photoFor } from "@/lib/photos";
 import { cx } from "@/lib/cx";
 import { localeHref } from "@/lib/links";
 import { getPublicPosts } from "@/lib/insights";
@@ -79,7 +80,7 @@ export default async function HomePage({ params }: Props) {
 
   return (
     <>
-      <HeroSection hero={page.hero} locale={locale} />
+      <HeroSection hero={page.hero} locale={locale} route="/" />
       {sections.map((section) => (
         <SectionView key={section.id} section={section} locale={locale} />
       ))}
@@ -95,7 +96,16 @@ export default async function HomePage({ params }: Props) {
                 <li key={post.slug} className="lg:col-span-7">
                   <article className="group">
                     <Link href={href} className="block" tabIndex={-1} aria-hidden="true">
-                      <ImagePlaceholder alt={post.title} aspect="aspect-[16/9]" />
+                      {photoFor("insights") ? (
+                        <img
+                          src={photoFor("insights")!.src}
+                          alt=""
+                          loading="lazy"
+                          className="aspect-[16/9] w-full rounded-card object-cover"
+                        />
+                      ) : (
+                        <ImagePlaceholder alt={post.title} aspect="aspect-[16/9]" />
+                      )}
                     </Link>
                     <p className="mt-5">
                       <Chip>{date}</Chip>

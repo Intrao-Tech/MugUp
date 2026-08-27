@@ -30,7 +30,7 @@ export default async function GlobalIntegrationPage({ params }: Props) {
           { label: dict.nav.pathwaysGlobal },
         ]}
       />
-      <HeroSection hero={page.hero} locale={locale} />
+      <HeroSection hero={page.hero} locale={locale} route={"/pathways/global-integration"} />
       {page.sections.map((section) => {
         // Client (25 Aug 2026): journey + "More than learning a language" share
         // one screen; "Beyond language" | "For employers" sit in two columns.
