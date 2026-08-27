@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PASSWORD_MIN_LENGTH } from "@/lib/password";
+import { INPUT } from "./ui";
 
 // Live per-rule feedback while typing a new password. The checklist is
 // advisory UI — the server actions re-validate with isStrongPassword().
@@ -29,7 +30,7 @@ export function PasswordRuleChecklist({
       {RULES.map((rule) => {
         const ok = rule.test(password);
         return (
-          <li key={rule.label} className={ok ? "text-green-700" : "text-neutral-500"}>
+          <li key={rule.label} className={ok ? "text-green-700" : "text-muted"}>
             <span aria-hidden="true" className="mr-1.5 inline-block w-3">{ok ? "✓" : "○"}</span>
             {rule.label}
           </li>
@@ -38,7 +39,7 @@ export function PasswordRuleChecklist({
       {confirm !== undefined && (
         <li
           className={
-            confirm && confirm === password ? "text-green-700" : "text-neutral-500"
+            confirm && confirm === password ? "text-green-700" : "text-muted"
           }
         >
           <span aria-hidden="true" className="mr-1.5 inline-block w-3">
@@ -56,11 +57,11 @@ export function PasswordRuleChecklist({
 export function NewPasswordFields() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const inputCls = "mt-1 w-full border border-neutral-400 px-3 py-2";
+  const inputCls = INPUT;
   return (
     <>
       <div>
-        <label htmlFor="password" className="block text-sm font-medium">
+        <label htmlFor="password" className="block text-sm font-bold text-ink">
           New password *
         </label>
         <input
@@ -75,7 +76,7 @@ export function NewPasswordFields() {
         />
       </div>
       <div>
-        <label htmlFor="confirm" className="block text-sm font-medium">
+        <label htmlFor="confirm" className="block text-sm font-bold text-ink">
           Repeat new password *
         </label>
         <input

@@ -8,7 +8,7 @@ import { requireProfile } from "@/lib/auth-guard";
 import { getData } from "@/lib/data";
 import { PROGRAMME_SUGGESTIONS } from "@/lib/programmes";
 import { addReview, deleteReview, setReviewStatus, updateReviewMeta } from "../actions";
-import { buildQuery, FilterChip, Notice } from "../ui";
+import { BTN_PRIMARY, BTN_SECONDARY, buildQuery, CARD, FilterChip, H1, H2, INPUT, Notice } from "../ui";
 
 export const dynamic = "force-dynamic";
 
@@ -28,26 +28,26 @@ const SOURCE_LABEL: Record<ReviewRow["source"], string> = {
 // (status buttons, "Edit details", "Delete") so nothing looks half-editable.
 function ReviewCard({ review }: { review: ReviewRow }) {
   return (
-    <article className="border border-neutral-300 bg-white p-4">
-      <p className="text-xs uppercase tracking-wide text-neutral-500">
+    <article className={`${CARD} p-4`}>
+      <p className="text-eyebrow uppercase text-muted">
         {STATUS_LABEL[review.status]} · {SOURCE_LABEL[review.source]} ·{" "}
         {new Date(review.created_at).toLocaleDateString("en-GB")}
         {review.rating && <> · {"★".repeat(review.rating)}</>}
         {review.featured && (
-          <span className="ml-2 border border-neutral-900 px-1 text-neutral-900">FEATURED</span>
+          <span className="ml-2 rounded-sm border border-line bg-surface px-2 py-0.5 text-eyebrow uppercase text-ink">FEATURED</span>
         )}
       </p>
       {(review.programme || review.audience) && (
-        <p className="mt-1 text-xs text-neutral-500">
+        <p className="mt-1 text-xs text-muted">
           {[review.programme, review.audience && REVIEW_AUDIENCE_LABELS[review.audience]]
             .filter(Boolean)
             .join(" · ")}
         </p>
       )}
       <blockquote className="mt-2 text-sm">“{review.quote}”</blockquote>
-      <p className="mt-2 text-sm font-medium">
+      <p className="mt-2 text-sm font-bold">
         — {review.author_name}
-        {review.author_tag && <span className="text-neutral-500"> · {review.author_tag}</span>}
+        {review.author_tag && <span className="text-muted"> · {review.author_tag}</span>}
       </p>
 
       <div className="mt-3 flex flex-wrap gap-2 text-sm">
@@ -57,15 +57,15 @@ function ReviewCard({ review }: { review: ReviewRow }) {
             <form key={s} action={setReviewStatus}>
               <input type="hidden" name="id" value={review.id} />
               <input type="hidden" name="status" value={s} />
-              <button type="submit" className="border border-neutral-400 px-3 py-1 hover:underline">
+              <button type="submit" className={BTN_SECONDARY}>
                 {s === "approved" ? "Approve" : s === "rejected" ? "Reject" : "Back to pending"}
               </button>
             </form>
           ))}
       </div>
 
-      <details className="mt-3 border-t border-neutral-200 pt-2 text-sm">
-        <summary className="cursor-pointer text-neutral-600 hover:underline">
+      <details className="mt-3 border-t border-line pt-2 text-sm">
+        <summary className="cursor-pointer text-primary underline underline-offset-4 hover:text-primary-hover">
           Edit details (programme, audience, featured)
         </summary>
         <form
@@ -78,13 +78,13 @@ function ReviewCard({ review }: { review: ReviewRow }) {
             list="programme-suggestions"
             placeholder="Programme (e.g. GCSE)"
             defaultValue={review.programme}
-            className="border border-neutral-300 px-2 py-1"
+            className={INPUT}
             aria-label="Programme"
           />
           <select
             name="audience"
             defaultValue={review.audience ?? ""}
-            className="border border-neutral-300 px-2 py-1"
+            className={INPUT}
             aria-label="Audience"
           >
             <option value="">Audience…</option>
@@ -98,7 +98,7 @@ function ReviewCard({ review }: { review: ReviewRow }) {
             <input type="checkbox" name="featured" defaultChecked={review.featured} />
             Featured
           </label>
-          <button type="submit" className="border border-neutral-900 px-3 py-1">
+          <button type="submit" className={BTN_SECONDARY}>
             Save
           </button>
         </form>
@@ -108,7 +108,7 @@ function ReviewCard({ review }: { review: ReviewRow }) {
         <summary className="cursor-pointer text-red-700 hover:underline">Delete…</summary>
         <form action={deleteReview} className="mt-2 flex items-center gap-2">
           <input type="hidden" name="id" value={review.id} />
-          <span className="text-neutral-600">This removes the review permanently.</span>
+          <span className="text-body">This removes the review permanently.</span>
           <button type="submit" className="border border-red-700 px-3 py-1 text-red-700">
             Yes, delete
           </button>
@@ -137,8 +137,8 @@ export default async function ReviewsPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Reviews</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <h1 className={H1}>Reviews</h1>
+      <p className="mt-1 text-base text-body">
         Only approved reviews may ever appear on the site; approved + Featured ones become the
         homepage testimonials.
       </p>
@@ -158,18 +158,18 @@ export default async function ReviewsPage({
       )}
 
       <section className="mt-6">
-        <h2 className="text-xl font-semibold">Awaiting moderation ({pending.length})</h2>
+        <h2 className={H2}>Awaiting moderation ({pending.length})</h2>
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
           {pending.map((r) => (
             <ReviewCard key={r.id} review={r} />
           ))}
-          {pending.length === 0 && <p className="text-sm text-neutral-500">Nothing pending.</p>}
+          {pending.length === 0 && <p className="text-sm text-muted">Nothing pending.</p>}
         </div>
       </section>
 
       <section className="mt-8">
-        <h2 className="text-xl font-semibold">Add a review</h2>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h2 className={H2}>Add a review</h2>
+        <p className="mt-1 text-base text-body">
           For importing real reviews the studio received elsewhere — e.g. copy one from Google and
           pick “Google” as the source. Visitors can also submit reviews themselves through the
           site's “Leave a review” page; those appear above as “Site form”.
@@ -177,20 +177,20 @@ export default async function ReviewsPage({
         <form action={addReview} className="mt-3 max-w-lg space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="source" className="block text-sm font-medium">
+              <label htmlFor="source" className="block text-sm font-bold text-ink">
                 Source
               </label>
-              <select id="source" name="source" className="mt-1 w-full border border-neutral-400 px-3 py-2">
+              <select id="source" name="source" className={INPUT}>
                 <option value="google">Google</option>
                 <option value="other">Other</option>
                 <option value="website">Site form</option>
               </select>
             </div>
             <div>
-              <label htmlFor="rating" className="block text-sm font-medium">
+              <label htmlFor="rating" className="block text-sm font-bold text-ink">
                 Rating (optional)
               </label>
-              <select id="rating" name="rating" className="mt-1 w-full border border-neutral-400 px-3 py-2">
+              <select id="rating" name="rating" className={INPUT}>
                 <option value="">—</option>
                 {[5, 4, 3, 2, 1].map((n) => (
                   <option key={n} value={n}>
@@ -200,7 +200,7 @@ export default async function ReviewsPage({
               </select>
             </div>
             <div>
-              <label htmlFor="add-programme" className="block text-sm font-medium">
+              <label htmlFor="add-programme" className="block text-sm font-bold text-ink">
                 Programme / area
               </label>
               <input
@@ -208,14 +208,14 @@ export default async function ReviewsPage({
                 name="programme"
                 list="programme-suggestions"
                 placeholder="e.g. GCSE, IELTS, Spanish"
-                className="mt-1 w-full border border-neutral-400 px-3 py-2"
+                className={INPUT}
               />
             </div>
             <div>
-              <label htmlFor="add-audience" className="block text-sm font-medium">
+              <label htmlFor="add-audience" className="block text-sm font-bold text-ink">
                 Audience
               </label>
-              <select id="add-audience" name="audience" className="mt-1 w-full border border-neutral-400 px-3 py-2">
+              <select id="add-audience" name="audience" className={INPUT}>
                 <option value="">—</option>
                 {REVIEW_AUDIENCES.map((a) => (
                   <option key={a} value={a}>
@@ -226,28 +226,28 @@ export default async function ReviewsPage({
             </div>
           </div>
           <div>
-            <label htmlFor="author_name" className="block text-sm font-medium">
+            <label htmlFor="author_name" className="block text-sm font-bold text-ink">
               Author *
             </label>
             <input
               id="author_name"
               name="author_name"
               required
-              className="mt-1 w-full border border-neutral-400 px-3 py-2"
+              className={INPUT}
             />
           </div>
           <div>
-            <label htmlFor="author_tag" className="block text-sm font-medium">
+            <label htmlFor="author_tag" className="block text-sm font-bold text-ink">
               Tag (e.g. “Parent of GCSE Student”)
             </label>
             <input
               id="author_tag"
               name="author_tag"
-              className="mt-1 w-full border border-neutral-400 px-3 py-2"
+              className={INPUT}
             />
           </div>
           <div>
-            <label htmlFor="quote" className="block text-sm font-medium">
+            <label htmlFor="quote" className="block text-sm font-bold text-ink">
               Quote *
             </label>
             <textarea
@@ -255,18 +255,18 @@ export default async function ReviewsPage({
               name="quote"
               rows={4}
               required
-              className="mt-1 w-full border border-neutral-400 px-3 py-2"
+              className={INPUT}
             />
           </div>
-          <button type="submit" className="border border-neutral-900 px-4 py-2">
+          <button type="submit" className={BTN_PRIMARY}>
             Add as pending
           </button>
         </form>
       </section>
 
       <section className="mt-8">
-        <h2 className="text-xl font-semibold">All reviews ({moderated.length})</h2>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h2 className={H2}>All reviews ({moderated.length})</h2>
+        <p className="mt-1 text-base text-body">
           Every review that has been moderated. Approve/reject changes where it can appear;
           “Edit details” manages the marketing fields; “Delete” removes it for good.
         </p>
@@ -291,7 +291,7 @@ export default async function ReviewsPage({
           {rest.map((r) => (
             <ReviewCard key={r.id} review={r} />
           ))}
-          {rest.length === 0 && <p className="text-sm text-neutral-500">Nothing here yet.</p>}
+          {rest.length === 0 && <p className="text-sm text-muted">Nothing here yet.</p>}
         </div>
       </section>
     </div>

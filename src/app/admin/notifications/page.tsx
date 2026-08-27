@@ -7,6 +7,7 @@ import {
 import { hasPerm, requireProfile } from "@/lib/auth-guard";
 import { getData } from "@/lib/data";
 import { markAllNotificationsRead, openNotification } from "../actions";
+import { BTN_SECONDARY, H1, H2 } from "../ui";
 
 export const dynamic = "force-dynamic";
 
@@ -37,22 +38,25 @@ export default async function NotificationsPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold">
+      <h1 className={H1}>
         Notifications
         {unread.length > 0 && (
-          <span className="ml-2 align-middle border border-neutral-900 bg-neutral-900 px-2 py-0.5 text-sm font-medium text-white">
+          <span className="ml-2 inline-block rounded-sm border border-ink bg-ink px-2 py-0.5 align-middle font-sans text-sm font-bold text-surface">
             {unread.length} new
           </span>
         )}
       </h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-base text-body">
         Website events for your role land here. Click an entry to open it; it counts as read
         only once you have.
         {canManage && (
           <>
             {" "}
             Which role receives what is configured in{" "}
-            <Link href="/admin/users" className="underline">
+            <Link
+              href="/admin/users"
+              className="text-primary underline underline-offset-4 hover:text-primary-hover"
+            >
               Team → Roles
             </Link>
             .
@@ -62,13 +66,13 @@ export default async function NotificationsPage() {
 
       <section className="mt-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-xl font-semibold">Latest</h2>
+          <h2 className={H2}>Latest</h2>
           {unread.length > 0 && (
             <form action={markAllNotificationsRead}>
               {unread.map((item) => (
                 <input key={item.id} type="hidden" name="ids" value={item.id} />
               ))}
-              <button type="submit" className="border border-neutral-400 px-3 py-1 text-sm hover:border-neutral-900">
+              <button type="submit" className={BTN_SECONDARY}>
                 Mark all as read
               </button>
             </form>
@@ -89,13 +93,13 @@ export default async function NotificationsPage() {
                     then marks this entry as read. */}
                 <button
                   type="submit"
-                  className={`block w-full border bg-white p-3 text-left hover:border-neutral-900 ${
-                    isNew ? "border-neutral-900" : "border-neutral-200"
+                  className={`block w-full rounded-card border p-3 text-left transition-colors hover:border-ink ${
+                    isNew ? "border-ink bg-surface-alt" : "border-line bg-surface"
                   }`}
                 >
-                  <span className="flex flex-wrap items-baseline gap-2 text-xs text-neutral-500">
+                  <span className="flex flex-wrap items-baseline gap-2 text-xs text-muted">
                     {isNew && (
-                      <span className="bg-neutral-900 px-1.5 py-0.5 font-medium text-white">NEW</span>
+                      <span className="rounded-sm bg-ink px-1.5 py-0.5 font-bold text-surface">NEW</span>
                     )}
                     <span>{NOTIFICATION_EVENT_LABELS[item.event] ?? item.event}</span>
                     <span>
@@ -104,18 +108,18 @@ export default async function NotificationsPage() {
                         timeStyle: "short",
                       })}
                     </span>
-                    <span className="ml-auto underline">open →</span>
+                    <span className="ml-auto text-primary underline underline-offset-4">open →</span>
                   </span>
-                  <span className="mt-1 block font-medium">{item.title}</span>
+                  <span className="mt-1 block font-bold text-ink">{item.title}</span>
                   {item.detail && (
-                    <span className="block text-sm text-neutral-600">{item.detail}</span>
+                    <span className="block text-sm text-body">{item.detail}</span>
                   )}
                 </button>
               </form>
             );
           })}
           {feed.length === 0 && (
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-muted">
               {myEvents.length === 0
                 ? "Your role does not receive any notifications — an administrator configures which role gets what in Team → Roles."
                 : "Nothing yet — new events will appear here."}

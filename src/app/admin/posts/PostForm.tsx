@@ -2,6 +2,7 @@ import type { CategoryRow, PostRow } from "@/lib/db-types";
 import { sanitizePostBlocks } from "@/lib/post-blocks";
 import { isoToUkWallTime } from "@/lib/uk-time";
 import { savePost, savePostDraft, savePostPublish } from "../actions";
+import { BTN_PRIMARY, BTN_SECONDARY, INPUT } from "../ui";
 import { HeroImageField } from "./HeroImageField";
 import { PostBuilder } from "./PostBuilder";
 import { ScheduleField } from "./ScheduleField";
@@ -17,7 +18,7 @@ export function PostForm({
   canPublish: boolean;
   categories: CategoryRow[];
 }) {
-  const inputCls = "mt-1 w-full border border-neutral-400 px-3 py-2";
+  const inputCls = INPUT;
   return (
     // The metadata fields sit in a narrow column; the content builder below
     // uses the full admin width (columns and wide blocks need the room).
@@ -26,7 +27,7 @@ export function PostForm({
       <div className="max-w-2xl space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="locale" className="block text-sm font-medium">
+          <label htmlFor="locale" className="block text-sm font-bold text-ink">
             Language *
           </label>
           <select id="locale" name="locale" defaultValue={post?.locale ?? "en"} className={inputCls}>
@@ -35,7 +36,7 @@ export function PostForm({
           </select>
         </div>
         <div>
-          <label htmlFor="category" className="block text-sm font-medium">
+          <label htmlFor="category" className="block text-sm font-bold text-ink">
             Category *
           </label>
           <select
@@ -53,15 +54,15 @@ export function PostForm({
         </div>
       </div>
       <div>
-        <label htmlFor="title" className="block text-sm font-medium">
-          Title * <span className="font-normal text-neutral-500">(unique, ≤ 60 chars — used as meta title)</span>
+        <label htmlFor="title" className="block text-sm font-bold text-ink">
+          Title * <span className="font-normal text-muted">(unique, ≤ 60 chars — used as meta title)</span>
         </label>
         <input id="title" name="title" required maxLength={70} defaultValue={post?.title} className={inputCls} />
       </div>
       <div>
-        <label htmlFor="slug" className="block text-sm font-medium">
+        <label htmlFor="slug" className="block text-sm font-bold text-ink">
           URL address (slug){" "}
-          <span className="font-normal text-neutral-500">
+          <span className="font-normal text-muted">
             — leave empty to generate from the title. Becomes /insights/&lt;slug&gt;; readable
             URLs matter for SEO.
           </span>
@@ -76,8 +77,8 @@ export function PostForm({
         />
       </div>
       <div>
-        <label htmlFor="description" className="block text-sm font-medium">
-          Description <span className="font-normal text-neutral-500">(~150 chars — meta description)</span>
+        <label htmlFor="description" className="block text-sm font-bold text-ink">
+          Description <span className="font-normal text-muted">(~150 chars — meta description)</span>
         </label>
         <textarea
           id="description"
@@ -89,17 +90,17 @@ export function PostForm({
         />
       </div>
       <div>
-        <label htmlFor="author" className="block text-sm font-medium">
+        <label htmlFor="author" className="block text-sm font-bold text-ink">
           Author{" "}
-          <span className="font-normal text-neutral-500">
+          <span className="font-normal text-muted">
             (shown as the byline; adds educational expertise for readers and Google)
           </span>
         </label>
         <input id="author" name="author" defaultValue={post?.author} className={inputCls} />
       </div>
       <div>
-        <span className="block text-sm font-medium">Featured image</span>
-        <p className="text-xs text-neutral-500">
+        <span className="block text-sm font-bold text-ink">Featured image</span>
+        <p className="text-xs text-muted">
           Shown at the top of the article and in social previews.
         </p>
         <div className="mt-2">
@@ -108,7 +109,7 @@ export function PostForm({
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="cta_label" className="block text-sm font-medium">
+          <label htmlFor="cta_label" className="block text-sm font-bold text-ink">
             End-of-article CTA — button text
           </label>
           <input
@@ -120,7 +121,7 @@ export function PostForm({
           />
         </div>
         <div>
-          <label htmlFor="cta_url" className="block text-sm font-medium">
+          <label htmlFor="cta_url" className="block text-sm font-bold text-ink">
             CTA — link
           </label>
           <input
@@ -132,13 +133,13 @@ export function PostForm({
           />
         </div>
       </div>
-      <p className="-mt-2 text-xs text-neutral-500">
+      <p className="-mt-2 text-xs text-muted">
         The CTA hands the reader on to a programme (fill both fields or neither).
       </p>
       </div>
       <div>
-        <span className="block text-sm font-medium">Content</span>
-        <p className="text-xs text-neutral-500">
+        <span className="block text-sm font-bold text-ink">Content</span>
+        <p className="text-xs text-muted">
           Build the article from blocks: drag them by the ⠿ handle to any position, insert at
           any point, set each block&apos;s width (standard / wide / full) and alignment, put two
           blocks side by side with “◫ with next” (and break columns apart with “Unstack”), and
@@ -155,14 +156,14 @@ export function PostForm({
           function actions, so a shared action can't tell the buttons apart —
           submitting via `name="intent"` silently saved publishes as drafts. */}
       <div className="flex flex-wrap items-end gap-3">
-        <button type="submit" formAction={savePostDraft} className="border border-neutral-900 px-4 py-2">
+        <button type="submit" formAction={savePostDraft} className={BTN_SECONDARY}>
           Save draft
         </button>
         {canPublish && (
           <button
             type="submit"
             formAction={savePostPublish}
-            className="border border-neutral-900 bg-neutral-900 px-4 py-2 font-medium text-white"
+            className={BTN_PRIMARY}
           >
             {post?.status === "published" ? "Update & keep published" : "Publish to site"}
           </button>
@@ -177,7 +178,7 @@ export function PostForm({
           />
         )}
       </div>
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-muted">
         Drafts are visible only here in the admin. Publishing puts the article on the live site
         within seconds; scheduling publishes it automatically at the chosen UK time.
         {post?.status === "published" && " “Save draft” takes a published article OFF the site."}

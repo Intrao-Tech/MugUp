@@ -10,7 +10,7 @@ import {
   sendPasswordResetEmail,
   updateTeamUser,
 } from "../actions";
-import { Notice } from "../ui";
+import { BTN_PRIMARY, BTN_SECONDARY, CARD, H1, H2, INPUT, Notice } from "../ui";
 import { RoleEditor } from "./RoleEditor";
 import { RolePermissionsFields } from "./RolePermissionsFields";
 
@@ -53,12 +53,12 @@ function UserCard({
     : [...roleOptions, { value: profile.role, label: profile.role }];
   const presets = Object.fromEntries(roles.map((role) => [role.slug, role.permissions]));
   return (
-    <article className="border border-neutral-300 bg-white p-4">
-      <h3 className="font-semibold">
+    <article className={`${CARD} p-4`}>
+      <h3 className="font-bold text-ink">
         {profile.full_name || "(no name)"}
-        {isSelf && <span className="ml-2 text-xs text-neutral-500">you</span>}
+        {isSelf && <span className="ml-2 text-xs text-muted">you</span>}
       </h3>
-      <p className="text-sm text-neutral-600">{profile.email}</p>
+      <p className="text-sm text-body">{profile.email}</p>
       <form action={updateTeamUser} className="mt-3 space-y-2 text-sm">
         <input type="hidden" name="id" value={profile.id} />
         <RolePermissionsFields
@@ -67,17 +67,17 @@ function UserCard({
           initialRole={profile.role}
           initialPermissions={profile.permissions}
         />
-        <button type="submit" className="border border-neutral-900 px-3 py-1">
+        <button type="submit" className={BTN_SECONDARY}>
           Save
         </button>
       </form>
 
-      <form action={sendPasswordResetEmail} className="mt-3 border-t border-neutral-200 pt-3 text-sm">
+      <form action={sendPasswordResetEmail} className="mt-3 border-t border-line pt-3 text-sm">
         <input type="hidden" name="id" value={profile.id} />
-        <button type="submit" className="border border-neutral-400 px-3 py-1 hover:border-neutral-900">
+        <button type="submit" className={BTN_SECONDARY}>
           Send password reset email
         </button>
-        <p className="mt-1 text-xs text-neutral-500">
+        <p className="mt-1 text-xs text-muted">
           Use when {displayName} has forgotten their password: they get an email to regain
           access and must set a new password of their own at the next sign-in.
         </p>
@@ -90,7 +90,7 @@ function UserCard({
           </summary>
           <form action={deleteTeamUser} className="mt-2 flex flex-wrap items-center gap-2">
             <input type="hidden" name="id" value={profile.id} />
-            <span className="text-neutral-600">
+            <span className="text-body">
               Deletes the account and its sign-in permanently.
             </span>
             <button type="submit" className="border border-red-700 px-3 py-1 text-red-700">
@@ -128,11 +128,11 @@ export default async function UsersPage({
     builtIn: role.built_in,
     memberCount: profiles.filter((p) => p.role === role.slug).length,
   }));
-  const inputCls = "mt-1 w-full border border-neutral-400 px-3 py-2";
+  const inputCls = INPUT;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Team</h1>
+      <h1 className={H1}>Team</h1>
       {params.saved && <Notice tone="success">Saved.</Notice>}
       {params.invited && (
         <Notice tone="success">
@@ -153,26 +153,26 @@ export default async function UsersPage({
       {error && <Notice tone="error">{ERRORS[error] ?? "Something went wrong."}</Notice>}
 
       <section className="mt-6">
-        <h2 className="text-xl font-semibold">Invite a team member</h2>
-        <form action={inviteTeamUser} className="mt-3 max-w-lg space-y-3 border border-neutral-300 bg-white p-4">
-          <p className="text-sm text-neutral-500">
+        <h2 className={H2}>Invite a team member</h2>
+        <form action={inviteTeamUser} className={`${CARD} mt-3 max-w-lg space-y-3 p-4`}>
+          <p className="text-sm text-muted">
             They receive an email with everything needed to sign in and are required to set
             their own password on first entry — you never have to share or write one down.
           </p>
           <div>
-            <label htmlFor="inv-name" className="block text-sm font-medium">
+            <label htmlFor="inv-name" className="block text-sm font-bold text-ink">
               Full name *
             </label>
             <input id="inv-name" name="full_name" required className={inputCls} />
           </div>
           <div>
-            <label htmlFor="inv-email" className="block text-sm font-medium">
+            <label htmlFor="inv-email" className="block text-sm font-bold text-ink">
               Email *
             </label>
             <input id="inv-email" name="email" type="email" required className={inputCls} />
           </div>
           <div>
-            <label htmlFor="inv-role" className="block text-sm font-medium">
+            <label htmlFor="inv-role" className="block text-sm font-bold text-ink">
               Role *
             </label>
             <select id="inv-role" name="role" className={inputCls}>
@@ -183,15 +183,15 @@ export default async function UsersPage({
               ))}
             </select>
           </div>
-          <button type="submit" className="border border-neutral-900 bg-neutral-900 px-4 py-2 font-medium text-white">
+          <button type="submit" className={BTN_PRIMARY}>
             Send invite
           </button>
         </form>
       </section>
 
       <section className="mt-10">
-        <h2 className="text-xl font-semibold">Roles</h2>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h2 className={H2}>Roles</h2>
+        <p className="mt-1 text-base text-body">
           Pick a role to edit what it can do and which notifications it receives. Saving applies
           the permission set to every member holding the role; individual accounts can still be
           fine-tuned below afterwards.
@@ -201,12 +201,12 @@ export default async function UsersPage({
         </div>
 
         <details className="mt-4 max-w-lg">
-          <summary className="cursor-pointer text-sm font-medium text-neutral-600">
+          <summary className="cursor-pointer text-sm font-bold text-primary underline underline-offset-4 hover:text-primary-hover">
             + Create a new role
           </summary>
-          <form action={addRole} className="mt-3 space-y-3 border border-neutral-300 bg-white p-4">
+          <form action={addRole} className={`${CARD} mt-3 space-y-3 p-4`}>
             <div>
-              <label htmlFor="role-name" className="block text-sm font-medium">
+              <label htmlFor="role-name" className="block text-sm font-bold text-ink">
                 Role name *
               </label>
               <input
@@ -219,7 +219,7 @@ export default async function UsersPage({
               />
             </div>
             <fieldset className="text-sm">
-              <legend className="font-medium">Permissions in this role</legend>
+              <legend className="font-bold text-ink">Permissions in this role</legend>
               {PERMISSIONS.map((perm) => (
                 <label key={perm} className="mt-1 flex items-center gap-2">
                   <input type="checkbox" name="permissions" value={perm} />
@@ -227,10 +227,10 @@ export default async function UsersPage({
                 </label>
               ))}
             </fieldset>
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-muted">
               Notifications for the new role are configured in the editor above after creation.
             </p>
-            <button type="submit" className="border border-neutral-900 px-4 py-2 font-medium">
+            <button type="submit" className={BTN_PRIMARY}>
               Create role
             </button>
           </form>
@@ -238,8 +238,8 @@ export default async function UsersPage({
       </section>
 
       <section className="mt-10">
-        <h2 className="text-xl font-semibold">Current team</h2>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h2 className={H2}>Current team</h2>
+        <p className="mt-1 text-base text-body">
           A role is a preset; the checkboxes are what actually grants access, so any account can
           be fine-tuned per module.
         </p>

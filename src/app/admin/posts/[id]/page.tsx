@@ -5,7 +5,7 @@ import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { deletePost } from "../../actions";
 import { PostForm } from "../PostForm";
 import { POST_FORM_ERRORS } from "../errors";
-import { Notice } from "../../ui";
+import { H1, Notice } from "../../ui";
 
 export const dynamic = "force-dynamic";
 
@@ -27,8 +27,8 @@ export default async function EditPostPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Edit post</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <h1 className={H1}>Edit post</h1>
+      <p className="mt-1 text-base text-body">
         Status: {post.status}
         {post.published_at && ` · published ${new Date(post.published_at).toLocaleDateString("en-GB")}`}
       </p>
@@ -37,12 +37,12 @@ export default async function EditPostPage({
         <PostForm post={post} canPublish={hasPerm(profile, "posts.publish")} categories={categories} />
       </div>
       {(post.status !== "published" || hasPerm(profile, "posts.publish")) && (
-        <form action={deletePost} className="mt-10 border-t border-neutral-300 pt-4">
+        <form action={deletePost} className="mt-10 border-t border-line pt-4">
           <input type="hidden" name="id" value={post.id} />
           <ConfirmSubmit
             label="Delete post"
             confirmText={`Delete "${post.title}" permanently? This cannot be undone.`}
-            className="border border-red-700 px-4 py-2 text-red-700"
+            className="inline-flex items-center justify-center rounded-full border-2 border-red-700 px-4 py-1.5 text-sm font-bold text-red-700 transition-colors hover:bg-red-50"
           />
         </form>
       )}

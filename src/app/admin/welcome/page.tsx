@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/data/supabase/browser";
 import { isStrongPassword, PASSWORD_RULES_TEXT } from "@/lib/password";
 import { PasswordRuleChecklist } from "../PasswordChecklist";
+import { BTN_PRIMARY, H1, INPUT } from "../ui";
 
 type State = "checking" | "ready" | "invalid" | "done";
 
@@ -63,25 +64,27 @@ export default function WelcomePage() {
 
   return (
     <div className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-bold">Mug.Up Admin — set your password</h1>
-      {state === "checking" && <p className="mt-4 text-neutral-600">Checking your link…</p>}
+      <h1 className={H1}>Mug.Up Admin — set your password</h1>
+      {state === "checking" && <p className="mt-4 text-body">Checking your link…</p>}
       {state === "invalid" && (
-        <p className="mt-4 border border-red-400 bg-red-50 p-3 text-sm text-red-800">
+        <p className="mt-4 rounded-card border border-red-400 bg-red-50 p-3 text-sm text-red-800">
           This link is invalid or has expired. Ask an administrator to send a new one.
         </p>
       )}
-      {state === "done" && <p className="mt-4 text-neutral-600">Password set — signing you in…</p>}
+      {state === "done" && <p className="mt-4 text-body">Password set — signing you in…</p>}
       {state === "ready" && (
         <>
-          <p className="mt-2 text-sm text-neutral-600">
+          <p className="mt-2 text-sm text-body">
             Choose a new password for your account to continue.
           </p>
           {error && (
-            <p className="mt-3 border border-red-400 bg-red-50 p-3 text-sm text-red-800">{error}</p>
+            <p className="mt-3 rounded-card border border-red-400 bg-red-50 p-3 text-sm text-red-800">
+              {error}
+            </p>
           )}
           <form onSubmit={submit} className="mt-4 space-y-3">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium">
+              <label htmlFor="password" className="block text-sm font-bold text-ink">
                 Password
               </label>
               <input
@@ -92,11 +95,11 @@ export default function WelcomePage() {
                 required
                 minLength={8}
                 autoComplete="new-password"
-                className="mt-1 w-full border border-neutral-400 px-3 py-2"
+                className={INPUT}
               />
             </div>
             <div>
-              <label htmlFor="confirm" className="block text-sm font-medium">
+              <label htmlFor="confirm" className="block text-sm font-bold text-ink">
                 Repeat password
               </label>
               <input
@@ -107,11 +110,11 @@ export default function WelcomePage() {
                 required
                 minLength={8}
                 autoComplete="new-password"
-                className="mt-1 w-full border border-neutral-400 px-3 py-2"
+                className={INPUT}
               />
             </div>
             <PasswordRuleChecklist password={password} confirm={confirm} />
-            <button type="submit" className="border border-neutral-900 px-4 py-2 font-medium">
+            <button type="submit" className={BTN_PRIMARY}>
               Set password & enter
             </button>
           </form>
