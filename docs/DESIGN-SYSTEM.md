@@ -226,6 +226,12 @@ Content stays block-based; **composition is chosen per section id** in
 | `trust-strip` | `professional-standards` | one ruled uppercase row on ink |
 | `closing` | any single-CTA section | teal band, statement headline, yellow button |
 
+Hero (client reference, 28 Aug 2026): with a registered photo the hero is
+full-bleed — photo on the right ~72%, `.hero-fade` bleeds the canvas in from
+the left, text sits on the clean field, `atAGlance` stacks bottom-right. On
+phones the photo sits above the text (no fade). Without a photo the hero
+falls back to text + placeholder. Tune crops with `position` in photos.ts.
+
 Rules: hero = text + big visual (`ImagePlaceholder` until client photos
 arrive; never AI/stock); the `teal` tone's primary button is **sun**; team
 cards are frameless (photo, name, role, `Read more`); rail arrows are one

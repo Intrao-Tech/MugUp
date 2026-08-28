@@ -58,10 +58,12 @@ export const PHOTOS: Record<string, Photo> = {
   "hero:/pathways/british-education/sats-preparation": {
     src: `${P}/sats.webp`,
     alt: { en: "A primary-school pupil writing carefully at her desk", ua: "Учениця початкової школи уважно пише за партою" },
+    position: "85% 40%",
   },
   "hero:/pathways/british-education/11-plus-preparation": {
     src: `${P}/eleven-plus.webp`,
     alt: { en: "A boy concentrating on a book at a tidy desk", ua: "Хлопчик зосереджено читає книгу за столом" },
+    position: "60% 30%",
   },
   "hero:/pathways/british-education/secondary-education": {
     src: `${P}/secondary.webp`,
