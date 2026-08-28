@@ -60,67 +60,91 @@ export function HeroSection({
 }) {
   const photo = visual === "photo";
   const img = route ? photoFor(`hero:${route}`) : undefined;
+  const fade = photo && Boolean(img);
+  const glanceList = glance && glance.length > 0 && (
+    <dl
+      className={cx(
+        "grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-1 lg:gap-0 lg:divide-y lg:divide-line lg:rounded-card lg:border lg:border-ink lg:bg-surface",
+        fade ? "mt-8 lg:mt-0" : "mt-4",
+      )}
+    >
+      {glance!.map((g) => (
+        <div key={g.label} className="rounded-card border border-ink bg-surface px-4 py-3 lg:rounded-none lg:border-0">
+          <dt className="text-eyebrow uppercase text-muted">{g.label}</dt>
+          <dd className="mt-0.5 font-display text-h3 text-ink">{g.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+  const text = (
+    <>
+      {hero.eyebrow && <Eyebrow className="mb-4">{hero.eyebrow}</Eyebrow>}
+      <h1
+        id="page-title"
+        className={cx("text-balance break-words text-ink", statement ? "text-statement uppercase" : "text-display")}
+      >
+        {hero.title}
+      </h1>
+      {hero.subtitle && <p className="mt-5 text-lead font-medium text-ink">{hero.subtitle}</p>}
+      {hero.body?.map((p) => (
+        <p key={p.slice(0, 40)} className="mt-4 max-w-prose text-base">
+          {p}
+        </p>
+      ))}
+      {hero.ctas && hero.ctas.length > 0 && (
+        <p className="mt-8 flex flex-wrap gap-3">
+          {hero.ctas.map((cta, i) => (
+            <Button
+              key={cta.href}
+              href={localeHref(locale, cta.href)}
+              variant={i === 0 ? "primary" : "secondary"}
+              size="lg"
+            >
+              {cta.label}
+              {i === 0 && <IconArrowRight />}
+            </Button>
+          ))}
+        </p>
+      )}
+    </>
+  );
+
+  if (fade) {
+    // Editorial hero: full-bleed photo, canvas fade from the left (lg+);
+    // on phones the photo sits above the text.
+    return (
+      <section aria-labelledby="page-title" className="relative overflow-hidden">
+        <div className="lg:absolute lg:inset-y-0 lg:left-[28%] lg:right-0">
+          <img
+            src={img!.src}
+            alt={img!.alt[locale]}
+            width={1600}
+            height={1066}
+            fetchPriority="high"
+            className="aspect-[4/3] w-full object-cover sm:aspect-[2/1] lg:aspect-auto lg:h-full"
+            style={{ objectPosition: img!.position ?? "50% 40%" }}
+          />
+          <div aria-hidden="true" className="hero-fade absolute inset-0 hidden lg:block" />
+        </div>
+        <Container size="wide" className="relative grid gap-8 py-10 sm:py-12 lg:min-h-[38rem] lg:grid-cols-12 lg:items-center lg:py-20 xl:min-h-[42rem]">
+          <div className="min-w-0 lg:col-span-6">{text}</div>
+          {glanceList && <div className="lg:col-span-3 lg:col-start-10 lg:self-end">{glanceList}</div>}
+        </Container>
+      </section>
+    );
+  }
+
   return (
     <section aria-labelledby="page-title" className="relative overflow-hidden">
       <Container
         size={photo ? "wide" : "content"}
         className={cx("relative py-10 sm:py-14", photo ? "grid gap-10 lg:grid-cols-12 lg:items-center" : "lg:py-20")}
       >
-        <div className={cx("min-w-0", photo ? "lg:col-span-6 lg:py-10" : "max-w-3xl")}>
-          {hero.eyebrow && <Eyebrow className="mb-4">{hero.eyebrow}</Eyebrow>}
-          <h1
-            id="page-title"
-            className={cx("text-balance break-words text-ink", statement ? "text-statement uppercase" : "text-display")}
-          >
-            {hero.title}
-          </h1>
-          {hero.subtitle && <p className="mt-5 text-lead font-medium text-ink">{hero.subtitle}</p>}
-          {hero.body?.map((p) => (
-            <p key={p.slice(0, 40)} className="mt-4 max-w-prose text-base">
-              {p}
-            </p>
-          ))}
-          {hero.ctas && hero.ctas.length > 0 && (
-            <p className="mt-8 flex flex-wrap gap-3">
-              {hero.ctas.map((cta, i) => (
-                <Button
-                  key={cta.href}
-                  href={localeHref(locale, cta.href)}
-                  variant={i === 0 ? "primary" : "secondary"}
-                  size="lg"
-                >
-                  {cta.label}
-                  {i === 0 && <IconArrowRight />}
-                </Button>
-              ))}
-            </p>
-          )}
-        </div>
+        <div className={cx("min-w-0", photo ? "lg:col-span-6 lg:py-10" : "max-w-3xl")}>{text}</div>
         {photo && (
           <div className="relative min-w-0 lg:col-span-6">
-            {img ? (
-              <img
-                src={img.src}
-                alt={img.alt[locale]}
-                width={1600}
-                height={1280}
-                fetchPriority="high"
-                className="aspect-[4/3] w-full rounded-card object-cover lg:aspect-[5/4]"
-                style={img.position ? { objectPosition: img.position } : undefined}
-              />
-            ) : (
-              <ImagePlaceholder alt={hero.title} aspect="aspect-[4/3] lg:aspect-[5/4]" />
-            )}
-            {glance && glance.length > 0 && (
-              <dl className="mt-4 grid grid-cols-2 gap-2 sm:absolute sm:bottom-6 sm:right-6 sm:mt-0 sm:grid-cols-1 sm:gap-0 sm:divide-y sm:divide-line sm:rounded-card sm:border sm:border-ink sm:bg-surface">
-                {glance.map((g) => (
-                  <div key={g.label} className="rounded-card border border-ink bg-surface px-4 py-3 sm:rounded-none sm:border-0">
-                    <dt className="text-eyebrow uppercase text-muted">{g.label}</dt>
-                    <dd className="mt-0.5 font-display text-h3 text-ink">{g.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
+            <ImagePlaceholder alt={hero.title} aspect="aspect-[4/3] lg:aspect-[5/4]" />
+            {glanceList}
           </div>
         )}
       </Container>

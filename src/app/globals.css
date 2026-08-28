@@ -211,7 +211,21 @@
     repeating-linear-gradient(180deg, transparent 0 27px, var(--color-teal-100) 27px 28px);
 }
 
-/* 5. Article columns (PostBody + the admin builder's editing grid): the
+/* 5. Hero fade — the editorial hero (client reference, 28 Aug 2026): the
+      photo fills the band, the canvas colour bleeds in from the left so the
+      text sits on a clean field. Desktop only; phones stack photo + text. */
+.hero-fade {
+  background: linear-gradient(
+    90deg,
+    var(--canvas) 0%,
+    var(--canvas) 16%,
+    color-mix(in srgb, var(--canvas) 75%, transparent) 36%,
+    color-mix(in srgb, var(--canvas) 20%, transparent) 52%,
+    transparent 66%
+  );
+}
+
+/* 6. Article columns (PostBody + the admin builder's editing grid): the
       column count is data-driven (--cols, any 2–6), which Tailwind's static
       classes cannot express. Stacks to one column on phones. */
 .post-columns {
