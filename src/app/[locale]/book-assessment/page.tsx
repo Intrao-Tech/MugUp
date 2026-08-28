@@ -7,6 +7,7 @@ import { FormRenderer } from "@/components/FormRenderer";
 import { JsonLd } from "@/components/JsonLd";
 import { pageMetadata } from "@/lib/seo";
 import { canAcceptSubmissions } from "@/lib/data";
+import { BOOKING_URL } from "@/lib/site";
 
 type Props = { params: Promise<{ locale: Locale }> };
 
@@ -59,8 +60,9 @@ export default async function BookAssessmentPage({ params }: Props) {
           locale={locale}
           enabled={canAcceptSubmissions()}
           notWiredNote={dict.ui.formNotWired}
-          sentText={dict.ui.formSent}
+          sentText={dict.ui.bookingSent}
           errorText={dict.ui.formError}
+          booking={{ url: BOOKING_URL, label: dict.ui.bookingCta }}
         />
       </section>
       {faq && <SectionView section={faq} locale={locale} />}

@@ -20,7 +20,9 @@ export async function submitLead(formData: FormData): Promise<void> {
   const locale = formData.get("locale") === "ua" ? "ua" : "en";
   const backUrl = `/${locale}/${formKind === "contact" ? "contact" : "book-assessment"}`;
 
-  if (honeypotTripped(formData)) redirect(`${backUrl}?sent=1`);
+  // Land on the form itself so the status (and the booking step) is in view.
+  const sentUrl = `${backUrl}?sent=1#${formKind === "contact" ? "contact-form" : "booking-form"}`;
+  if (honeypotTripped(formData)) redirect(sentUrl);
   if (!canAcceptSubmissions()) redirect(`${backUrl}?error=1`);
 
   const fullName = formText(formData, "fullName", 200);
