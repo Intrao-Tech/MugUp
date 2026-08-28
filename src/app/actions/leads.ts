@@ -78,5 +78,5 @@ export async function submitLead(formData: FormData): Promise<void> {
       leadId: id,
     });
   }
-  redirect(`${backUrl}${error ? "?error=1" : "?sent=1"}`);
+  redirect(error ? `${backUrl}?error=1` : sentUrl);
 }
