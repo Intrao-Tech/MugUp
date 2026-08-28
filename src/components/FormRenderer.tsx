@@ -14,6 +14,8 @@ interface FormRendererProps {
   notWiredNote: string;
   sentText: string;
   errorText: string;
+  /** Appointment step shown after a successful send (booking form only). */
+  booking?: { url: string; label: string };
 }
 
 export function FormRenderer({
@@ -24,6 +26,7 @@ export function FormRenderer({
   notWiredNote,
   sentText,
   errorText,
+  booking,
 }: FormRendererProps) {
   const inputCls =
     "mt-1.5 w-full rounded-lg border border-ink-300 bg-surface px-3.5 py-2.5 text-base text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30";
@@ -32,7 +35,7 @@ export function FormRenderer({
       <h3 className="text-h3 text-ink">{form.title}</h3>
       {form.intro && <p>{form.intro}</p>}
       <Suspense fallback={null}>
-        <FormStatusBanner sentText={sentText} errorText={errorText} />
+        <FormStatusBanner sentText={sentText} errorText={errorText} booking={booking} />
       </Suspense>
       <input type="hidden" name="form" value={formKind} />
       <input type="hidden" name="locale" value={locale} />
