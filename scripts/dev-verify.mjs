@@ -58,7 +58,9 @@ await asUser("manager@mugup.local", async (db) => {
     check("manager: can update lead status", !error);
   }
   const { data: posts } = await db.from("posts").select("id");
-  check("manager: posts invisible", (posts ?? []).length === 0);
+  check("manager: sees posts (editor capabilities)", (posts ?? []).length >= 1);
+  const { data: reviews } = await db.from("reviews").select("id");
+  check("manager: sees reviews (editor capabilities)", (reviews ?? []).length >= 1);
   // Migration 0002: leads.view holders read all profiles — the CRM's Owner
   // column and assignment dropdown need the team list.
   const { data: profiles } = await db.from("profiles").select("id");

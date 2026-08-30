@@ -63,8 +63,10 @@ scripts/                  local seed + RLS verification
   service role; no table has anonymous write policies. Published posts and
   categories have anonymous read policies (public content).
 - Roles are presets over flags (`src/lib/permissions.ts`): admin (all),
-  manager (leads + files), editor (posts + reviews; deliberately no access to
-  leads — personal data, GDPR minimisation). Flags are editable per user.
+  manager (leads + files + posts + reviews — everything except team
+  management; client request 30 Aug 2026), editor (posts + reviews;
+  deliberately no access to leads — personal data, GDPR minimisation).
+  Flags are editable per user.
 
 ## 5. Content layer (public site)
 
