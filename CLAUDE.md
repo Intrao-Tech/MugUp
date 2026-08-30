@@ -17,7 +17,9 @@ npm run db:start   # local Supabase (Docker), applies supabase/migrations
 npm run db:reset   # wipe + re-apply migrations
 npm run seed:dev   # test accounts + demo data (local only, guarded)
 npm run seed:remote # hosted project seed (.env.remote, SEED_ALLOW_REMOTE=1)
-                   # (a build also seeds when SEED_ON_DEPLOY=true is set)
+                   # (a build also seeds when SEED_ON_DEPLOY=true is set, and
+                   # a production build applies pending supabase/migrations
+                   # when SUPABASE_DB_URL is set — scripts/deploy-migrate.mjs)
 ```
 
 Local test logins (password `admin123`): `admin@` / `manager@` / `editor@mugup.local`.
