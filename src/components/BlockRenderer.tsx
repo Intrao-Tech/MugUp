@@ -14,6 +14,7 @@ import {
   IconList,
   IconRow,
   JourneyTrack,
+  ListIcon,
   PathwayPanels,
   PathwayTrack,
   SplitPhoto,
@@ -64,12 +65,12 @@ export function HeroSection({
   const glanceList = glance && glance.length > 0 && (
     <dl
       className={cx(
-        "grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-1 lg:gap-0 lg:divide-y lg:divide-line lg:rounded-card lg:border lg:border-ink lg:bg-surface",
+        "grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-1 lg:gap-0 lg:divide-y lg:divide-line lg:rounded-card lg:border-0 lg:bg-surface/80 lg:shadow-card lg:backdrop-blur-sm",
         fade ? "mt-8 lg:mt-0" : "mt-4",
       )}
     >
       {glance!.map((g) => (
-        <div key={g.label} className="rounded-card border border-ink bg-surface px-4 py-3 lg:rounded-none lg:border-0">
+        <div key={g.label} className="rounded-card border border-ink bg-surface px-4 py-3 lg:rounded-none lg:border-0 lg:bg-transparent">
           <dt className="text-eyebrow uppercase text-muted">{g.label}</dt>
           <dd className="mt-0.5 font-display text-h3 text-ink">{g.value}</dd>
         </div>
@@ -97,7 +98,7 @@ export function HeroSection({
             <Button
               key={cta.href}
               href={localeHref(locale, cta.href)}
-              variant={i === 0 ? "primary" : "secondary"}
+              variant={i === 0 ? "primary" : "accent"}
               size="lg"
             >
               {cta.label}
@@ -411,6 +412,7 @@ const LAYOUTS: Record<string, Layout> = {
   beyond: "icon-row",
   "exams-available": "rows",
   "flexible-online-exams": "icon-row",
+  "who-it-is-for": "icon-row",
   "final-cta": "closing",
   "start-cta": "closing",
 };
@@ -541,18 +543,31 @@ function Body({ section, locale, layout }: { section: SectionData; locale: Local
     case "grid-2":
       return cards ? <GridTwo cards={cards.cards} /> : <Flow section={section} locale={locale} />;
     case "statement": {
+      // Reference (28 Aug): statement + numbered principles left, text right.
       const lead = blockOf(blocks, "lead");
       const ps = blocks.filter((b) => b.type === "paragraph");
       return (
         <div className="grid gap-10 lg:grid-cols-2">
-          <div className="min-w-0">{lead && <Statement text={lead.text} className="text-[clamp(2.5rem,1.25rem+4vw,4.75rem)]" />}</div>
+          <div className="min-w-0">
+            {lead && <Statement text={lead.text} />}
+            {cards && (
+              <ol role="list" className="mt-10 space-y-5">
+                {cards.cards.map((c, i) => (
+                  <li key={c.title} className="flex items-center gap-4">
+                    <span aria-hidden="true" className="font-display text-h2 tabular-nums text-accent">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-brand text-brand">
+                      <ListIcon index={i} size={20} />
+                    </span>
+                    <span className="text-base font-bold uppercase text-ink">{c.title}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
           <div className="min-w-0">
             <Prose blocks={ps} />
-            {cards && (
-              <div className="mt-8">
-                <ChipRow items={cards.cards.map((c) => c.title)} />
-              </div>
-            )}
           </div>
         </div>
       );
@@ -610,8 +625,12 @@ function Body({ section, locale, layout }: { section: SectionData; locale: Local
       const team = blockOf(blocks, "team");
       return (
         <>
-          {list && <ChipRow items={list.items} />}
-          {paragraphs.length > 0 && <Prose blocks={paragraphs} className="mt-4 max-w-3xl" />}
+          {(list || paragraphs.length > 0) && (
+            <div className="grid gap-8 lg:grid-cols-2">
+              {list && <ChipRow items={list.items} accent />}
+              {paragraphs.length > 0 && <Prose blocks={paragraphs} />}
+            </div>
+          )}
           {team && (
             <div className={cx((list || paragraphs.length > 0) && "mt-10")}>
               <TeamRail members={team.members} locale={locale} />
@@ -639,9 +658,14 @@ function Body({ section, locale, layout }: { section: SectionData; locale: Local
           <div className="lg:col-span-7">
             <Prose blocks={before} />
             {buttons && (
-              <div className="mt-6">
-                <BlockView block={buttons} locale={locale} />
-              </div>
+              <p className="mt-6 flex flex-wrap gap-3">
+                {buttons.ctas.map((c, i) => (
+                  <Button key={c.href + c.label} href={localeHref(locale, c.href)} variant={i === 0 ? "primary" : "secondary"}>
+                    {c.label}
+                    <IconArrowRight size={18} />
+                  </Button>
+                ))}
+              </p>
             )}
           </div>
           {logos && (
@@ -688,6 +712,23 @@ export function SectionView({
   const layout = forced ?? layoutFor(section);
   const t = tone ?? TONES[layout] ?? "default";
   const closing = layout === "closing";
+  const cardsBlock = blockOf(section.blocks, "cards");
+  // Reference (28 Aug): the two-pathway section is one band — heading on the
+  // left, two compact photo panels on the right.
+  if (layout === "panels" && cardsBlock && cardsBlock.cards.length === 2) {
+    return (
+      <Section id={section.id} tone={t} size="wide" className="overflow-hidden">
+        <div className="grid gap-10 lg:grid-cols-12">
+          <div className="lg:col-span-4">
+            <SectionHeading eyebrow={section.eyebrow} title={section.title} intro={section.intro} />
+          </div>
+          <div className="lg:col-span-8">
+            <PathwayPanels cards={cardsBlock.cards} locale={locale} compact />
+          </div>
+        </div>
+      </Section>
+    );
+  }
   const heading = !closing && (section.title || section.eyebrow || section.intro);
   return (
     <Section
@@ -712,15 +753,20 @@ export function SectionView({
 export function TwoUp({ left, right, locale, tone = "default" }: { left: SectionData; right: SectionData; locale: Locale; tone?: SectionTone }) {
   const Col = ({ s }: { s: SectionData }) => (
     <div id={s.id} className="scroll-mt-20">
-      <SectionHeading eyebrow={s.eyebrow} title={s.title} intro={s.intro} as="h2" />
-      <div className="mt-8">
-        <Body section={s} locale={locale} layout={layoutFor(s)} />
-      </div>
+      {(s.title || s.eyebrow || s.intro) && (
+        <div className="mb-6 max-w-3xl">
+          {s.eyebrow && <Eyebrow className="mb-3">{s.eyebrow}</Eyebrow>}
+          {/* "UK Qualifications & Exams" heading in the brand blue (client, 28 Aug). */}
+          {s.title && <h2 className={cx("text-h2 text-balance", s.id === "uk-qualifications" ? "text-primary" : "text-ink")}>{s.title}</h2>}
+          {s.intro && <p className="mt-4 text-lead text-body">{s.intro}</p>}
+        </div>
+      )}
+      <Body section={s} locale={locale} layout={layoutFor(s)} />
     </div>
   );
   return (
-    <Section tone={tone} className="overflow-hidden">
-      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+    <Section tone={tone} pad="sm" className="overflow-hidden">
+      <div className="grid gap-10 lg:grid-cols-2">
         <Col s={left} />
         <Col s={right} />
       </div>
