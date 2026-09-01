@@ -71,7 +71,7 @@
   --text-stat--line-height: 1;
   --text-stat--letter-spacing: 0;
   --text-stat--font-weight: 700;
-  --text-statement: clamp(3rem, 1.5rem + 7vw, 7.5rem);
+  --text-statement: clamp(2.5rem, 1.25rem + 4.5vw, 5.25rem);
   --text-statement--line-height: 0.92;
   --text-statement--letter-spacing: 0.01em;
   --text-statement--font-weight: 700;
@@ -209,6 +209,11 @@
   background-image:
     linear-gradient(90deg, transparent 0 calc(12% - 1px), var(--color-teal-300) calc(12% - 1px) 12%, transparent 12%),
     repeating-linear-gradient(180deg, transparent 0 27px, var(--color-teal-100) 27px 28px);
+}
+
+/* Founder Story: the "Meet Ievgeniia…" intro line is bold (client, 28 Aug). */
+#founder-story .text-lead {
+  font-weight: 700;
 }
 
 /* 5. Hero fade — the editorial hero (client reference, 28 Aug 2026): the

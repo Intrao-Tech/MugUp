@@ -178,7 +178,7 @@ export function JourneyTrack({ stops, locale }: { stops: TrackStop[]; locale: Lo
 /* --------------------------- Pathway panels ------------------------------ */
 
 /** Two big contrasting blocks (Britain / Global): photo, big title, list, link. */
-export function PathwayPanels({ cards, locale }: { cards: CardData[]; locale: Locale }) {
+export function PathwayPanels({ cards, locale, compact = false }: { cards: CardData[]; locale: Locale; compact?: boolean }) {
   const tones = ["ink", "teal"] as const;
   return (
     <div className="grid overflow-hidden rounded-card md:grid-cols-2">
@@ -206,9 +206,9 @@ export function PathwayPanels({ cards, locale }: { cards: CardData[]; locale: Lo
             ) : (
               <ImagePlaceholder alt={card.title} aspect="aspect-[16/9]" className="rounded-none border-0 border-b border-line" />
             )}
-            <div className="flex grow flex-col p-7 sm:p-10">
+            <div className={cx("flex grow flex-col", compact ? "p-6 sm:p-7" : "p-7 sm:p-10")}>
               {card.eyebrow && <Eyebrow className="mb-3">{card.eyebrow}</Eyebrow>}
-              <h3 className="text-h2 text-ink">
+              <h3 className={cx(compact ? "text-h3" : "text-h2", "text-ink")}>
                 {card.href ? (
                   <Link
                     href={localeHref(locale, card.href)}
@@ -220,9 +220,9 @@ export function PathwayPanels({ cards, locale }: { cards: CardData[]; locale: Lo
                   card.title
                 )}
               </h3>
-              {card.body && <p className="mt-4 text-base">{card.body}</p>}
+              {card.body && <p className={cx("mt-4", compact ? "text-sm" : "text-base")}>{card.body}</p>}
               {card.items && (
-                <ul className="mt-6 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                <ul className={cx("mt-6 grid gap-x-6 gap-y-2", !compact && "sm:grid-cols-2")}>
                   {card.items.map((it) => (
                     <li key={it} className="flex items-start gap-2 text-sm">
                       <IconCheck size={16} className="mt-1 shrink-0 text-accent" />
@@ -296,7 +296,7 @@ export function GoalRow({ cards }: { cards: CardData[] }) {
     <ul className="grid gap-6 border-y border-ink py-8 sm:grid-cols-3 lg:grid-cols-5">
       {cards.map((card) => (
         <li key={card.title}>
-          <p className="font-display text-h2 uppercase leading-none text-ink">{card.title}</p>
+          <p className="font-display text-h2 uppercase leading-none text-primary">{card.title}</p>
           {card.body && <p className="mt-2 text-sm">{card.body}</p>}
         </li>
       ))}
@@ -308,9 +308,11 @@ export function GoalRow({ cards }: { cards: CardData[] }) {
 export function CatalogueRows({ cards, locale }: { cards: CardData[]; locale: Locale }) {
   return (
     <ul className="divide-y divide-ink border-y border-ink">
-      {cards.map((card) => (
+      {cards.map((card) => {
+        const img = card.href ? photoFor(`row:${card.href}`) : undefined;
+        return (
         <li key={card.title} className="grid gap-4 py-7 md:grid-cols-12 md:gap-8">
-          <div className="md:col-span-5">
+          <div className={img ? "md:col-span-4" : "md:col-span-5"}>
             {card.eyebrow && <Eyebrow className="mb-2">{card.eyebrow}</Eyebrow>}
             <h3 className="font-display text-h2 text-ink">
               {card.href ? (
@@ -325,7 +327,7 @@ export function CatalogueRows({ cards, locale }: { cards: CardData[]; locale: Lo
               )}
             </h3>
           </div>
-          <div className="md:col-span-7">
+          <div className={img ? "md:col-span-5" : "md:col-span-7"}>
             {card.body && <p className="text-base">{card.body}</p>}
             {card.items && (
               <ul className="mt-3 space-y-1.5 text-sm text-muted">
@@ -343,8 +345,18 @@ export function CatalogueRows({ cards, locale }: { cards: CardData[]; locale: Lo
               </p>
             )}
           </div>
+          {img && (
+            <img
+              src={img.src}
+              alt={img.alt[locale]}
+              loading="lazy"
+              className="hidden aspect-[4/3] w-full rounded-card object-cover md:col-span-3 md:block"
+              style={img.position ? { objectPosition: img.position } : undefined}
+            />
+          )}
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }
@@ -424,12 +436,17 @@ export function TrustStrip({ items }: { items: string[] }) {
 }
 
 /** Compact label chips (About values). */
-export function ChipRow({ items }: { items: string[] }) {
+export function ChipRow({ items, accent = false }: { items: string[]; accent?: boolean }) {
   return (
     <ul className="flex flex-wrap gap-2">
       {items.map((it) => (
         <li key={it}>
-          <Chip className="px-3 py-1.5 text-sm normal-case">{it}</Chip>
+          {accent ? (
+            /* Chip's own bg-surface can win the cascade — style the accent pill directly. */
+            <span className="inline-flex items-center rounded-sm bg-accent px-3 py-1.5 text-sm font-bold text-ink-900">{it}</span>
+          ) : (
+            <Chip className="px-3 py-1.5 text-sm normal-case">{it}</Chip>
+          )}
         </li>
       ))}
     </ul>
@@ -451,7 +468,7 @@ export function SplitPhoto({
   children: ReactNode;
 }) {
   const photo = src ? (
-    <img src={src} alt={alt} loading="lazy" className="aspect-[4/5] w-full rounded-card border border-ink object-cover object-top lg:aspect-auto lg:h-full" />
+    <img src={src} alt={alt} loading="lazy" className="aspect-[4/5] w-full rounded-card object-cover object-top lg:aspect-auto lg:h-full" />
   ) : (
     <ImagePlaceholder alt={alt} aspect="aspect-[4/5] lg:aspect-auto lg:h-full lg:min-h-[28rem]" />
   );
@@ -533,24 +550,29 @@ export function ClosingBand({
   extra?: Cta[];
   locale: Locale;
 }) {
+  // Reference format (client, 28 Aug 2026): smaller uppercase headline left
+  // with a sun dash, body copy right, yellow button under the text.
   return (
-    <div className="grid gap-8 lg:grid-cols-12 lg:items-end">
-      <div className="min-w-0 lg:col-span-8">
-        <h2 className="break-words font-display text-statement text-balance uppercase text-ink">{title}</h2>
-        {body && <p className="mt-6 max-w-2xl text-lead">{body}</p>}
-        {note && <p className="mt-3 text-sm text-muted">{note}</p>}
+    <div className="grid gap-8 lg:grid-cols-12">
+      <div className="min-w-0 lg:col-span-5">
+        <h2 className="break-words font-display text-h2 text-balance uppercase text-ink">{title}</h2>
+        <span aria-hidden="true" className="mt-5 block h-1 w-14 bg-accent" />
       </div>
-      <p className="flex flex-wrap gap-3 lg:col-span-4 lg:justify-end">
-        <Button href={localeHref(locale, cta.href)} size="lg">
-          {cta.label}
-          <IconArrowRight />
-        </Button>
-        {extra?.map((c) => (
-          <Button key={c.href + c.label} href={localeHref(locale, c.href)} variant="secondary" size="lg">
-            {c.label}
+      <div className="lg:col-span-6 lg:col-start-7">
+        {body && <p className="text-base">{body}</p>}
+        {note && <p className="mt-3 text-sm text-muted">{note}</p>}
+        <p className="mt-7 flex flex-wrap gap-3">
+          <Button href={localeHref(locale, cta.href)} size="lg">
+            {cta.label}
+            <IconArrowRight />
           </Button>
-        ))}
-      </p>
+          {extra?.map((c) => (
+            <Button key={c.href + c.label} href={localeHref(locale, c.href)} variant="secondary" size="lg">
+              {c.label}
+            </Button>
+          ))}
+        </p>
+      </div>
     </div>
   );
 }

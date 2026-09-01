@@ -30,13 +30,13 @@ export const PHOTOS: Record<string, Photo> = {
   },
   "hero:/pathways/british-education": {
     src: `${P}/british.webp`,
-    alt: { en: "Secondary-school students working together on laptops and notebooks", ua: "Учні середньої школи працюють разом із ноутбуками та зошитами" },
-    position: "50% 35%",
+    alt: { en: "Students in school uniform talking together in a bright classroom", ua: "Учні у шкільній формі спілкуються у світлому класі" },
+    position: "50% 40%",
   },
   "panel:/pathways/british-education": {
     src: `${P}/british.webp`,
-    alt: { en: "Secondary-school students working together on laptops and notebooks", ua: "Учні середньої школи працюють разом із ноутбуками та зошитами" },
-    position: "50% 35%",
+    alt: { en: "Students in school uniform talking together in a bright classroom", ua: "Учні у шкільній формі спілкуються у світлому класі" },
+    position: "50% 40%",
   },
   "hero:/pathways/global-integration": {
     src: `${P}/global.webp`,
@@ -77,9 +77,11 @@ export const PHOTOS: Record<string, Photo> = {
     src: `${P}/post-16.webp`,
     alt: { en: "Sixth-form students working with a laptop and textbook", ua: "Старшокласники працюють із ноутбуком і підручником" },
   },
+  // Client's own photo (Oxford, supplied 1 Sep 2026) — replaces the stock shot.
   "hero:/pathways/british-education/university-application-support": {
     src: `${P}/university.webp`,
-    alt: { en: "Students walking across a university campus", ua: "Студенти йдуть університетським кампусом" },
+    alt: { en: "A historic Oxford college quadrangle", ua: "Подвір'я історичного коледжу в Оксфорді" },
+    position: "50% 65%",
   },
   "hero:/pathways/british-education/esol": {
     src: `${P}/esol.webp`,
@@ -139,6 +141,16 @@ export const PHOTOS: Record<string, Photo> = {
     alt: { en: "Historic façades on a street in Lviv", ua: "Історичні фасади на вулиці Львова" },
   },
 };
+
+// Catalogue-row photos (client, 28 Aug: country rows sit with a photo).
+PHOTOS["row:/pathways/british-education"] = PHOTOS["split:supporting-families"];
+PHOTOS["row:/pathways/global-integration/spanish"] = PHOTOS["hero:/pathways/global-integration/spanish"];
+PHOTOS["row:/pathways/global-integration/french"] = PHOTOS["hero:/pathways/global-integration/french"];
+PHOTOS["row:/pathways/global-integration/german"] = PHOTOS["hero:/pathways/global-integration/german"];
+PHOTOS["row:/pathways/global-integration/italian"] = PHOTOS["hero:/pathways/global-integration/italian"];
+PHOTOS["row:/pathways/global-integration/portuguese"] = PHOTOS["hero:/pathways/global-integration/portuguese"];
+PHOTOS["row:/pathways/global-integration/ukrainian"] = PHOTOS["hero:/pathways/global-integration/ukrainian"];
+PHOTOS["row:/pathways/global-integration/boarding-schools"] = PHOTOS["hero:/pathways/global-integration/boarding-schools"];
 
 export function photoFor(key: string): Photo | undefined {
   return PHOTOS[key];

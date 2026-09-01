@@ -10,7 +10,7 @@ Registry: `src/lib/photos.ts`.
 | --- | --- |
 | home-hero | https://www.pexels.com/photo/6502733/ (Thirdman) |
 | about-hero | https://unsplash.com/photos/qNCXEi8OCwk |
-| british | https://www.pexels.com/photo/8457292/ (Norma Mortenson) |
+| british | https://www.pexels.com/photo/7395448/ (cottonbro studio) |
 | global | https://unsplash.com/photos/5V6KbvRcnV8 |
 | for-parents | https://www.pexels.com/photo/36812778/ (Vitaly Gariev) |
 | families | https://unsplash.com/photos/1lRzLFwc--o |
