@@ -752,7 +752,7 @@ export function SectionView({
  */
 export function TwoUp({ left, right, locale, tone = "default" }: { left: SectionData; right: SectionData; locale: Locale; tone?: SectionTone }) {
   const Col = ({ s }: { s: SectionData }) => (
-    <div id={s.id} className="scroll-mt-20">
+    <div id={s.id} className="flex h-full scroll-mt-20 flex-col">
       {(s.title || s.eyebrow || s.intro) && (
         <div className="mb-6 max-w-3xl">
           {s.eyebrow && <Eyebrow className="mb-3">{s.eyebrow}</Eyebrow>}
@@ -761,7 +761,9 @@ export function TwoUp({ left, right, locale, tone = "default" }: { left: Section
           {s.intro && <p className="mt-4 text-lead text-body">{s.intro}</p>}
         </div>
       )}
-      <Body section={s} locale={locale} layout={layoutFor(s)} />
+      <div className="grow">
+        <Body section={s} locale={locale} layout={layoutFor(s)} />
+      </div>
     </div>
   );
   return (

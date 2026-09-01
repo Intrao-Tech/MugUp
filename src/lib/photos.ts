@@ -150,6 +150,7 @@ PHOTOS["row:/pathways/global-integration/german"] = PHOTOS["hero:/pathways/globa
 PHOTOS["row:/pathways/global-integration/italian"] = PHOTOS["hero:/pathways/global-integration/italian"];
 PHOTOS["row:/pathways/global-integration/portuguese"] = PHOTOS["hero:/pathways/global-integration/portuguese"];
 PHOTOS["row:/pathways/global-integration/ukrainian"] = PHOTOS["hero:/pathways/global-integration/ukrainian"];
+PHOTOS["panel:/pathways/global-integration/boarding-schools"] = PHOTOS["hero:/pathways/global-integration/boarding-schools"];
 PHOTOS["row:/pathways/global-integration/boarding-schools"] = PHOTOS["hero:/pathways/global-integration/boarding-schools"];
 
 export function photoFor(key: string): Photo | undefined {

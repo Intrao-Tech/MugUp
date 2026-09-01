@@ -181,7 +181,8 @@ export function JourneyTrack({ stops, locale }: { stops: TrackStop[]; locale: Lo
 export function PathwayPanels({ cards, locale, compact = false }: { cards: CardData[]; locale: Locale; compact?: boolean }) {
   const tones = ["ink", "teal"] as const;
   return (
-    <div className="grid overflow-hidden rounded-card md:grid-cols-2">
+    // A single panel (boarding crosslink) fills its column; only a pair splits.
+    <div className={cx("grid h-full overflow-hidden rounded-card", cards.length > 1 && "md:grid-cols-2")}>
       {cards.map((card, i) => {
         const tone = tones[i % tones.length];
         const img = card.href ? photoFor(`panel:${card.href}`) : undefined;
