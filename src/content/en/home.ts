@@ -125,32 +125,64 @@ export const page: Page = {
             "Successful adaptation to life and education in the UK",
           ],
         },
+        // Client doc "Відгyки.docx" (2 Sep 2026) — verbatim, doc order and labels.
         {
           type: "testimonials",
           items: [
             {
               quote:
-                "We would like to thank Mug.Up Language Studio and Anastasiia for their support and dedication. Over this period, Tykhomyr has made remarkable progress. His English grades at school have improved significantly, and we can clearly see the positive impact of the lessons. We are delighted with the results and highly recommend Mug.Up to other families.",
-              author: "Parent of Secondary School Student",
-              tag: "Academic Progress",
+                "Good morning! We are incredibly grateful for all your help! Yarik achieved a Grade 7 in Maths and got into the school he wanted. Thank you so much! Please pass on our sincere thanks to his Maths teacher! Could you please let me know where I can leave a review for your school? I will definitely recommend you to others. 😁",
+              author: "GCSE",
             },
             {
               quote:
-                "We would like to sincerely thank Ievgeniia and the entire Mug.Up team for their professionalism, patience, and support. They made our learning journey both comfortable and enjoyable. Our children genuinely loved the lessons and always looked forward to the next one. We highly recommend Mug.Up to families seeking quality education and genuine care.",
-              author: "Parent of Two Students",
-              tag: "Caring and Supportive Environment",
+                "Good evening, thank you. All the exams were passed. English was a Grade 4, which is a pass.",
+              author: "GCSE",
             },
             {
               quote:
-                "We are extremely pleased with the progress achieved through Mug.Up. Our children genuinely enjoy their lessons and have built wonderful relationships with their teachers. The encouragement, professionalism, and personal approach of the team have made a real difference to their confidence and learning journey.",
-              author: "Parent, Mug.Up Britain Programme",
-              tag: "Student Engagement & Confidence",
+                "She got a Grade 4. :) Thank you! Yes, that’s good. :) And thank you for all your work!",
+              author: "GCSE",
             },
             {
               quote:
-                "My daughter recently took a school assessment and achieved a Grade 8 in topics she had been studying during her lessons at Mug.Up over the previous six weeks. It was fantastic to see her hard work and preparation pay off. We are absolutely delighted with the result.",
-              author: "Parent of GCSE Student",
-              tag: "GCSE Success Story — Grade 8 Achievement",
+                "Good afternoon, yes, of course. Maths — Grade 7. English — Grade 7. Thank you so much! 🫶 This is more than we expected, as Denis had only been studying at school for two years.",
+              author: "GCSE",
+            },
+            {
+              quote:
+                "I really enjoyed the first lesson! The course is interesting and well organised. There is homework to complete before each lesson, which makes it easier to prepare for the topic. The course is taught by a native English speaker, which is very useful for understanding accounting and business terminology in the UK. It was challenging, but incredibly useful and motivating.",
+              author: "English for Accountants",
+            },
+            {
+              quote:
+                "Good morning! I really enjoyed the first lesson, thank you. Would it be possible to upload the presentation separately from the lesson video? Thank you.",
+              author: "English for Accountants",
+            },
+            {
+              quote:
+                "Good evening. We wanted to let you know that Ulyana will have her final lesson on Monday, 25 May. We won’t continue next month as the summer holidays are starting, and Ulyana and I will decide when to resume lessons in the new academic year. We really like your approach and are very happy that we chose you. Thank you. We still have one more lesson on Monday.",
+              author: "Year 10",
+            },
+            {
+              quote:
+                "Good afternoon, I just wanted to share this 🙈 My son brought home his Maths test results yesterday, and I’m very happy! They took the same type of test before the New Year and again now. Before the New Year, he scored 10/65 — 10 correct answers out of 65. Now he has scored 45/65. More than half are correct, and we’re steadily moving forward 💪 Thank you! We’ll be back in September 💛 Have a lovely day :)",
+              author: "Year 7",
+            },
+            {
+              quote:
+                "Good morning, Ievgeniia! I hope this message finds you in a wonderful mood 😊 Thank you so much for all your work! You did everything you could to make both me and my children feel comfortable. Thank you for your patience and understanding with all our late arrivals and rescheduled lessons. We may not always have been the easiest students, and I hope you didn’t mind. You and your team are amazing! 👍 We are really hoping for positive results 🙏 I’m sincerely grateful to the teachers for all their work. My children really liked them and always looked forward to their next lesson. Wishing you a wonderful summer break, lots of positive emotions, unforgettable moments and wonderful people around you! THANK YOU!!!!!!",
+              author: "Year 11",
+            },
+            {
+              quote:
+                "Thank you to Mug.Up Language Studio and teacher Anastasiia for the lessons. We have seen noticeable progress during this time. Tykhomyr is now getting very good grades in English at school, and I can see real results from the lessons.",
+              author: "General English",
+            },
+            {
+              quote:
+                "Wow!! [Student] did a test at school and got a Grade 8 — it’s what we’ve been covering the last 6 weeks or so! 🎉 — Is that a Mock test? — Yes! 🙌",
+              author: "Grade 8 Mock Test",
             },
           ],
         },
