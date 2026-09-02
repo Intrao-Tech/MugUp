@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Block, Card as CardData, Hero, Locale, Section as SectionData } from "@/content/types";
 import { localeHref } from "@/lib/links";
 import { cx } from "@/lib/cx";
+import { ExpandableText } from "@/components/ExpandableText";
 import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import { ScrollRail } from "@/components/ScrollRail";
 import {
@@ -266,14 +267,14 @@ export function BlockView({
         <ScrollRail label="Reviews" locale={locale}>
           {block.items.map((t) => (
             <li
-              key={t.author + (t.tag ?? "")}
-              className="w-[88%] shrink-0 snap-start border-t-2 border-ink pt-6 sm:w-[34rem] lg:w-[38rem]"
+              key={t.author + t.quote.slice(0, 24)}
+              className="w-[88%] shrink-0 snap-start self-start border-t-2 border-ink pt-6 sm:w-[34rem] lg:w-[38rem]"
             >
-              <figure className="flex h-full flex-col">
-                <blockquote className="text-quote grow text-ink [hanging-punctuation:first]">
-                  “{t.quote}”
+              <figure>
+                <blockquote className="text-quote text-ink [hanging-punctuation:first]">
+                  <ExpandableText text={t.quote} locale={locale} />
                 </blockquote>
-                <figcaption className="mt-6">
+                <figcaption className="mt-5">
                   <span className="block text-sm font-bold text-ink">{t.author}</span>
                   {t.tag && (
                     <span className="mt-1 block text-eyebrow uppercase text-muted">{t.tag}</span>
