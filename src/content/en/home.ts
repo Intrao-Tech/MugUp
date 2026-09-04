@@ -184,6 +184,11 @@ export const page: Page = {
                 "Wow!! [Student] did a test at school and got a Grade 8 — it’s what we’ve been covering the last 6 weeks or so! 🎉 — Is that a Mock test? — Yes! 🙌",
               author: "Grade 8 Mock Test",
             },
+            {
+              quote:
+                "Good morning! I got a 4, and I’m very happy that I passed everything! A huge thank you to the teachers for their support and help over the past two years of my studies!",
+              author: "GCSE",
+            },
           ],
         },
         {
