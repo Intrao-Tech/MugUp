@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/data/supabase/browser";
 import { isStrongPassword, PASSWORD_RULES_TEXT } from "@/lib/password";
+import { stampAdminActivity } from "../actions";
 import { PasswordRuleChecklist } from "../PasswordChecklist";
 import { BTN_PRIMARY, H1, INPUT } from "../ui";
 
@@ -59,6 +60,9 @@ export default function WelcomePage() {
       return;
     }
     setState("done");
+    // The session was created in the browser — stamp activity so the idle
+    // check does not read the first panel request as a timeout.
+    await stampAdminActivity();
     window.location.assign("/admin");
   }
 

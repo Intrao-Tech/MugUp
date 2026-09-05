@@ -1,10 +1,18 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getData } from "@/lib/data";
-import { requireProfile } from "@/lib/auth-guard";
+import {
+  ADMIN_ACTIVITY_COOKIE,
+  activityCookieOptions,
+  IDLE_TIMEOUT_MAX_MINUTES,
+  IDLE_TIMEOUT_MIN_MINUTES,
+  MFA_REQUIRED_SETTING,
+} from "@/lib/admin-session";
+import { getCurrentProfile, requireProfile } from "@/lib/auth-guard";
 import { isPermission, ROLE_PRESETS, type BuiltInRole, type Permission } from "@/lib/permissions";
 import {
   LEAD_SOURCES,
@@ -20,6 +28,7 @@ import {
   type NotificationEvent,
   type ProfileRow,
   type ReviewAudience,
+  type ReviewLocale,
 } from "@/lib/db-types";
 import { isEmailConfigured, sendEmail } from "@/lib/email";
 import { notifyPostPublished } from "@/lib/notify";
@@ -28,6 +37,7 @@ import { parsePostBlocksJson, sanitizePostBlocks, type PostBlock } from "@/lib/p
 import { slugify } from "@/lib/slugify";
 import { adminSiteOrigin } from "@/lib/site";
 import { ukWallTimeToIso } from "@/lib/uk-time";
+import type { PostIntent, PostSaveError } from "./posts/errors";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -75,13 +85,158 @@ export async function signIn(formData: FormData): Promise<void> {
   const data = await getData();
   const { error } = await data.auth.signInWithPassword(email, password);
   if (error) redirect("/admin/login?error=invalid");
+  await setActivityCookie();
+  // Members with an authenticator app prove it before anything else.
+  const mfa = await data.auth.getMfaState();
+  redirect(mfa?.factor && mfa.level !== "aal2" ? "/admin/verify" : "/admin");
+}
+
+/** The idle-timeout stamp itself — no profile guard, because it is also
+ *  needed in the moment between the password and the second factor. */
+async function setActivityCookie(): Promise<void> {
+  (await cookies()).set(
+    ADMIN_ACTIVITY_COOKIE,
+    String(Date.now()),
+    activityCookieOptions(IDLE_TIMEOUT_MAX_MINUTES),
+  );
+}
+
+/**
+ * Marks "active right now" for the idle timeout. Sign-in calls it, and the
+ * welcome page (invite/recovery links create their session in the browser)
+ * calls it before entering the panel — otherwise the very first request
+ * would have no activity cookie and read as a timeout. Stamped with the
+ * maximum lifetime; the middleware trims it to the configured timeout on
+ * the next request.
+ */
+export async function stampAdminActivity(): Promise<void> {
+  const profile = await getCurrentProfile();
+  if (!profile) return;
+  await setActivityCookie();
+}
+
+/* ---------- two-factor authentication (authenticator app) ---------- */
+
+function totpCode(formData: FormData): string | null {
+  const code = String(formData.get("code") ?? "").replace(/\s+/g, "");
+  return /^\d{6}$/.test(code) ? code : null;
+}
+
+/** Second step of sign-in for members with an authenticator app. Deliberately
+ *  not behind requireProfile: the session is not "signed in" yet. */
+export async function verifyMfaCode(formData: FormData): Promise<void> {
+  const data = await getData();
+  const mfa = await data.auth.getMfaState();
+  if (!mfa?.factor) redirect("/admin/login");
+  const code = totpCode(formData);
+  if (!code) redirect("/admin/verify?error=code");
+  const { error } = await data.auth.verifyTotp(mfa.factor.id, code);
+  if (error) redirect("/admin/verify?error=code");
+  await setActivityCookie();
   redirect("/admin");
+}
+
+export type TotpEnrolment = { factorId: string; qrCode: string; secret: string };
+
+/** Settings → starts enrolment. Called from the client component so the QR
+ *  code lives in browser state and survives the re-render after a wrong code. */
+export async function startTotpEnrollment(): Promise<TotpEnrolment | { error: string }> {
+  await requireProfile();
+  const data = await getData();
+  const result = await data.auth.enrollTotp();
+  if (result.error || !result.factorId || !result.qrCode || !result.secret) {
+    return { error: "Could not start the authenticator setup — try again." };
+  }
+  return { factorId: result.factorId, qrCode: result.qrCode, secret: result.secret };
+}
+
+/** Settings → finishes enrolment with the first code from the app. Returns
+ *  the error instead of redirecting so the QR code on screen survives a typo. */
+export async function activateTotp(
+  _prev: { error?: string } | null,
+  formData: FormData,
+): Promise<{ error?: string } | null> {
+  const me = await requireProfile();
+  const factorId = String(formData.get("factor_id") ?? "");
+  const code = totpCode(formData);
+  if (!UUID_RE.test(factorId) || !code) return { error: "Enter the 6-digit code from the app." };
+  const data = await getData();
+  const { error } = await data.auth.verifyTotp(factorId, code);
+  if (error) {
+    return {
+      error: "That code is not valid — codes change every 30 seconds, enter the current one.",
+    };
+  }
+  await logActivity(me, "mfa.enable", "user", me.id, "authenticator app enabled");
+  redirect("/admin/account?mfa=on");
+}
+
+export async function disableTotp(formData: FormData): Promise<void> {
+  const me = await requireProfile();
+  const data = await getData();
+  if ((await data.settings.get(MFA_REQUIRED_SETTING)) === "1") {
+    redirect("/admin/account?error=mfa-required");
+  }
+  const mfa = await data.auth.getMfaState();
+  if (!mfa?.factor) redirect("/admin/account");
+  // Proof of the phone, not the password: only whoever holds the app can
+  // switch it off (and a stolen password cannot strip the protection).
+  const code = totpCode(formData);
+  if (!code) redirect("/admin/account?error=mfa-code");
+  const { error: codeError } = await data.auth.verifyTotp(mfa.factor.id, code);
+  if (codeError) redirect("/admin/account?error=mfa-code");
+  const { error } = await data.auth.unenrollTotp(mfa.factor.id);
+  if (!error) await logActivity(me, "mfa.disable", "user", me.id, "authenticator app removed");
+  redirect(`/admin/account${error ? "?error=save" : "?mfa=off"}`);
+}
+
+export async function updateMfaRequired(formData: FormData): Promise<void> {
+  const me = await requireProfile("security.policy");
+  const required = formData.get("required") === "on";
+  const data = await getData();
+  const { error } = await data.settings.set(MFA_REQUIRED_SETTING, required ? "1" : "0");
+  if (!error) {
+    await logActivity(
+      me,
+      "settings.mfa-required",
+      "settings",
+      "",
+      required ? "two-factor required for everyone" : "two-factor optional",
+    );
+  }
+  redirect(`/admin/account${error ? "?error=save" : "?saved-mfa=1"}`);
+}
+
+/** Team → lost phone: removes the member's second factor. */
+export async function resetMemberMfa(formData: FormData): Promise<void> {
+  const me = await requireProfile("users.manage");
+  const id = requireId(formData, "/admin/users");
+  const data = await getData();
+  const target = await data.team.getProfile(id);
+  if (!target) redirect("/admin/users?error=input");
+  const { error } = await data.team.resetMfa(id);
+  if (!error) await logActivity(me, "user.mfa-reset", "user", id, `${target.email}: two-factor reset`);
+  redirect(`/admin/users${error ? "?error=save" : "?mfa-reset=1"}`);
 }
 
 export async function signOut(): Promise<void> {
   const data = await getData();
   await data.auth.signOut();
   redirect("/admin/login");
+}
+
+/**
+ * Called by the tab itself (IdleGuard) once the idle timeout has passed with
+ * no activity. Ends only THIS session — other devices keep theirs — and
+ * lands on the login page with the inactivity message. Explicit sign-out
+ * rather than a reload: any request, a reload included, would re-stamp the
+ * activity cookie and keep the session alive.
+ */
+export async function signOutIdle(): Promise<void> {
+  const data = await getData();
+  await data.auth.signOut("local");
+  (await cookies()).delete(ADMIN_ACTIVITY_COOKIE);
+  redirect("/admin/login?error=expired");
 }
 
 /* ---------- leads ---------- */
@@ -183,6 +338,11 @@ function audienceFromForm(formData: FormData): ReviewAudience | null {
   return (REVIEW_AUDIENCES as string[]).includes(raw) ? (raw as ReviewAudience) : null;
 }
 
+/** Which homepage shows the review; anything but "ua" is English. */
+function localeFromForm(formData: FormData): ReviewLocale {
+  return formData.get("locale") === "ua" ? "ua" : "en";
+}
+
 export async function addReview(formData: FormData): Promise<void> {
   await requireProfile("reviews.moderate");
   const authorName = String(formData.get("author_name") ?? "").trim();
@@ -198,6 +358,7 @@ export async function addReview(formData: FormData): Promise<void> {
   if (!authorName || !quote) redirect("/admin/reviews?error=input");
   const data = await getData();
   const { error } = await data.reviews.add({
+    locale: localeFromForm(formData),
     authorName,
     authorTag,
     quote,
@@ -206,6 +367,7 @@ export async function addReview(formData: FormData): Promise<void> {
     programme: String(formData.get("programme") ?? "").trim().slice(0, 100),
     audience: audienceFromForm(formData),
   });
+  if (!error) revalidateHome();
   redirect(`/admin/reviews${error ? "?error=save" : "?saved=1"}`);
 }
 
@@ -235,6 +397,7 @@ export async function updateReviewMeta(formData: FormData): Promise<void> {
   const featured = formData.get("featured") === "on";
   const data = await getData();
   const { error } = await data.reviews.updateMeta(id, {
+    locale: localeFromForm(formData),
     programme: String(formData.get("programme") ?? "").trim().slice(0, 100),
     audience: audienceFromForm(formData),
     featured,
@@ -309,7 +472,11 @@ export async function markAllNotificationsRead(formData: FormData): Promise<void
 export async function updateSessionTimeout(formData: FormData): Promise<void> {
   const me = await requireProfile("users.manage");
   const minutes = Number(String(formData.get("minutes") ?? ""));
-  if (!Number.isInteger(minutes) || minutes < 5 || minutes > 480) {
+  if (
+    !Number.isInteger(minutes) ||
+    minutes < IDLE_TIMEOUT_MIN_MINUTES ||
+    minutes > IDLE_TIMEOUT_MAX_MINUTES
+  ) {
     redirect("/admin/account?error=timeout");
   }
   const data = await getData();
@@ -349,38 +516,27 @@ export async function deletePost(formData: FormData): Promise<void> {
   redirect("/admin/posts?deleted=1");
 }
 
-// The submit buttons carry the intent via per-button formAction — React drops
-// a submitter's own name/value for function actions, so a single action
-// reading formData.get("intent") silently saved every publish as a draft
-// (the original "posts don't update" bug).
-export async function savePostDraft(formData: FormData): Promise<void> {
-  formData.set("intent", "draft");
-  await savePost(formData);
-}
-
-export async function savePostPublish(formData: FormData): Promise<void> {
-  formData.set("intent", "publish");
-  await savePost(formData);
-}
-
-export async function savePostSchedule(formData: FormData): Promise<void> {
-  formData.set("intent", "schedule");
-  await savePost(formData);
-}
-
-export async function savePost(formData: FormData): Promise<void> {
+/**
+ * Create/update an Insights post. Called directly by the (client) PostForm
+ * with the intent of the button pressed. Validation problems come back as
+ * a code + the field to highlight — never a redirect, so nothing typed is
+ * lost; success redirects to the list.
+ */
+export async function savePost(
+  intent: PostIntent,
+  formData: FormData,
+): Promise<PostSaveError | undefined> {
   const profile = await requireProfile("posts.edit");
   const rawId = String(formData.get("id") ?? "");
   const id = rawId && UUID_RE.test(rawId) ? rawId : "";
-  if (rawId && !id) redirect("/admin/posts?error=input");
-  const intent = String(formData.get("intent") ?? "draft");
+  if (rawId && !id) return { code: "input" };
+  if (!["draft", "publish", "schedule"].includes(intent)) return { code: "input" };
   const wantPublish = intent === "publish";
   const wantSchedule = intent === "schedule";
-  const backTo = id ? `/admin/posts/${id}` : "/admin/posts/new";
 
   const data = await getData();
   const existing = id ? await data.posts.get(id) : null;
-  if (id && !existing) redirect("/admin/posts?error=input");
+  if (id && !existing) return { code: "input" };
 
   /** Absent field (form version without it) = keep the stored value; present
    *  but empty = the user cleared it. Keeps older/partial forms lossless. */
@@ -399,7 +555,7 @@ export async function savePost(formData: FormData): Promise<void> {
   } else {
     const trimmed = String(rawBlocks).trim();
     bodyBlocks = trimmed && trimmed !== "[]" ? parsePostBlocksJson(trimmed) : null;
-    if (trimmed && trimmed !== "[]" && !bodyBlocks) redirect(`${backTo}?error=blocks`);
+    if (trimmed && trimmed !== "[]" && !bodyBlocks) return { code: "blocks" };
   }
 
   const title = String(formData.get("title") ?? "").trim();
@@ -426,29 +582,29 @@ export async function savePost(formData: FormData): Promise<void> {
     ctaUrl,
   };
   // Category validity is enforced by the database (FK to post_categories).
-  if (
-    !SLUG_RE.test(input.slug) ||
-    !input.title ||
-    !["en", "ua"].includes(input.locale) ||
-    !input.category
-  ) {
-    redirect(`${backTo}?error=input`);
+  if (!input.title) return { code: "title", field: "title" };
+  if (!SLUG_RE.test(input.slug)) return { code: "slug", field: "slug" };
+  if (!["en", "ua"].includes(input.locale) || !input.category) {
+    return { code: "input", field: "category" };
   }
-  if (heroImageUrl && !/^https?:\/\//.test(heroImageUrl)) redirect(`${backTo}?error=input`);
+  if (heroImageUrl && !/^https?:\/\//.test(heroImageUrl)) return { code: "input" };
   // Alt text is non-negotiable when there is an image (accessibility + SEO).
-  if (heroImageUrl && !heroImageAlt) redirect(`${backTo}?error=alt`);
+  if (heroImageUrl && !heroImageAlt) return { code: "alt", field: "hero_image_alt" };
   // CTA needs both the label and the destination.
-  if ((ctaLabel && !ctaUrl) || (ctaUrl && !ctaLabel)) redirect(`${backTo}?error=cta`);
-  if (ctaUrl && !/^(\/|https?:\/\/)/.test(ctaUrl)) redirect(`${backTo}?error=cta`);
+  if (ctaLabel && !ctaUrl) return { code: "cta", field: "cta_url" };
+  if (ctaUrl && !ctaLabel) return { code: "cta", field: "cta_label" };
+  if (ctaUrl && !/^(\/|https?:\/\/)/.test(ctaUrl)) return { code: "cta-url", field: "cta_url" };
   if ((wantPublish || wantSchedule) && !profile.permissions.includes("posts.publish")) {
-    redirect(`${backTo}?error=publish-denied`);
+    return { code: "publish-denied" };
   }
 
   let scheduledAt: string | null = null;
   if (wantSchedule) {
     scheduledAt = ukWallTimeToIso(String(formData.get("publish_at") ?? ""));
-    if (!scheduledAt) redirect(`${backTo}?error=schedule`);
-    if (new Date(scheduledAt).getTime() <= Date.now()) redirect(`${backTo}?error=schedule-past`);
+    if (!scheduledAt) return { code: "schedule", field: "publish_at" };
+    if (new Date(scheduledAt).getTime() <= Date.now()) {
+      return { code: "schedule-past", field: "publish_at" };
+    }
   }
 
   const status = wantPublish ? "published" : wantSchedule ? "scheduled" : "draft";
@@ -461,7 +617,7 @@ export async function savePost(formData: FormData): Promise<void> {
         ? scheduledAt
         : undefined;
     const { error } = await data.posts.update(id, { ...input, status, publishedAt });
-    if (error) redirect(`${backTo}?error=save`);
+    if (error) return { code: "save", field: "slug" };
     // Un-publishing / re-scheduling also has to refresh the site.
     if (status !== "draft" || existing?.status !== "draft") revalidatePublicInsights(input.slug);
     await logActivity(profile, `post.${intent}`, "post", id, input.title);
@@ -483,7 +639,7 @@ export async function savePost(formData: FormData): Promise<void> {
       },
       profile.id,
     );
-    if (error) redirect(`${backTo}?error=save`);
+    if (error) return { code: "save", field: "slug" };
     if (status !== "draft") revalidatePublicInsights(input.slug);
     await logActivity(profile, `post.${intent}`, "post", input.slug, input.title);
     if (status !== "draft") {
@@ -765,7 +921,7 @@ export async function deleteRole(formData: FormData): Promise<void> {
   const inUse = (await data.team.listProfiles()).some((p) => p.role === slug);
   if (inUse) redirect("/admin/users?error=role-in-use");
   const { error } = await data.team.deleteRole(slug);
-  if (!error) await logActivity(me, "role.delete", "role", slug, "");
+  if (!error) await logActivity(me, "role.delete", "role", slug, `role "${slug}" removed`);
   redirect(`/admin/users${error ? "?error=role-save" : "?role-deleted=1"}`);
 }
 

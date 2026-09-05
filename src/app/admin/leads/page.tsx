@@ -11,7 +11,17 @@ import {
 import { hasPerm, requireProfile } from "@/lib/auth-guard";
 import { getData } from "@/lib/data";
 import { updateLeadStatus } from "../actions";
-import { BTN_LINK, BTN_SECONDARY, buildQuery, CARD, FilterChip, H1, INPUT, Notice } from "../ui";
+import {
+  BTN_COMPACT,
+  BTN_LINK,
+  BTN_SECONDARY,
+  buildQuery,
+  CARD,
+  FilterChip,
+  H1,
+  INPUT,
+  Notice,
+} from "../ui";
 
 export const dynamic = "force-dynamic";
 
@@ -143,13 +153,13 @@ export default async function LeadsPage({
       <div className="mt-4 overflow-x-auto">
         <table className="w-full border-collapse bg-surface text-sm">
           <thead>
-            <tr className="border-b border-line text-left">
-              <th className="p-2 text-eyebrow uppercase text-muted">Date</th>
-              <th className="p-2 text-eyebrow uppercase text-muted">Enquiry</th>
-              <th className="p-2 text-eyebrow uppercase text-muted">Source</th>
-              <th className="p-2 text-eyebrow uppercase text-muted">Owner</th>
-              <th className="p-2 text-eyebrow uppercase text-muted">Next action</th>
-              <th className="p-2 text-eyebrow uppercase text-muted">Status</th>
+            <tr className="border-b-2 border-line text-left">
+              <th className="px-3 py-2.5 text-eyebrow uppercase text-muted">Date</th>
+              <th className="px-3 py-2.5 text-eyebrow uppercase text-muted">Enquiry</th>
+              <th className="px-3 py-2.5 text-eyebrow uppercase text-muted">Source</th>
+              <th className="px-3 py-2.5 text-eyebrow uppercase text-muted">Owner</th>
+              <th className="px-3 py-2.5 text-eyebrow uppercase text-muted">Next action</th>
+              <th className="px-3 py-2.5 text-eyebrow uppercase text-muted">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -159,14 +169,14 @@ export default async function LeadsPage({
                 lead.next_action_date <= today &&
                 !["enrolled", "closed", "lost"].includes(lead.status);
               return (
-                <tr key={lead.id} className="border-b border-line align-top">
-                  <td className="p-2 whitespace-nowrap">
+                <tr key={lead.id} className="border-b border-line align-top even:bg-canvas">
+                  <td className="px-3 py-3 whitespace-nowrap">
                     {new Date(lead.created_at).toLocaleDateString("en-GB")}
                     <span className="block text-xs text-muted">
                       {LEAD_FORM_LABELS[lead.form]}
                     </span>
                   </td>
-                  <td className="p-2">
+                  <td className="px-3 py-3">
                     <Link
                       href={`/admin/leads/${lead.id}`}
                       className="font-bold text-primary underline underline-offset-4 hover:text-primary-hover"
@@ -179,11 +189,11 @@ export default async function LeadsPage({
                         .join(" · ") || "—"}
                     </span>
                   </td>
-                  <td className="p-2 whitespace-nowrap">
+                  <td className="px-3 py-3 whitespace-nowrap">
                     {lead.source ? LEAD_SOURCE_LABELS[lead.source] : "—"}
                   </td>
-                  <td className="p-2">{ownerName(lead.owner_id)}</td>
-                  <td className="p-2">
+                  <td className="px-3 py-3">{ownerName(lead.owner_id)}</td>
+                  <td className="px-3 py-3">
                     {lead.next_action || "—"}
                     {lead.next_action_date && (
                       <span
@@ -195,18 +205,18 @@ export default async function LeadsPage({
                       </span>
                     )}
                   </td>
-                  <td className="p-2">
+                  <td className="px-3 py-3">
                     {canManage ? (
-                      <form action={updateLeadStatus} className="flex items-center gap-1">
+                      <form action={updateLeadStatus} className="flex items-center gap-3">
                         <input type="hidden" name="id" value={lead.id} />
-                        <select name="status" defaultValue={lead.status} className={INPUT}>
+                        <select name="status" defaultValue={lead.status} className={`${INPUT} min-w-40`}>
                           {LEAD_STATUSES.map((s) => (
                             <option key={s} value={s}>
                               {LEAD_STATUS_LABELS[s]}
                             </option>
                           ))}
                         </select>
-                        <button type="submit" className={BTN_LINK}>
+                        <button type="submit" className={BTN_COMPACT}>
                           Save
                         </button>
                       </form>

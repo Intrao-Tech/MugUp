@@ -5,7 +5,14 @@ import Link from "next/link";
 import "../globals.css";
 import { NavLink } from "@/components/NavLink";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import {
+  IDLE_TIMEOUT_DEFAULT_MINUTES,
+  IDLE_TIMEOUT_MIN_MINUTES,
+  SESSION_TIMEOUT_SETTING,
+} from "@/lib/admin-session";
 import { getCurrentProfile, hasPerm } from "@/lib/auth-guard";
+import { getData } from "@/lib/data";
+import { IdleGuard } from "./IdleGuard";
 import type { Permission } from "@/lib/permissions";
 import { signOut } from "./actions";
 
@@ -28,8 +35,18 @@ const NAV: { href: string; label: string; perm?: Permission }[] = [
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const profile = await getCurrentProfile();
+  // The idle guard (heartbeat + auto sign-out in the tab) needs the team's
+  // timeout; the middleware stays the authority — see src/lib/admin-session.ts.
+  let timeoutMinutes = IDLE_TIMEOUT_DEFAULT_MINUTES;
+  if (profile) {
+    const configured = Number(await (await getData()).settings.get(SESSION_TIMEOUT_SETTING));
+    if (Number.isFinite(configured) && configured >= IDLE_TIMEOUT_MIN_MINUTES) {
+      timeoutMinutes = configured;
+    }
+  }
   return (
-    <html lang="en" className={fontVariables}>
+    // A scrollbar that appears (notices, expanding panels) must not shift the page.
+    <html lang="en" className={fontVariables} style={{ scrollbarGutter: "stable" }}>
       <body className="min-h-screen bg-canvas text-body antialiased">
         <Suspense fallback={null}>
           <ScrollToTop />
@@ -48,7 +65,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </Link>
             {profile && (
               <>
-                <nav aria-label="Admin" className="flex flex-wrap items-center">
+                <nav aria-label="Admin" className="flex flex-wrap items-center gap-x-1 xl:gap-x-5">
                   {NAV.filter((item) => !item.perm || hasPerm(profile, item.perm)).map((item) => (
                     <NavLink key={item.href} href={item.href}>
                       {item.label}
@@ -57,11 +74,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 </nav>
                 <Link
                   href="/admin/account"
-                  className="px-1 text-sm font-semibold text-muted transition-colors hover:text-ink"
+                  className="ml-2 px-1 text-sm font-semibold text-muted transition-colors hover:text-ink xl:ml-6"
                 >
                   Settings <span className="font-normal">({profile.email})</span>
                 </Link>
-                <form action={signOut}>
+                <form action={signOut} className="ml-2 xl:ml-4">
                   <button
                     type="submit"
                     className="text-sm text-primary underline underline-offset-4 hover:text-primary-hover"
@@ -74,6 +91,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
         </header>
         <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        {profile && <IdleGuard timeoutMinutes={timeoutMinutes} />}
       </body>
     </html>
   );

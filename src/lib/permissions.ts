@@ -11,6 +11,9 @@ export const PERMISSIONS = [
   "reviews.moderate",
   "analytics.view",
   "users.manage",
+  // Team-wide security policy (require two-factor for everyone) — its own
+  // flag on purpose, separate from account management (client request).
+  "security.policy",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -54,6 +57,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   "reviews.moderate": "Manage reviews: approve, reject, add, feature",
   "analytics.view": "View analytics: the enquiries dashboard",
   "users.manage": "Manage users: accounts, roles, permissions",
+  "security.policy": "Security policy: require two-factor authentication for everyone",
 };
 
 /** Plain-language summary of each built-in preset. */

@@ -16,10 +16,10 @@ npm run typecheck  # tsc --noEmit
 npm run db:start   # local Supabase (Docker), applies supabase/migrations
 npm run db:reset   # wipe + re-apply migrations
 npm run seed:dev   # test accounts + demo data (local only, guarded)
-npm run seed:remote # hosted project seed (.env.remote, SEED_ALLOW_REMOTE=1)
-                   # (a build also seeds when SEED_ON_DEPLOY=true is set, and
-                   # a production build applies pending supabase/migrations
-                   # when SUPABASE_DB_URL is set — scripts/deploy-migrate.mjs)
+npm run seed:remote # hosted project: administrator only (.env.remote,
+                   # SEED_ALLOW_REMOTE=1); demo data never leaves localhost.
+                   # A production build applies pending supabase/migrations
+                   # when SUPABASE_DB_URL is set — scripts/deploy-migrate.mjs
 ```
 
 Local test logins (password `admin123`): `admin@` / `manager@` / `editor@mugup.local`.
@@ -46,15 +46,25 @@ letters land in Mailpit: http://localhost:54324. DB GUI: :54323.
   the no-backend fallback. Post bodies are layout blocks
   (`src/lib/post-blocks.ts`, rendered by `PostBody`); `body_md` is the
   legacy/fallback format.
-- Admin notifications are IN-APP (feed + per-member subscriptions +
-  per-entry read state); email is an optional copy through
-  `src/lib/email.ts`. Invited/reset accounts get generated temporary
-  passwords and must set their own on first sign-in.
+- Admin notifications are IN-APP (feed + per-role routing + per-entry read
+  state); email is an optional copy through `src/lib/email.ts`.
+  Invited/reset accounts get generated temporary passwords and must set
+  their own on first sign-in.
+- Admin sign-in security: idle timeout (`src/lib/admin-session.ts`,
+  cookie `mugup-admin-last-active`; `src/app/admin/IdleGuard.tsx` adds the
+  in-tab heartbeat + auto sign-out) and an optional/required second factor
+  (authenticator app via Supabase MFA; `AuthPort.getUserId()` returns null
+  until the session is aal2, `/admin/verify` is the code step; local
+  `supabase/config.toml` has `[auth.mfa.totp]` enabled).
 
 ## Rules
 
 - Never hardcode copy in components; edit `src/content/{en,ua}` (keep section
   ids and hrefs identical across locales).
+- Admin forms with real typing effort (the post editor) validate in the
+  browser and get errors BACK from the action (`{ code, field }`) — never
+  redirect with `?error=` from a form that holds unsaved text. Small forms
+  rely on native `required`/`pattern` plus the `INPUT` invalid styling.
 - Never import a vendor SDK outside `src/lib/data/supabase/`.
 - Visual layer: only semantic tokens + `src/components/ui` primitives
   (`docs/DESIGN-SYSTEM.md`); no `neutral-*`/hex/arbitrary colours, no ad-hoc

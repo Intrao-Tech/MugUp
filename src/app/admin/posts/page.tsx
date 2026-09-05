@@ -27,6 +27,9 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
   const langFilter = params.lang === "en" || params.lang === "ua" ? params.lang : undefined;
 
   const data = await getData();
+  // Scheduled posts whose time has passed are live on the site already;
+  // flip their status so the list, counters and links say so.
+  await data.posts.publishDue();
   const [all, categories] = await Promise.all([
     data.posts.listAll(),
     data.posts.listCategories(),

@@ -117,6 +117,3 @@ export const getPosts = (locale: Locale): InsightPost[] =>
   (locale === "ua" ? uaPosts : enPosts)
     .slice()
     .sort((a, b) => b.date.localeCompare(a.date));
-
-export const getPost = (locale: Locale, slug: string): InsightPost | undefined =>
-  getPosts(locale).find((p) => p.slug === slug);

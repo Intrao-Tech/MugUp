@@ -66,6 +66,8 @@ export const common: CommonDict = {
     imagePlaceholder: "Image placeholder",
     stage2Notice: "Full programme pages arrive in Stage 2.",
     formSent: "Thank you — your message has been sent. We will get back to you shortly.",
+    reviewSent:
+      "Thank you for your review! It will appear on the site once our team has approved it.",
     formError: "Something went wrong and the message was not sent. Please check the fields and try again.",
     meetFullTeam: "Meet the full team on the About page",
     bookingSent: "Thank you — we have your details. Choose a time for your consultation and we will confirm it by email.",

@@ -23,6 +23,7 @@ export async function submitReview(formData: FormData): Promise<void> {
   const data = await getData();
   const rating = formRating(formData);
   const { error } = await data.reviews.submitPublic({
+    locale,
     authorName,
     authorTag: formText(formData, "authorTag", 200) ?? "",
     quote,

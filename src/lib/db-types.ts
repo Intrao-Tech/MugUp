@@ -194,9 +194,18 @@ export const REVIEW_AUDIENCE_LABELS: Record<ReviewAudience, string> = {
   corporate_client: "Corporate client",
 };
 
+export type ReviewLocale = "en" | "ua";
+export const REVIEW_LOCALES: readonly ReviewLocale[] = ["en", "ua"];
+export const REVIEW_LOCALE_LABELS: Record<ReviewLocale, string> = {
+  en: "English site",
+  ua: "Ukrainian site",
+};
+
 export interface ReviewRow {
   id: string;
   created_at: string;
+  /** Language of the quote — the homepage shows each locale its own reviews. */
+  locale: ReviewLocale;
   author_name: string;
   author_tag: string;
   quote: string;

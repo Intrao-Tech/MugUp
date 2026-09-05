@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { PASSWORD_MIN_LENGTH } from "@/lib/password";
+import { useEffect, useRef, useState } from "react";
+import { PASSWORD_MIN_LENGTH, PASSWORD_RULES_TEXT } from "@/lib/password";
 import { INPUT } from "./ui";
 
 // Live per-rule feedback while typing a new password. The checklist is
@@ -57,7 +57,15 @@ export function PasswordRuleChecklist({
 export function NewPasswordFields() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const confirmInput = useRef<HTMLInputElement>(null);
   const inputCls = INPUT;
+  // Native constraint validation: the browser refuses to submit and marks the
+  // field, so a weak or mismatched password never costs a round trip.
+  useEffect(() => {
+    confirmInput.current?.setCustomValidity(
+      confirm && confirm !== password ? "The two passwords do not match." : "",
+    );
+  }, [password, confirm]);
   return (
     <>
       <div>
@@ -71,6 +79,9 @@ export function NewPasswordFields() {
           required
           value={password}
           onChange={(event) => setPassword(event.target.value)}
+          minLength={PASSWORD_MIN_LENGTH}
+          pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}"
+          title={PASSWORD_RULES_TEXT}
           autoComplete="new-password"
           className={inputCls}
         />
@@ -84,6 +95,7 @@ export function NewPasswordFields() {
           name="confirm"
           type="password"
           required
+          ref={confirmInput}
           value={confirm}
           onChange={(event) => setConfirm(event.target.value)}
           autoComplete="new-password"

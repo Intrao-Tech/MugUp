@@ -232,6 +232,8 @@ export interface UiDict {
   imagePlaceholder: string;
   stage2Notice: string;
   formSent: string;
+  /** Review form only: the text is not "we will reply" but "it appears after moderation". */
+  reviewSent: string;
   formError: string;
   meetFullTeam: string;
   /** Shown after a successful Get Expert Guidance submission, above the booking button. */

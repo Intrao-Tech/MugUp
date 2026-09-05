@@ -1,6 +1,8 @@
 import {
   REVIEW_AUDIENCE_LABELS,
   REVIEW_AUDIENCES,
+  REVIEW_LOCALE_LABELS,
+  REVIEW_LOCALES,
   type ReviewRow,
   type ReviewStatus,
 } from "@/lib/db-types";
@@ -31,15 +33,21 @@ function ReviewCard({ review }: { review: ReviewRow }) {
     <article className={`${CARD} p-4`}>
       <p className="text-eyebrow uppercase text-muted">
         {STATUS_LABEL[review.status]} · {SOURCE_LABEL[review.source]} ·{" "}
+        {REVIEW_LOCALE_LABELS[review.locale]} ·{" "}
         {new Date(review.created_at).toLocaleDateString("en-GB")}
         {review.rating && <> · {"★".repeat(review.rating)}</>}
         {review.featured && (
           <span className="ml-2 rounded-sm border border-line bg-surface px-2 py-0.5 text-eyebrow uppercase text-ink">FEATURED</span>
         )}
       </p>
-      {(review.programme || review.audience) && (
+      {/* The client's own testimonials use the programme as the author line
+          ("GCSE"), so the meta line does not repeat it. */}
+      {((review.programme && review.programme !== review.author_name) || review.audience) && (
         <p className="mt-1 text-xs text-muted">
-          {[review.programme, review.audience && REVIEW_AUDIENCE_LABELS[review.audience]]
+          {[
+            review.programme !== review.author_name ? review.programme : null,
+            review.audience && REVIEW_AUDIENCE_LABELS[review.audience],
+          ]
             .filter(Boolean)
             .join(" · ")}
         </p>
@@ -66,13 +74,25 @@ function ReviewCard({ review }: { review: ReviewRow }) {
 
       <details className="mt-3 border-t border-line pt-2 text-sm">
         <summary className="cursor-pointer text-primary underline underline-offset-4 hover:text-primary-hover">
-          Edit details (programme, audience, featured)
+          Edit details (language, programme, audience, featured)
         </summary>
         <form
           action={updateReviewMeta}
-          className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]"
+          className="mt-2 grid gap-2 sm:grid-cols-[auto_1fr_1fr_auto_auto]"
         >
           <input type="hidden" name="id" value={review.id} />
+          <select
+            name="locale"
+            defaultValue={review.locale}
+            className={INPUT}
+            aria-label="Language (which site shows it)"
+          >
+            {REVIEW_LOCALES.map((l) => (
+              <option key={l} value={l}>
+                {REVIEW_LOCALE_LABELS[l]}
+              </option>
+            ))}
+          </select>
           <input
             name="programme"
             list="programme-suggestions"
@@ -176,6 +196,21 @@ export default async function ReviewsPage({
         </p>
         <form action={addReview} className="mt-3 max-w-lg space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label htmlFor="add-locale" className="block text-sm font-bold text-ink">
+                Language
+              </label>
+              <select id="add-locale" name="locale" className={INPUT}>
+                {REVIEW_LOCALES.map((l) => (
+                  <option key={l} value={l}>
+                    {REVIEW_LOCALE_LABELS[l]}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-muted">
+                Each homepage shows only reviews written in its language.
+              </p>
+            </div>
             <div>
               <label htmlFor="source" className="block text-sm font-bold text-ink">
                 Source

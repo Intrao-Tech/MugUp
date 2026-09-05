@@ -7,6 +7,7 @@ import {
   addRole,
   deleteTeamUser,
   inviteTeamUser,
+  resetMemberMfa,
   sendPasswordResetEmail,
   updateTeamUser,
 } from "../actions";
@@ -36,7 +37,7 @@ const mailpitHint = () =>
     ? " (Local test stack without email configured: the email lands in Mailpit, http://localhost:54324.)"
     : "";
 
-function UserCard({
+async function UserCard({
   profile,
   isSelf,
   roles,
@@ -46,6 +47,7 @@ function UserCard({
   roles: RoleRow[];
 }) {
   const displayName = profile.full_name || profile.email;
+  const mfaEnabled = await (await getData()).team.hasMfa(profile.id);
   const roleOptions = roles.map((role) => ({ value: role.slug, label: role.name }));
   // A role deleted after assignment still shows truthfully in the select.
   const options = roleOptions.some((o) => o.value === profile.role)
@@ -82,6 +84,30 @@ function UserCard({
           access and must set a new password of their own at the next sign-in.
         </p>
       </form>
+
+      <div className="mt-3 border-t border-line pt-3 text-sm">
+        <p>
+          Two-factor authentication:{" "}
+          <span className="font-bold text-ink">{mfaEnabled ? "on" : "off"}</span>
+        </p>
+        {mfaEnabled ? (
+          <form action={resetMemberMfa} className="mt-2">
+            <input type="hidden" name="id" value={profile.id} />
+            <button type="submit" className={BTN_SECONDARY}>
+              Reset two-factor
+            </button>
+            <p className="mt-1 text-xs text-muted">
+              Use when {displayName} has lost the phone with the authenticator app: they sign in
+              with the password alone and set it up again in Settings.
+            </p>
+          </form>
+        ) : (
+          <p className="mt-1 text-xs text-muted">
+            {isSelf ? "You" : displayName} can turn it on in Settings; “Require two-factor for
+            everyone” lives there too.
+          </p>
+        )}
+      </div>
 
       {!isSelf && (
         <details className="mt-2 text-sm">
@@ -150,6 +176,12 @@ export default async function UsersPage({
       {params.removed && <Notice tone="success">Account removed.</Notice>}
       {params["role-saved"] && <Notice tone="success">Role saved.</Notice>}
       {params["role-deleted"] && <Notice tone="success">Role deleted.</Notice>}
+      {params["mfa-reset"] && (
+        <Notice tone="success">
+          Two-factor reset — the member signs in with their password alone until they set it up
+          again.
+        </Notice>
+      )}
       {error && <Notice tone="error">{ERRORS[error] ?? "Something went wrong."}</Notice>}
 
       <section className="mt-6">

@@ -7,8 +7,13 @@ import type { ReactNode } from "react";
    compose them instead of hand-writing colour classes. */
 
 /** Text inputs / selects / textareas — mirrors the public FormRenderer. */
+/** Invalid state (browser validation after the person touched the field, or
+ *  aria-invalid set by a form) shows on the field itself, everywhere. */
 export const INPUT =
-  "mt-1 w-full rounded-lg border border-ink-300 bg-surface px-3.5 py-2.5 text-base text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30";
+  "mt-1 w-full rounded-lg border border-ink-300 bg-surface px-3.5 py-2.5 text-base text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30 user-invalid:border-red-600 user-invalid:ring-2 user-invalid:ring-red-200 aria-invalid:border-red-600 aria-invalid:ring-2 aria-invalid:ring-red-200";
+
+/** Message under an invalid field. */
+export const FIELD_ERROR = "mt-1 text-xs font-semibold text-red-700";
 
 /** Primary action — the site's filled pill (Button md sizing). */
 export const BTN_PRIMARY =
@@ -17,6 +22,11 @@ export const BTN_PRIMARY =
 /** Secondary action — the site's outlined pill (Button sm sizing). */
 export const BTN_SECONDARY =
   "inline-flex min-h-10 items-center justify-center gap-2 rounded-full border-2 border-ink px-4 py-2 text-base font-bold text-ink transition-colors hover:bg-ink hover:text-surface disabled:pointer-events-none disabled:opacity-50";
+
+/** Compact outlined pill for actions inside table rows and dense lists,
+ *  where the full-size buttons would crowd the controls next to them. */
+export const BTN_COMPACT =
+  "inline-flex shrink-0 items-center justify-center rounded-full border-2 border-primary px-3 py-1 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-on-primary disabled:pointer-events-none disabled:opacity-50";
 
 /** Tertiary action — underlined teal link (site's ghost button). */
 export const BTN_LINK =

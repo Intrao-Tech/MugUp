@@ -11,7 +11,7 @@
 // from supabase/migrations via `supabase db push` before `next build`.
 // Preview builds never touch the database.
 //
-// Unlike seeding (deploy-seed.mjs), a migration failure FAILS the build on
+// A migration failure FAILS the build on
 // purpose: new code must not go live against an old schema, and a failed
 // build keeps the previous deployment serving.
 //

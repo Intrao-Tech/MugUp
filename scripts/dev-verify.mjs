@@ -44,6 +44,8 @@ async function asUser(email, fn) {
 await asUser("admin@mugup.local", async (db) => {
   const { data: leads } = await db.from("leads").select("id");
   check("admin: sees leads", (leads ?? []).length >= 3);
+  const { data: me } = await db.from("profiles").select("permissions").eq("email", "admin@mugup.local").single();
+  check("admin: holds security.policy (migration 0013)", (me?.permissions ?? []).includes("security.policy"));
   const { data: profiles } = await db.from("profiles").select("id");
   check("admin: sees all profiles", (profiles ?? []).length >= 3);
   const { data: posts } = await db.from("posts").select("id");
@@ -84,6 +86,14 @@ await asUser("editor@mugup.local", async (db) => {
       .eq("id", posts[0].id);
     check("editor: can edit post", !error);
   }
+  // Authenticator-app second factor must be enabled in supabase/config.toml
+  // ([auth.mfa.totp]) — enrol and discard a factor to prove it.
+  const { data: factor, error: enrolError } = await db.auth.mfa.enroll({
+    factorType: "totp",
+    friendlyName: "verify-script",
+  });
+  check("editor: TOTP enrolment available (config.toml auth.mfa.totp)", !enrolError && !!factor?.id);
+  if (factor?.id) await db.auth.mfa.unenroll({ factorId: factor.id });
 });
 
 console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll checks passed.");

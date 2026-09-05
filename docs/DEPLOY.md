@@ -135,16 +135,26 @@ npx supabase migration list --db-url "$SUPABASE_DB_URL"
 ```
 
 ```bash
-npx supabase migration repair --status applied 0001 0002 0003 0004 0005 0006 0007 0008 0009 0010 --db-url "$SUPABASE_DB_URL"
+npx supabase migration repair --status applied 0001 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 --db-url "$SUPABASE_DB_URL"
 ```
-4. First administrator: Supabase → Authentication → **Add user** (tick *Auto
-   confirm user*), then edit the email in `supabase/seed_admin.sql` and run it
-   against the project to grant the permission flags.
-5. Email (invites + notifications): follow `docs/EMAIL-SETUP.md` — Resend
-   API key + verified domain for enquiry/review notifications (recipients are
-   then configured on the admin **Notifications** page), and Supabase custom
-   SMTP + the `/admin/welcome` redirect URL for team invites. Without the
-   key, submissions still save — only the email step is skipped.
+4. First administrator: `npm run seed:remote` with `.env.remote` pointing at
+   the project (creates the administrator ONLY — demo data never reaches a
+   hosted project unless `SEED_DEMO_DATA=1` is set on purpose). Manual
+   alternative: Supabase → Authentication → **Add user** (tick *Auto confirm
+   user*), then edit the email in `supabase/seed_admin.sql` and run it.
+5. Email (team invites, password resets, optional enquiry copies): one
+   app-owned channel — `SMTP_*` or `RESEND_API_KEY` + `MAIL_FROM` on Vercel,
+   see `docs/EMAIL-SETUP.md`. Notifications themselves are in-admin and need
+   no setup. Without a transport, submissions still save — only the email
+   step is skipped, and invites fall back to Supabase Auth's own letters
+   (`/admin/welcome` redirect URL).
+6. Two-factor authentication: Supabase → Authentication → **Multi-Factor**
+   → make sure *TOTP* (authenticator app) is enabled (it is by default).
+   Recommended for the client: every member turns it on in Settings, then an
+   administrator ticks "Require two-factor authentication for everyone".
+   Recovery when the ONLY administrator loses the phone: Supabase →
+   Authentication → Users → the user → delete the MFA factor; everyone else
+   is reset from Team in the admin panel.
 7. Redeploy and verify: forms accept submissions, `/admin` on the admin host
    reaches the login page, Insights posts published from admin appear on the
    public site (ISR + `revalidatePath`).

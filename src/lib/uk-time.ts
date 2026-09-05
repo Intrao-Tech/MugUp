@@ -53,9 +53,14 @@ export function isoToUkDisplay(iso: string): string {
   });
 }
 
-/** `datetime-local` default value (UK wall time) for a stored UTC instant. */
+/** Schedule-field value ("YYYY-MM-DDTHH:MM", UK wall time) for a stored UTC instant. */
 export function isoToUkWallTime(iso: string): string {
   const date = new Date(iso);
   const shifted = new Date(date.getTime() + londonOffsetMs(date));
   return shifted.toISOString().slice(0, 16);
+}
+
+/** The current UK wall time in the same shape, so values compare as strings. */
+export function ukNowWallTime(): string {
+  return isoToUkWallTime(new Date().toISOString());
 }

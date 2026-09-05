@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { uploadPostImage } from "../actions";
+import { FIELD_ERROR } from "../ui";
 
 // Featured-image picker for PostForm: uploads through the same action as the
 // builder's image blocks, stores the public URL in a hidden input and forces
@@ -9,9 +10,14 @@ import { uploadPostImage } from "../actions";
 export function HeroImageField({
   initialUrl,
   initialAlt,
+  altError,
+  onAltInput,
 }: {
   initialUrl: string | null;
   initialAlt: string;
+  /** Set by PostForm when an image is present but the alt text is empty. */
+  altError?: string;
+  onAltInput?: () => void;
 }) {
   const [url, setUrl] = useState(initialUrl ?? "");
   const [uploading, setUploading] = useState(false);
@@ -60,12 +66,16 @@ export function HeroImageField({
       </div>
       {error && <p className="text-sm text-red-700">{error}</p>}
       <input
+        id="hero_image_alt"
         type="text"
         name="hero_image_alt"
         defaultValue={initialAlt}
         placeholder="Image description (alt text — required when an image is set)"
-        className="w-full rounded-lg border border-ink-300 bg-surface px-2 py-1 text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30"
+        aria-invalid={altError ? true : undefined}
+        onInput={onAltInput}
+        className="w-full rounded-lg border border-ink-300 bg-surface px-2 py-1 text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30 aria-invalid:border-red-600 aria-invalid:ring-2 aria-invalid:ring-red-200"
       />
+      {altError && <p className={FIELD_ERROR}>{altError}</p>}
     </div>
   );
 }
