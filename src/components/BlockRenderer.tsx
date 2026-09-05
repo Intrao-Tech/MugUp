@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Block, Card as CardData, Hero, Locale, Section as SectionData } from "@/content/types";
 import { localeHref } from "@/lib/links";
 import { cx } from "@/lib/cx";
+import { ExpandableText } from "@/components/ExpandableText";
 import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import { ScrollRail } from "@/components/ScrollRail";
 import {
@@ -14,6 +15,7 @@ import {
   IconList,
   IconRow,
   JourneyTrack,
+  ListIcon,
   PathwayPanels,
   PathwayTrack,
   SplitPhoto,
@@ -60,67 +62,91 @@ export function HeroSection({
 }) {
   const photo = visual === "photo";
   const img = route ? photoFor(`hero:${route}`) : undefined;
+  const fade = photo && Boolean(img);
+  const glanceList = glance && glance.length > 0 && (
+    <dl
+      className={cx(
+        "grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-1 lg:gap-0 lg:divide-y lg:divide-line lg:rounded-card lg:border-0 lg:bg-surface/80 lg:shadow-card lg:backdrop-blur-sm",
+        fade ? "mt-8 lg:mt-0" : "mt-4",
+      )}
+    >
+      {glance!.map((g) => (
+        <div key={g.label} className="rounded-card border border-ink bg-surface px-4 py-3 lg:rounded-none lg:border-0 lg:bg-transparent">
+          <dt className="text-eyebrow uppercase text-muted">{g.label}</dt>
+          <dd className="mt-0.5 font-display text-h3 text-ink">{g.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+  const text = (
+    <>
+      {hero.eyebrow && <Eyebrow className="mb-4">{hero.eyebrow}</Eyebrow>}
+      <h1
+        id="page-title"
+        className={cx("text-balance break-words text-ink", statement ? "text-statement uppercase" : "text-display")}
+      >
+        {hero.title}
+      </h1>
+      {hero.subtitle && <p className="mt-5 text-lead font-medium text-ink">{hero.subtitle}</p>}
+      {hero.body?.map((p) => (
+        <p key={p.slice(0, 40)} className="mt-4 max-w-prose text-base">
+          {p}
+        </p>
+      ))}
+      {hero.ctas && hero.ctas.length > 0 && (
+        <p className="mt-8 flex flex-wrap gap-3">
+          {hero.ctas.map((cta, i) => (
+            <Button
+              key={cta.href}
+              href={localeHref(locale, cta.href)}
+              variant={i === 0 ? "primary" : "accent"}
+              size="lg"
+            >
+              {cta.label}
+              {i === 0 && <IconArrowRight />}
+            </Button>
+          ))}
+        </p>
+      )}
+    </>
+  );
+
+  if (fade) {
+    // Editorial hero: full-bleed photo, canvas fade from the left (lg+);
+    // on phones the photo sits above the text.
+    return (
+      <section aria-labelledby="page-title" className="relative overflow-hidden">
+        <div className="lg:absolute lg:inset-y-0 lg:left-[28%] lg:right-0">
+          <img
+            src={img!.src}
+            alt={img!.alt[locale]}
+            width={1600}
+            height={1066}
+            fetchPriority="high"
+            className="aspect-[4/3] w-full object-cover sm:aspect-[2/1] lg:aspect-auto lg:h-full"
+            style={{ objectPosition: img!.position ?? "50% 40%" }}
+          />
+          <div aria-hidden="true" className="hero-fade absolute inset-0 hidden lg:block" />
+        </div>
+        <Container size="wide" className="relative grid gap-8 py-10 sm:py-12 lg:min-h-[38rem] lg:grid-cols-12 lg:items-center lg:py-20 xl:min-h-[42rem]">
+          <div className="min-w-0 lg:col-span-6">{text}</div>
+          {glanceList && <div className="lg:col-span-3 lg:col-start-10 lg:self-end">{glanceList}</div>}
+        </Container>
+      </section>
+    );
+  }
+
   return (
     <section aria-labelledby="page-title" className="relative overflow-hidden">
       <Container
         size={photo ? "wide" : "content"}
         className={cx("relative py-10 sm:py-14", photo ? "grid gap-10 lg:grid-cols-12 lg:items-center" : "lg:py-20")}
       >
-        <div className={cx("min-w-0", photo ? "lg:col-span-6 lg:py-10" : "max-w-3xl")}>
-          {hero.eyebrow && <Eyebrow className="mb-4">{hero.eyebrow}</Eyebrow>}
-          <h1
-            id="page-title"
-            className={cx("text-balance break-words text-ink", statement ? "text-statement uppercase" : "text-display")}
-          >
-            {hero.title}
-          </h1>
-          {hero.subtitle && <p className="mt-5 text-lead font-medium text-ink">{hero.subtitle}</p>}
-          {hero.body?.map((p) => (
-            <p key={p.slice(0, 40)} className="mt-4 max-w-prose text-base">
-              {p}
-            </p>
-          ))}
-          {hero.ctas && hero.ctas.length > 0 && (
-            <p className="mt-8 flex flex-wrap gap-3">
-              {hero.ctas.map((cta, i) => (
-                <Button
-                  key={cta.href}
-                  href={localeHref(locale, cta.href)}
-                  variant={i === 0 ? "primary" : "secondary"}
-                  size="lg"
-                >
-                  {cta.label}
-                  {i === 0 && <IconArrowRight />}
-                </Button>
-              ))}
-            </p>
-          )}
-        </div>
+        <div className={cx("min-w-0", photo ? "lg:col-span-6 lg:py-10" : "max-w-3xl")}>{text}</div>
         {photo && (
           <div className="relative min-w-0 lg:col-span-6">
-            {img ? (
-              <img
-                src={img.src}
-                alt={img.alt[locale]}
-                width={1600}
-                height={1280}
-                fetchPriority="high"
-                className="aspect-[4/3] w-full rounded-card object-cover lg:aspect-[5/4]"
-                style={img.position ? { objectPosition: img.position } : undefined}
-              />
-            ) : (
-              <ImagePlaceholder alt={hero.title} aspect="aspect-[4/3] lg:aspect-[5/4]" />
-            )}
-            {glance && glance.length > 0 && (
-              <dl className="mt-4 grid grid-cols-2 gap-2 sm:absolute sm:bottom-6 sm:right-6 sm:mt-0 sm:grid-cols-1 sm:gap-0 sm:divide-y sm:divide-line sm:rounded-card sm:border sm:border-ink sm:bg-surface">
-                {glance.map((g) => (
-                  <div key={g.label} className="rounded-card border border-ink bg-surface px-4 py-3 sm:rounded-none sm:border-0">
-                    <dt className="text-eyebrow uppercase text-muted">{g.label}</dt>
-                    <dd className="mt-0.5 font-display text-h3 text-ink">{g.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
+            <ImagePlaceholder alt={hero.title} aspect="aspect-[4/3] lg:aspect-[5/4]" />
+            {glanceList}
           </div>
         )}
       </Container>
@@ -241,14 +267,14 @@ export function BlockView({
         <ScrollRail label="Reviews" locale={locale}>
           {block.items.map((t) => (
             <li
-              key={t.author + (t.tag ?? "")}
-              className="w-[88%] shrink-0 snap-start border-t-2 border-ink pt-6 sm:w-[34rem] lg:w-[38rem]"
+              key={t.author + t.quote.slice(0, 24)}
+              className="w-[88%] shrink-0 snap-start self-start border-t-2 border-ink pt-6 sm:w-[34rem] lg:w-[38rem]"
             >
-              <figure className="flex h-full flex-col">
-                <blockquote className="text-quote grow text-ink [hanging-punctuation:first]">
-                  “{t.quote}”
+              <figure>
+                <blockquote className="text-quote text-ink [hanging-punctuation:first]">
+                  <ExpandableText text={t.quote} locale={locale} />
                 </blockquote>
-                <figcaption className="mt-6">
+                <figcaption className="mt-5">
                   <span className="block text-sm font-bold text-ink">{t.author}</span>
                   {t.tag && (
                     <span className="mt-1 block text-eyebrow uppercase text-muted">{t.tag}</span>
@@ -387,6 +413,7 @@ const LAYOUTS: Record<string, Layout> = {
   beyond: "icon-row",
   "exams-available": "rows",
   "flexible-online-exams": "icon-row",
+  "who-it-is-for": "icon-row",
   "final-cta": "closing",
   "start-cta": "closing",
 };
@@ -517,18 +544,31 @@ function Body({ section, locale, layout }: { section: SectionData; locale: Local
     case "grid-2":
       return cards ? <GridTwo cards={cards.cards} /> : <Flow section={section} locale={locale} />;
     case "statement": {
+      // Reference (28 Aug): statement + numbered principles left, text right.
       const lead = blockOf(blocks, "lead");
       const ps = blocks.filter((b) => b.type === "paragraph");
       return (
         <div className="grid gap-10 lg:grid-cols-2">
-          <div className="min-w-0">{lead && <Statement text={lead.text} className="text-[clamp(2.5rem,1.25rem+4vw,4.75rem)]" />}</div>
+          <div className="min-w-0">
+            {lead && <Statement text={lead.text} />}
+            {cards && (
+              <ol role="list" className="mt-10 space-y-5">
+                {cards.cards.map((c, i) => (
+                  <li key={c.title} className="flex items-center gap-4">
+                    <span aria-hidden="true" className="font-display text-h2 tabular-nums text-accent">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-brand text-brand">
+                      <ListIcon index={i} size={20} />
+                    </span>
+                    <span className="text-base font-bold uppercase text-ink">{c.title}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
           <div className="min-w-0">
             <Prose blocks={ps} />
-            {cards && (
-              <div className="mt-8">
-                <ChipRow items={cards.cards.map((c) => c.title)} />
-              </div>
-            )}
           </div>
         </div>
       );
@@ -586,8 +626,12 @@ function Body({ section, locale, layout }: { section: SectionData; locale: Local
       const team = blockOf(blocks, "team");
       return (
         <>
-          {list && <ChipRow items={list.items} />}
-          {paragraphs.length > 0 && <Prose blocks={paragraphs} className="mt-4 max-w-3xl" />}
+          {(list || paragraphs.length > 0) && (
+            <div className="grid gap-8 lg:grid-cols-2">
+              {list && <ChipRow items={list.items} accent />}
+              {paragraphs.length > 0 && <Prose blocks={paragraphs} />}
+            </div>
+          )}
           {team && (
             <div className={cx((list || paragraphs.length > 0) && "mt-10")}>
               <TeamRail members={team.members} locale={locale} />
@@ -615,9 +659,14 @@ function Body({ section, locale, layout }: { section: SectionData; locale: Local
           <div className="lg:col-span-7">
             <Prose blocks={before} />
             {buttons && (
-              <div className="mt-6">
-                <BlockView block={buttons} locale={locale} />
-              </div>
+              <p className="mt-6 flex flex-wrap gap-3">
+                {buttons.ctas.map((c, i) => (
+                  <Button key={c.href + c.label} href={localeHref(locale, c.href)} variant={i === 0 ? "primary" : "secondary"}>
+                    {c.label}
+                    <IconArrowRight size={18} />
+                  </Button>
+                ))}
+              </p>
             )}
           </div>
           {logos && (
@@ -664,6 +713,23 @@ export function SectionView({
   const layout = forced ?? layoutFor(section);
   const t = tone ?? TONES[layout] ?? "default";
   const closing = layout === "closing";
+  const cardsBlock = blockOf(section.blocks, "cards");
+  // Reference (28 Aug): the two-pathway section is one band — heading on the
+  // left, two compact photo panels on the right.
+  if (layout === "panels" && cardsBlock && cardsBlock.cards.length === 2) {
+    return (
+      <Section id={section.id} tone={t} size="wide" className="overflow-hidden">
+        <div className="grid gap-10 lg:grid-cols-12">
+          <div className="lg:col-span-4">
+            <SectionHeading eyebrow={section.eyebrow} title={section.title} intro={section.intro} />
+          </div>
+          <div className="lg:col-span-8">
+            <PathwayPanels cards={cardsBlock.cards} locale={locale} compact />
+          </div>
+        </div>
+      </Section>
+    );
+  }
   const heading = !closing && (section.title || section.eyebrow || section.intro);
   return (
     <Section
@@ -687,16 +753,23 @@ export function SectionView({
  */
 export function TwoUp({ left, right, locale, tone = "default" }: { left: SectionData; right: SectionData; locale: Locale; tone?: SectionTone }) {
   const Col = ({ s }: { s: SectionData }) => (
-    <div id={s.id} className="scroll-mt-20">
-      <SectionHeading eyebrow={s.eyebrow} title={s.title} intro={s.intro} as="h2" />
-      <div className="mt-8">
+    <div id={s.id} className="flex h-full scroll-mt-20 flex-col">
+      {(s.title || s.eyebrow || s.intro) && (
+        <div className="mb-6 max-w-3xl">
+          {s.eyebrow && <Eyebrow className="mb-3">{s.eyebrow}</Eyebrow>}
+          {/* "UK Qualifications & Exams" heading in the brand blue (client, 28 Aug). */}
+          {s.title && <h2 className={cx("text-h2 text-balance", s.id === "uk-qualifications" ? "text-primary" : "text-ink")}>{s.title}</h2>}
+          {s.intro && <p className="mt-4 text-lead text-body">{s.intro}</p>}
+        </div>
+      )}
+      <div className="grow">
         <Body section={s} locale={locale} layout={layoutFor(s)} />
       </div>
     </div>
   );
   return (
-    <Section tone={tone} className="overflow-hidden">
-      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+    <Section tone={tone} pad="sm" className="overflow-hidden">
+      <div className="grid gap-10 lg:grid-cols-2">
         <Col s={left} />
         <Col s={right} />
       </div>

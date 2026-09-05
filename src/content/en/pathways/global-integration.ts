@@ -23,7 +23,7 @@ export const page: Page = {
       "We combine language learning with the cultural and practical understanding you need to communicate confidently in the real world.",
     ],
     ctas: [
-      { label: "Book Your Language Assessment", href: "/book-assessment" },
+      { label: "Get Expert Guidance", href: "/book-assessment" },
       {
         label: "Explore Languages & Destinations",
         href: "/pathways/global-integration#explore-languages-destinations",

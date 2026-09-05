@@ -18,7 +18,7 @@ export const page: Page = {
       "Ми поєднуємо вивчення мови з культурним і практичним розумінням, потрібним, щоб упевнено спілкуватися в реальному світі.",
     ],
     ctas: [
-      { label: "Записатися на мовне оцінювання", href: "/book-assessment" },
+      { label: "Отримати консультацію", href: "/book-assessment" },
       {
         label: "Переглянути мови та напрямки",
         href: "/pathways/global-integration#explore-languages-destinations",

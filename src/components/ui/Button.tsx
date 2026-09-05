@@ -7,7 +7,7 @@ import { cx } from "@/lib/cx";
  * otherwise <button>. Colours come from semantic tokens, so the same
  * `variant="primary"` is teal on light bands, yellow on ink, white on teal.
  */
-export type ButtonVariant = "primary" | "secondary" | "ghost";
+export type ButtonVariant = "primary" | "secondary" | "accent" | "ghost";
 export type ButtonSize = "sm" | "md" | "lg";
 
 const BASE =
@@ -17,7 +17,9 @@ const BASE =
 
 const VARIANT: Record<ButtonVariant, string> = {
   primary: "bg-primary text-on-primary hover:bg-primary-hover shadow-card hover:shadow-lift",
-  secondary: "border-2 border-ink text-ink hover:bg-ink hover:text-surface",
+  // Client (28 Aug): outline buttons read as beige — they are brand blue now.
+  secondary: "border-2 border-primary text-primary hover:bg-primary hover:text-on-primary",
+  accent: "bg-accent text-ink-900 hover:bg-sun-300 shadow-card hover:shadow-lift",
   ghost:
     "rounded-none px-0 text-primary underline decoration-2 decoration-brand/40 underline-offset-[6px] hover:text-primary-hover hover:decoration-brand",
 };

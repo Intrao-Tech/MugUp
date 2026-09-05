@@ -68,3 +68,11 @@ export const SOCIALS = {
     { label: "LinkedIn", href: "https://www.linkedin.com/company/mug-up-language-studio/" },
   ],
 } as const;
+
+/**
+ * Appointment scheduling page (client's Google Calendar booking link,
+ * 28 Aug 2026). Public URL, so a code default is fine; override per
+ * environment with NEXT_PUBLIC_BOOKING_URL.
+ */
+export const BOOKING_URL =
+  process.env.NEXT_PUBLIC_BOOKING_URL || "https://calendar.app.google/FyRNsFpXWmcy9Wn17";

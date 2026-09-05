@@ -71,7 +71,7 @@
   --text-stat--line-height: 1;
   --text-stat--letter-spacing: 0;
   --text-stat--font-weight: 700;
-  --text-statement: clamp(3rem, 1.5rem + 7vw, 7.5rem);
+  --text-statement: clamp(2.5rem, 1.25rem + 4.5vw, 5.25rem);
   --text-statement--line-height: 0.92;
   --text-statement--letter-spacing: 0.01em;
   --text-statement--font-weight: 700;
@@ -211,7 +211,26 @@
     repeating-linear-gradient(180deg, transparent 0 27px, var(--color-teal-100) 27px 28px);
 }
 
-/* 5. Article columns (PostBody + the admin builder's editing grid): the
+/* Founder Story: the "Meet Ievgeniia…" intro line is bold (client, 28 Aug). */
+#founder-story .text-lead {
+  font-weight: 700;
+}
+
+/* 5. Hero fade — the editorial hero (client reference, 28 Aug 2026): the
+      photo fills the band, the canvas colour bleeds in from the left so the
+      text sits on a clean field. Desktop only; phones stack photo + text. */
+.hero-fade {
+  background: linear-gradient(
+    90deg,
+    var(--canvas) 0%,
+    var(--canvas) 16%,
+    color-mix(in srgb, var(--canvas) 75%, transparent) 36%,
+    color-mix(in srgb, var(--canvas) 20%, transparent) 52%,
+    transparent 66%
+  );
+}
+
+/* 6. Article columns (PostBody + the admin builder's editing grid): the
       column count is data-driven (--cols, any 2–6), which Tailwind's static
       classes cannot express. Stacks to one column on phones. */
 .post-columns {

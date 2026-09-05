@@ -234,6 +234,9 @@ export interface UiDict {
   formSent: string;
   formError: string;
   meetFullTeam: string;
+  /** Shown after a successful Get Expert Guidance submission, above the booking button. */
+  bookingSent: string;
+  bookingCta: string;
 }
 
 export interface CommonDict {
