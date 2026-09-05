@@ -261,3 +261,133 @@ page-by-page in `docs/HANDOFF-ADMIN-CRM.md`.
    the admin role cannot lose "Manage users"; self-lockout guarded. The
    Notifications page is now a pure feed (config lives in Team → Roles);
    creating a role moved into a collapsible "+ Create a new role".
+
+## Client feedback round 2 (30 Aug, Telegram, Natalia)
+
+Admin panel approved ("все гарно"), two requests:
+
+1. **Manager gets the editor's capabilities**: the manager built-in role now
+   also carries posts.edit, posts.publish, reviews.moderate (preset in
+   `permissions.ts` + migration 0011 updates the `roles` row, UNIONs the
+   flags onto existing manager profiles, and restores the review_new
+   notification default that 0010 had removed for lack of the permission).
+   **Implemented.**
+2. **Lost reason field in Enquiries** — already shipped in the 11 Aug round
+   (item 2 above, commit `0e80292`): selecting the "Lost" status reveals a
+   required reason select (Price / Timing / No suitable programme /
+   No response / Chose another provider / Location / Not ready yet / Other)
+   plus a note, required for "Other". The client reviewed a build that
+   predates it or didn't switch a status to Lost. **No code change; show /
+   redeploy.**
+
+## Production-readiness pass (5 Sep, internal)
+
+Goal: the product can be handed over with no demo content anywhere but a
+developer's machine.
+
+1. **Client reviews live in the database** — the 25 testimonials from
+   "Відгуки.docx" (12 EN / 13 UA) ship by migration `0012` as approved +
+   featured rows with fixed ids; `reviews.locale` (en|ua) decides which
+   homepage shows a review, the public "Leave a review" form stores the
+   page's language, and the admin Reviews module gained a Language field
+   (add form + Edit details) and a language badge on every card. The static
+   copies in `src/content` remain the no-database fallback only.
+2. **Seeding policy** — `seed:dev` demo content (accounts `@mugup.local`,
+   enquiries, posts, pending reviews) is local-only; on a hosted project the
+   seed creates the administrator and nothing else unless `SEED_DEMO_DATA=1`
+   is set on purpose. Seed-on-deploy was removed; migrations-on-deploy
+   (`scripts/deploy-migrate.mjs`, `SUPABASE_DB_URL`) stays.
+3. **Test project (mugup-test) cleaned** — demo enquiries/posts deleted,
+   migrations 0011–0012 applied: it now holds the administrator, the 7 post
+   categories and the 25 client reviews.
+4. **Idle sign-out fixed** — the activity cookie was a session cookie, so a
+   browser kept open for days never timed out; it now expires with the
+   configured timeout (default 15 min) and a missing/expired stamp signs the
+   session out (`/admin/login?error=expired`). Sign-in and the welcome page
+   stamp it first.
+5. Round-2 items re-checked on this branch: manager = editor capabilities
+   (migration 0011, applied to the test project) and the Lost reason list
+   (Price / Timing / No suitable programme / No response / Chose another
+   provider / Location / Not ready yet / Other) — both present.
+6. **Second factor (authenticator app)** — requested after the IP-allowlist
+   discussion (the client travels, so protection must not depend on the
+   network): TOTP via Supabase MFA. Settings → "Two-factor authentication"
+   (QR code + key, first code activates it; turning off needs the current
+   password), sign-in gains a `/admin/verify` code step, a session that has
+   not passed it is signed OUT for every page/action, Security card gets
+   "Require two-factor authentication for everyone" (forces enrolment), Team
+   shows each member's status + "Reset two-factor" for a lost phone.
+   Hosted project: Authentication → Multi-Factor → TOTP must stay enabled.
+7. **Full click-through (5 Sep, every admin module + all three public forms,
+   admin/manager/editor)** — everything worked; three small polish fixes
+   made on the way: the public review form thanked people with the contact
+   form's "we will get back to you" (now "it will appear once approved"),
+   the post editor showed "published <date>" on an unpublished draft (now
+   "taken off the site (was live from <date>)"), and the activity log's
+   role-delete entry had no detail. Note for testers: "Delete post" /
+   "Remove" ask for confirmation in a browser dialog.
+
+## Internal feedback round (5 Sep, evening — screenshots)
+
+1. **Settings looked untidy** (a bare separator line inside the Security
+   card) — the card is now two cards, "Inactivity sign-out" and "Two-factor
+   policy", each with its own heading; no separator lines.
+2. **Header links too close** — the admin nav now has real gaps between
+   sections, and Settings / Sign out sit apart from the section links.
+3. **Enquiries table hard to scan, Save crowding the status select** —
+   zebra rows, more cell padding, a heavier header rule, a wider select and
+   Save as a compact outlined button with a proper gap.
+4. **Idle sign-out** — confirmed working server-side (cookie lifetime =
+   timeout, stale/missing stamp signs out). Added `IdleGuard`: reading or
+   scrolling keeps the session alive via a heartbeat, and after the timeout
+   the tab signs itself out and goes to the login page instead of waiting
+   for the next click (verified with a 5-minute timeout).
+   "Require two-factor for everyone" explained in place: off = each member
+   decides, on = everyone must set it up and can do nothing else until then.
+5. **Could not turn 2FA off** — the form asked for the password while the
+   natural thing to type is the app code; it now asks for the current code
+   from the authenticator app (proof of the phone), password not involved.
+6. **Settings still one narrow column** — re-laid out in two columns on
+   wide screens ("Your account": Profile, Password · "Security": Two-factor,
+   Inactivity sign-out, Two-factor policy), each card with a one-line
+   explanation; the authenticator setup shows the QR code beside the steps.
+7. **Settings rows did not line up; two-factor options apart** — the page is
+   now two groups, each a grid whose cards stretch to the same row height:
+   "Your account" = Profile | Password; "Security" = Two-factor
+   authentication | Two-factor policy side by side, Inactivity sign-out full
+   width beneath.
+8. **Two-factor policy behind its own permission** — new flag
+   `security.policy` ("Security policy: require two-factor authentication
+   for everyone"), migration 0013: added to the admin preset and every admin
+   profile; RLS on `admin_settings` checks it for the `mfa_required` key
+   (other keys keep `users.manage`). Grant/withhold it per role or per
+   member in Team like any other flag.
+
+## Internal feedback round (6 Sep — screenshots)
+
+1. **Settings half-empty without the policy flag** — the page adapts: Profile
+   and Two-factor stack beside Password; the "Team security" group appears
+   only for members holding `security.policy` / `users.manage`, and a lone
+   card takes the full width.
+2. **Post form lost everything on a validation error** (e.g. Schedule with no
+   date, CTA half-filled, slug already taken) — the form now checks in the
+   browser first, the save action returns the problem instead of
+   redirecting, the offending field is highlighted with the message under
+   it, the page scrolls to it, and nothing typed is lost. Native invalid
+   styling on every admin input; password fields block weak/mismatched
+   values before submitting.
+3. **Schedule control ugly, jumping layout, device-zone "now"** — replaced
+   the browser datetime control with an in-house calendar + time picker in
+   the panel's design, always UK time, with "Now in the UK" shown; it sits
+   in its own "Schedule for later" card and its error line no longer shifts
+   the buttons.
+4. **Opening the calendar shifted the whole page** — the popover was
+   absolutely positioned and, near the end of a short page, grew the
+   document so the scrollbar appeared; it is now position:fixed, placed from
+   the button (below, or above when there is no room), and the admin shell
+   reserves the scrollbar gutter so nothing shifts sideways.
+5. **"It's 23:30 and the scheduled post was not sent"** — it was: the site
+   showed it (time-based ISR, ≤ 5 min), only the admin kept saying
+   "Scheduled" because nothing flipped the row. The posts list and the edit
+   page now promote due scheduled posts to Published on load, so the status,
+   the counters and the "View on site" link agree with the site.

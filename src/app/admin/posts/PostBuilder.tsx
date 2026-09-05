@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { PostBody } from "@/components/PostBody";
@@ -12,6 +12,7 @@ import {
   type PostSpacerSize,
 } from "@/lib/post-blocks";
 import { uploadPostImage } from "../actions";
+import { BTN_SECONDARY } from "../ui";
 
 // Layout-aware post constructor (builder v2). State serializes to TWO hidden
 // inputs: body_blocks (JSON — what the site renders: widths, alignment,
@@ -134,8 +135,10 @@ function cloneBlock(block: BBlock): BBlock {
 
 /* ---------- small editors ---------- */
 
-const inputCls = "w-full border border-neutral-300 px-2 py-1 text-sm";
-const btnCls = "border border-neutral-300 px-2 py-0.5 hover:border-neutral-900 disabled:opacity-30";
+const inputCls =
+  "w-full rounded-lg border border-ink-300 bg-surface px-2 py-1 text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30";
+const btnCls =
+  "rounded-sm border border-line bg-surface px-2 py-0.5 text-body hover:border-ink hover:text-ink disabled:opacity-30";
 
 function ImageEditor({
   block,
@@ -164,9 +167,9 @@ function ImageEditor({
   return (
     <div className="space-y-2">
       {block.url ? (
-        <img src={block.url} alt={block.alt} className="max-h-48 border border-neutral-200" />
+        <img src={block.url} alt={block.alt} className="max-h-48 border border-line" />
       ) : (
-        <p className="text-sm text-neutral-500">No image yet — upload one below.</p>
+        <p className="text-sm text-muted">No image yet — upload one below.</p>
       )}
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <input
@@ -176,7 +179,7 @@ function ImageEditor({
           onChange={(event) => handleFile(event.target.files?.[0])}
           disabled={uploading}
         />
-        {uploading && <span className="text-neutral-500">Uploading…</span>}
+        {uploading && <span className="text-muted">Uploading…</span>}
       </div>
       {uploadError && <p className="text-sm text-red-700">{uploadError}</p>}
       <input
@@ -294,7 +297,7 @@ function InsertPoint({
 }) {
   return (
     <div
-      className={`py-1 ${dragActive ? "outline-dashed outline-1 outline-neutral-400" : ""}`}
+      className={`py-1 ${dragActive ? "outline-dashed outline-1 outline-primary" : ""}`}
       onDragOver={(event) => {
         if (dragActive) event.preventDefault();
       }}
@@ -304,9 +307,13 @@ function InsertPoint({
       }}
     >
       {open ? (
-        <div className="flex flex-wrap items-center gap-2 border border-dashed border-neutral-400 bg-neutral-50 p-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-ink-300 bg-canvas p-2 text-sm">
           <KindPalette onInsert={onInsert} />
-          <button type="button" onClick={onToggle} className="ml-auto text-neutral-500 hover:underline">
+          <button
+            type="button"
+            onClick={onToggle}
+            className="ml-auto text-primary underline underline-offset-4 hover:text-primary-hover"
+          >
             close
           </button>
         </div>
@@ -314,11 +321,11 @@ function InsertPoint({
         <button
           type="button"
           onClick={onToggle}
-          className="group flex w-full items-center gap-2 text-xs text-neutral-400 hover:text-neutral-900"
+          className="group flex w-full items-center gap-2 text-xs text-muted hover:text-ink"
         >
-          <span className="h-px flex-1 bg-neutral-200 group-hover:bg-neutral-400" />
+          <span className="h-px flex-1 bg-line group-hover:bg-ink-300" />
           + add a block here
-          <span className="h-px flex-1 bg-neutral-200 group-hover:bg-neutral-400" />
+          <span className="h-px flex-1 bg-line group-hover:bg-ink-300" />
         </button>
       )}
     </div>
@@ -480,7 +487,7 @@ export function PostBuilder({
           <select
             value={block.width ?? "normal"}
             onChange={(event) => update(block.uid, { width: event.target.value })}
-            className="border border-neutral-300 px-1 py-0.5"
+            className="rounded-lg border border-ink-300 bg-surface px-1 py-0.5 text-ink"
           >
             {(Object.keys(WIDTH_LABEL) as PostBlockWidth[]).map((w) => (
               <option key={w} value={w}>
@@ -496,7 +503,7 @@ export function PostBuilder({
           <select
             value={block.align ?? "left"}
             onChange={(event) => update(block.uid, { align: event.target.value })}
-            className="border border-neutral-300 px-1 py-0.5"
+            className="rounded-lg border border-ink-300 bg-surface px-1 py-0.5 text-ink"
           >
             {(Object.keys(ALIGN_LABEL) as PostBlockAlign[]).map((a) => (
               <option key={a} value={a}>
@@ -512,7 +519,7 @@ export function PostBuilder({
           <select
             value={block.size}
             onChange={(event) => update(block.uid, { size: event.target.value })}
-            className="border border-neutral-300 px-1 py-0.5"
+            className="rounded-lg border border-ink-300 bg-surface px-1 py-0.5 text-ink"
           >
             <option value="s">Small</option>
             <option value="m">Medium</option>
@@ -526,7 +533,7 @@ export function PostBuilder({
           <select
             value={block.columns.length}
             onChange={(event) => setColumnCount(block.uid, Number(event.target.value))}
-            className="border border-neutral-300 px-1 py-0.5"
+            className="rounded-lg border border-ink-300 bg-surface px-1 py-0.5 text-ink"
           >
             {Array.from({ length: MAX_COLUMNS - 1 }, (_, i) => i + 2).map((n) => (
               <option key={n} value={n}>
@@ -556,7 +563,7 @@ export function PostBuilder({
       {blocks.map((block, index) => (
         <div key={block.uid}>
           <div
-            className={`border bg-white p-3 ${dragId === block.uid ? "border-neutral-900 opacity-60" : "border-neutral-300"}`}
+            className={`rounded-card border bg-surface p-3 ${dragId === block.uid ? "border-primary opacity-60" : "border-ink"}`}
             onDragOver={(event) => {
               if (dragId !== null && dragId !== block.uid) event.preventDefault();
             }}
@@ -565,7 +572,7 @@ export function PostBuilder({
               if (dragId !== null) moveTo(dragId, index);
             }}
           >
-            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-neutral-500">
+            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted">
               <span
                 draggable
                 onDragStart={(event) => {
@@ -574,11 +581,11 @@ export function PostBuilder({
                 }}
                 onDragEnd={() => setDragId(null)}
                 title="Drag to any position (or onto a “+ add a block here” line)"
-                className="cursor-grab select-none text-base leading-none text-neutral-400 hover:text-neutral-900"
+                className="cursor-grab select-none text-base leading-none text-muted hover:text-ink"
               >
                 ⠿
               </span>
-              <span className="font-medium uppercase tracking-wide">{KIND_LABEL[block.kind]}</span>
+              <span className="font-bold uppercase tracking-wide">{KIND_LABEL[block.kind]}</span>
               {layoutControls(block)}
               <span className="ml-auto flex gap-1">
                 {isInner(block) && index + 1 < blocks.length && isInner(blocks[index + 1]) && (
@@ -623,7 +630,7 @@ export function PostBuilder({
                 <button type="button" onClick={() => duplicate(block.uid)} aria-label="Duplicate block" title="Duplicate" className={btnCls}>
                   ⧉
                 </button>
-                <button type="button" onClick={() => remove(block.uid)} aria-label="Remove block" className="border border-red-300 px-2 py-0.5 text-red-700">
+                <button type="button" onClick={() => remove(block.uid)} aria-label="Remove block" className="rounded-sm border border-red-300 bg-surface px-2 py-0.5 text-red-700 hover:border-red-700">
                   ✕
                 </button>
               </span>
@@ -635,16 +642,16 @@ export function PostBuilder({
                 style={{ "--cols": block.columns.length } as CSSProperties}
               >
                 {block.columns.map((column, col) => (
-                  <div key={col} className="space-y-2 border border-dashed border-neutral-300 bg-neutral-50 p-2">
+                  <div key={col} className="space-y-2 rounded-lg border border-dashed border-line bg-canvas p-2">
                     {column.map((child, childIndex) => (
-                      <div key={child.uid} className="border border-neutral-200 bg-white p-2">
-                        <div className="mb-1 flex items-center gap-2 text-[11px] text-neutral-500">
+                      <div key={child.uid} className="rounded-lg border border-line bg-surface p-2">
+                        <div className="mb-1 flex items-center gap-2 text-[11px] text-muted">
                           <span className="uppercase tracking-wide">{KIND_LABEL[child.kind]}</span>
                           <label className="flex items-center gap-1">
                             <select
                               value={child.align ?? "left"}
                               onChange={(event) => updateChild(block.uid, col, child.uid, { align: event.target.value })}
-                              className="border border-neutral-300 px-1 py-0.5"
+                              className="rounded-lg border border-ink-300 bg-surface px-1 py-0.5 text-ink"
                               aria-label="Align"
                             >
                               {(Object.keys(ALIGN_LABEL) as PostBlockAlign[]).map((a) => (
@@ -661,7 +668,7 @@ export function PostBuilder({
                             <button type="button" onClick={() => moveChild(block.uid, col, child.uid, 1)} disabled={childIndex === column.length - 1} aria-label="Move down" className={btnCls}>
                               ↓
                             </button>
-                            <button type="button" onClick={() => removeChild(block.uid, col, child.uid)} aria-label="Remove" className="border border-red-300 px-1.5 py-0.5 text-red-700">
+                            <button type="button" onClick={() => removeChild(block.uid, col, child.uid)} aria-label="Remove" className="rounded-sm border border-red-300 bg-surface px-1.5 py-0.5 text-red-700 hover:border-red-700">
                               ✕
                             </button>
                           </span>
@@ -680,9 +687,9 @@ export function PostBuilder({
                 ))}
               </div>
             ) : block.kind === "divider" ? (
-              <hr className="border-neutral-300" />
+              <hr className="border-line" />
             ) : block.kind === "spacer" ? (
-              <p className="text-sm text-neutral-400">Empty vertical space on the page.</p>
+              <p className="text-sm text-muted">Empty vertical space on the page.</p>
             ) : (
               <BlockEditor block={block} onChange={(patch) => update(block.uid, patch)} />
             )}
@@ -699,8 +706,8 @@ export function PostBuilder({
       ))}
 
       {/* Always-visible add bar: no need to discover the between-block lines. */}
-      <div className="mt-1 flex flex-wrap items-center gap-2 border border-dashed border-neutral-400 bg-neutral-50 p-2 text-sm">
-        <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+      <div className="mt-1 flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-ink-300 bg-canvas p-2 text-sm">
+        <span className="text-eyebrow uppercase text-muted">
           Add a block
         </span>
         <KindPalette onInsert={(kind) => insert(blocks.length, kind)} />
@@ -710,13 +717,13 @@ export function PostBuilder({
         <button
           type="button"
           onClick={() => setShowPreview((v) => !v)}
-          className="border border-neutral-400 px-3 py-1 text-sm hover:border-neutral-900"
+          className={BTN_SECONDARY}
         >
           {showPreview ? "Hide preview" : "Preview the article"}
         </button>
         {showPreview && (
-          <div className="mt-2 border border-neutral-300 bg-white py-6">
-            <p className="mb-4 px-4 text-center text-xs uppercase tracking-wide text-neutral-400">
+          <div className="mt-2 rounded-card border border-ink bg-surface py-6">
+            <p className="mb-4 px-4 text-center text-eyebrow uppercase text-muted">
               Preview — exactly how the article body will render on the site
             </p>
             <PostBody blocks={clean} />

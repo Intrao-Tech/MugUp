@@ -12,7 +12,7 @@ import { getData } from "@/lib/data";
 import { maskEmail, maskPhone } from "@/lib/pii";
 import { PROGRAMME_SUGGESTIONS } from "@/lib/programmes";
 import { saveLeadNotes, updateLeadDetails, updateLeadStatus } from "../../actions";
-import { Notice } from "../../ui";
+import { BTN_PRIMARY, CARD, H1, H2, INPUT, Notice } from "../../ui";
 import { StatusFields } from "./StatusFields";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +45,7 @@ export default async function LeadDetailPage({
     fileUrl = await data.files.getLeadFileUrl(lead.file_path, 600);
   }
 
-  const inputCls = "mt-1 w-full border border-neutral-400 px-3 py-2";
+  const inputCls = INPUT;
   const facts: [string, string][] = [
     ["Source form", LEAD_FORM_LABELS[lead.form]],
     ["Site language", lead.locale.toUpperCase()],
@@ -60,12 +60,15 @@ export default async function LeadDetailPage({
   return (
     <div className="max-w-2xl">
       <p className="text-sm">
-        <Link href="/admin/leads" className="underline">
+        <Link
+          href="/admin/leads"
+          className="text-primary underline underline-offset-4 hover:text-primary-hover"
+        >
           ← All enquiries
         </Link>
       </p>
-      <h1 className="mt-2 text-2xl font-bold">{lead.full_name}</h1>
-      <p className="text-sm text-neutral-500">
+      <h1 className={`mt-2 ${H1}`}>{lead.full_name}</h1>
+      <p className="text-sm text-muted">
         Received {new Date(lead.created_at).toLocaleString("en-GB")} · status:{" "}
         {LEAD_STATUS_LABELS[lead.status]}
         {lead.status === "lost" && lead.lost_reason && (
@@ -79,7 +82,7 @@ export default async function LeadDetailPage({
       {saved && <Notice tone="success">Saved.</Notice>}
       {error && <Notice tone="error">{ERRORS[error] ?? ERRORS.save}</Notice>}
       {!canSeePii && (
-        <p className="mt-2 text-xs text-neutral-500">
+        <p className="mt-2 text-xs text-muted">
           Contact details are masked — you need the “View learner personal data” permission.
         </p>
       )}
@@ -87,7 +90,7 @@ export default async function LeadDetailPage({
       <dl className="mt-6 grid gap-3 sm:grid-cols-2">
         {facts.map(([label, value]) => (
           <div key={label}>
-            <dt className="text-sm text-neutral-500">{label}</dt>
+            <dt className="text-sm text-muted">{label}</dt>
             <dd>{value}</dd>
           </div>
         ))}
@@ -96,45 +99,50 @@ export default async function LeadDetailPage({
       {lead.message &&
         (canSeePii ? (
           <section className="mt-6">
-            <h2 className="font-semibold">Message</h2>
-            <p className="mt-1 whitespace-pre-wrap border border-neutral-300 bg-white p-3">
+            <h2 className={H2}>Message</h2>
+            <p className={`mt-1 whitespace-pre-wrap ${CARD} p-3`}>
               {lead.message}
             </p>
           </section>
         ) : (
-          <p className="mt-6 text-sm text-neutral-500">
+          <p className="mt-6 text-sm text-muted">
             A message is attached — hidden without the personal-data permission.
           </p>
         ))}
 
       <section className="mt-6">
-        <h2 className="font-semibold">Attached file</h2>
+        <h2 className={H2}>Attached file</h2>
         {lead.file_path ? (
           fileUrl ? (
             <p className="mt-1">
-              <a href={fileUrl} className="underline" target="_blank" rel="noopener">
+              <a
+                href={fileUrl}
+                className="text-primary underline underline-offset-4 hover:text-primary-hover"
+                target="_blank"
+                rel="noopener"
+              >
                 Download (link valid 10 minutes)
               </a>
             </p>
           ) : (
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1 text-sm text-muted">
               A file is attached; you need the “View learner personal data” permission to open it.
             </p>
           )
         ) : (
-          <p className="mt-1 text-sm text-neutral-500">None.</p>
+          <p className="mt-1 text-sm text-muted">None.</p>
         )}
       </section>
 
       {canManage && (
         <>
-          <section className="mt-8 border-t border-neutral-300 pt-4">
-            <h2 className="text-lg font-semibold">Enquiry management</h2>
+          <section className="mt-8 border-t border-line pt-4">
+            <h2 className={H2}>Enquiry management</h2>
             <form action={updateLeadDetails} className="mt-3 space-y-3">
               <input type="hidden" name="id" value={lead.id} />
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="programme" className="block text-sm font-medium">
+                  <label htmlFor="programme" className="block text-sm font-bold text-ink">
                     Programme
                   </label>
                   <input
@@ -151,7 +159,7 @@ export default async function LeadDetailPage({
                   </datalist>
                 </div>
                 <div>
-                  <label htmlFor="source" className="block text-sm font-medium">
+                  <label htmlFor="source" className="block text-sm font-bold text-ink">
                     Lead source
                   </label>
                   <select id="source" name="source" defaultValue={lead.source ?? ""} className={inputCls}>
@@ -164,7 +172,7 @@ export default async function LeadDetailPage({
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="owner_id" className="block text-sm font-medium">
+                  <label htmlFor="owner_id" className="block text-sm font-bold text-ink">
                     Owner
                   </label>
                   <select id="owner_id" name="owner_id" defaultValue={lead.owner_id ?? ""} className={inputCls}>
@@ -180,7 +188,7 @@ export default async function LeadDetailPage({
                     only exist for statuses that still move forward. */}
                 {!["closed", "lost"].includes(lead.status) && (
                   <div>
-                    <label htmlFor="next_action_date" className="block text-sm font-medium">
+                    <label htmlFor="next_action_date" className="block text-sm font-bold text-ink">
                       Next action due
                     </label>
                     <input
@@ -195,7 +203,7 @@ export default async function LeadDetailPage({
               </div>
               {!["closed", "lost"].includes(lead.status) && (
                 <div>
-                  <label htmlFor="next_action" className="block text-sm font-medium">
+                  <label htmlFor="next_action" className="block text-sm font-bold text-ink">
                     Next action
                   </label>
                   <input
@@ -207,14 +215,14 @@ export default async function LeadDetailPage({
                   />
                 </div>
               )}
-              <button type="submit" className="border border-neutral-900 px-4 py-2">
+              <button type="submit" className={BTN_PRIMARY}>
                 Save management fields
               </button>
             </form>
           </section>
 
           <section className="mt-6">
-            <h2 className="text-lg font-semibold">Status</h2>
+            <h2 className={H2}>Status</h2>
             <form action={updateLeadStatus} className="mt-2 space-y-3">
               <input type="hidden" name="id" value={lead.id} />
               <input type="hidden" name="back" value={`/admin/leads/${lead.id}`} />
@@ -224,23 +232,23 @@ export default async function LeadDetailPage({
                 lostReason={lead.lost_reason}
                 lostReasonNote={lead.lost_reason_note}
               />
-              <button type="submit" className="border border-neutral-900 px-4 py-2">
+              <button type="submit" className={BTN_PRIMARY}>
                 Save status
               </button>
             </form>
           </section>
 
           <section className="mt-6">
-            <h2 className="text-lg font-semibold">Internal notes</h2>
+            <h2 className={H2}>Internal notes</h2>
             <form action={saveLeadNotes} className="mt-2">
               <input type="hidden" name="id" value={lead.id} />
               <textarea
                 name="notes"
                 rows={5}
                 defaultValue={lead.notes}
-                className="w-full border border-neutral-300 p-2"
+                className={INPUT}
               />
-              <button type="submit" className="mt-2 border border-neutral-900 px-4 py-2">
+              <button type="submit" className={`mt-2 ${BTN_PRIMARY}`}>
                 Save notes
               </button>
             </form>

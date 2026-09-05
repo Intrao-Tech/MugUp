@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth-guard";
 import { getData } from "@/lib/data";
-import { buildQuery, FilterChip } from "../ui";
+import { BTN_LINK, BTN_SECONDARY, buildQuery, CARD, FilterChip, H1, INPUT } from "../ui";
 
 export const dynamic = "force-dynamic";
 
@@ -98,13 +98,13 @@ export default async function ActivityPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Activity log</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <h1 className={H1}>Activity log</h1>
+      <p className="mt-1 text-base text-body">
         Who changed enquiries, moderation, publishing, exports and team permissions. Written
         server-side only — entries cannot be edited or deleted from the panel.
       </p>
 
-      <div className="mt-4 space-y-2 border border-neutral-300 bg-white p-3 text-sm">
+      <div className={`mt-4 space-y-2 ${CARD} p-3 text-sm`}>
         <div className="flex flex-wrap items-center gap-1.5">
           {(Object.keys(RANGE_LABEL) as RangeKey[]).map((key) => (
             <FilterChip
@@ -118,21 +118,21 @@ export default async function ActivityPage({
         <form
           action="/admin/activity"
           method="get"
-          className="flex flex-wrap items-end gap-2 border-t border-neutral-200 pt-2"
+          className="flex flex-wrap items-end gap-2 border-t border-line pt-2"
         >
           <label className="block">
-            <span className="text-xs font-medium text-neutral-500">From</span>
-            <input type="date" name="from" defaultValue={customFrom} className="mt-0.5 block border border-neutral-400 px-2 py-1" />
+            <span className="text-xs font-bold text-muted">From</span>
+            <input type="date" name="from" defaultValue={customFrom} className={INPUT} />
           </label>
           <label className="block">
-            <span className="text-xs font-medium text-neutral-500">To (inclusive)</span>
-            <input type="date" name="to" defaultValue={customTo} className="mt-0.5 block border border-neutral-400 px-2 py-1" />
+            <span className="text-xs font-bold text-muted">To (inclusive)</span>
+            <input type="date" name="to" defaultValue={customTo} className={INPUT} />
           </label>
-          <button type="submit" className="border border-neutral-900 px-4 py-1.5">
+          <button type="submit" className={BTN_SECONDARY}>
             Apply
           </button>
           {(customFrom || customTo) && (
-            <Link href="/admin/activity" className="self-center underline">
+            <Link href="/admin/activity" className={`self-center ${BTN_LINK}`}>
               Clear
             </Link>
           )}
@@ -140,56 +140,56 @@ export default async function ActivityPage({
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <div className="border border-neutral-300 bg-white p-3">
-          <p className="text-xs uppercase tracking-wide text-neutral-500">Actions in period</p>
-          <p className="mt-1 text-2xl font-bold">{entries.length}{entries.length === 1000 ? "+" : ""}</p>
+        <div className={`${CARD} p-3`}>
+          <p className="text-eyebrow uppercase text-muted">Actions in period</p>
+          <p className="mt-1 font-display text-3xl text-brand">{entries.length}{entries.length === 1000 ? "+" : ""}</p>
           {busiestDay && (
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-muted">
               busiest day: {new Date(busiestDay[0]).toLocaleDateString("en-GB")} ({busiestDay[1]})
             </p>
           )}
         </div>
-        <div className="border border-neutral-300 bg-white p-3">
-          <p className="text-xs uppercase tracking-wide text-neutral-500">By module</p>
+        <div className={`${CARD} p-3`}>
+          <p className="text-eyebrow uppercase text-muted">By module</p>
           <ul className="mt-1 space-y-0.5 text-sm">
             {[...byModule.entries()]
               .sort((a, b) => b[1] - a[1])
               .map(([mod, count]) => (
                 <li key={mod} className="flex justify-between">
                   <span>{mod}</span>
-                  <span className="font-medium">{count}</span>
+                  <span className="font-bold text-ink">{count}</span>
                 </li>
               ))}
-            {byModule.size === 0 && <li className="text-neutral-500">—</li>}
+            {byModule.size === 0 && <li className="text-muted">—</li>}
           </ul>
         </div>
-        <div className="border border-neutral-300 bg-white p-3">
-          <p className="text-xs uppercase tracking-wide text-neutral-500">Most active</p>
+        <div className={`${CARD} p-3`}>
+          <p className="text-eyebrow uppercase text-muted">Most active</p>
           <ul className="mt-1 space-y-0.5 text-sm">
             {topActors.map(([actor, count]) => (
               <li key={actor} className="flex justify-between gap-2">
                 <span className="truncate">{actor}</span>
-                <span className="font-medium">{count}</span>
+                <span className="font-bold text-ink">{count}</span>
               </li>
             ))}
-            {topActors.length === 0 && <li className="text-neutral-500">—</li>}
+            {topActors.length === 0 && <li className="text-muted">—</li>}
           </ul>
         </div>
       </div>
 
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full border-collapse bg-white text-sm">
+        <table className="w-full border-collapse bg-surface text-sm">
           <thead>
-            <tr className="border-b border-neutral-300 text-left">
-              <th className="p-2">Date</th>
-              <th className="p-2">Who</th>
-              <th className="p-2">Action</th>
-              <th className="p-2">Detail</th>
+            <tr className="border-b border-line text-left">
+              <th className="p-2 text-eyebrow uppercase text-muted">Date</th>
+              <th className="p-2 text-eyebrow uppercase text-muted">Who</th>
+              <th className="p-2 text-eyebrow uppercase text-muted">Action</th>
+              <th className="p-2 text-eyebrow uppercase text-muted">Detail</th>
             </tr>
           </thead>
           <tbody>
             {entries.map((entry) => (
-              <tr key={entry.id} className="border-b border-neutral-200 align-top">
+              <tr key={entry.id} className="border-b border-line align-top">
                 <td className="p-2 whitespace-nowrap">
                   {new Date(entry.created_at).toLocaleString("en-GB", {
                     dateStyle: "short",
@@ -203,7 +203,7 @@ export default async function ActivityPage({
             ))}
             {entries.length === 0 && (
               <tr>
-                <td colSpan={4} className="p-4 text-neutral-500">
+                <td colSpan={4} className="p-4 text-muted">
                   Nothing logged in this period.
                 </td>
               </tr>

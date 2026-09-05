@@ -93,7 +93,7 @@ export default async function ReviewPage({ params }: Props) {
         <p className="mt-1 text-sm text-muted">{copy.moderation}</p>
         <form action={enabled ? submitReview : undefined} className="mt-6 space-y-4">
           <Suspense fallback={null}>
-            <FormStatusBanner sentText={dict.ui.formSent} errorText={dict.ui.formError} />
+            <FormStatusBanner sentText={dict.ui.reviewSent} errorText={dict.ui.formError} />
           </Suspense>
           <input type="hidden" name="locale" value={locale} />
           <div aria-hidden="true" className="hidden">

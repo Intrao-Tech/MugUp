@@ -20,6 +20,7 @@ import type {
   PostStatus,
   ProfileRow,
   ReviewAudience,
+  ReviewLocale,
   ReviewRow,
   ReviewStatus,
   RoleRow,
@@ -32,15 +33,43 @@ export interface Result {
   error?: string;
 }
 
+export type MfaLevel = "aal1" | "aal2";
+
+/** Second-factor situation of the current session (authenticator app / TOTP). */
+export interface MfaState {
+  /** aal2 = this session has passed the second factor. */
+  level: MfaLevel;
+  /** The member's active authenticator factor, if enrolled. */
+  factor: { id: string; enrolledAt: string } | null;
+}
+
 export interface AuthPort {
-  /** Signed-in user id for the current request, or null. */
+  /**
+   * Signed-in user id for the current request, or null. Also null while a
+   * member with an authenticator app has not yet entered the code for THIS
+   * session (getMfaState) — pages and actions treat that as signed out.
+   */
   getUserId(): Promise<string | null>;
   signInWithPassword(email: string, password: string): Promise<Result>;
-  signOut(): Promise<void>;
+  /** "global" (default) ends every session of the user; "local" only this one. */
+  signOut(scope?: "global" | "local"): Promise<void>;
   /** Change the signed-in user's own password. */
   updateOwnPassword(newPassword: string): Promise<Result>;
   /** True if `password` matches the signed-in user's current password. */
   verifyOwnPassword(password: string): Promise<boolean>;
+  /* Second factor — authenticator app (TOTP). */
+  /** Null when signed out; otherwise the session's level + enrolled factor. */
+  getMfaState(): Promise<MfaState | null>;
+  /**
+   * Starts enrolment: a QR code (data URL) and the key to show ONCE. The
+   * factor stays inactive until verifyTotp succeeds with a code from the app.
+   */
+  enrollTotp(): Promise<Result & { factorId?: string; qrCode?: string; secret?: string }>;
+  /** Proves a code from the app: activates an enrolling factor and lifts
+   *  the current session to aal2 (new tokens are written to the cookies). */
+  verifyTotp(factorId: string, code: string): Promise<Result>;
+  /** Removes the member's own factor (needs an aal2 session). */
+  unenrollTotp(factorId: string): Promise<Result>;
 }
 
 export interface TeamPort {
@@ -75,6 +104,11 @@ export interface TeamPort {
   setPassword(userId: string, password: string, mustChange: boolean): Promise<Result>;
   /** Privileged: removes the login and (via cascade) its profile. */
   deleteAccount(userId: string): Promise<Result>;
+  /** Privileged: whether the member has an active authenticator factor. */
+  hasMfa(userId: string): Promise<boolean>;
+  /** Privileged (lost phone): removes every second factor — the member
+   *  signs in with the password alone until they enrol again. */
+  resetMfa(userId: string): Promise<Result>;
   /** Fallback reset when no email transport is configured: the auth provider
    *  emails a recovery link landing on `${redirectOrigin}/admin/welcome`. */
   sendPasswordReset(email: string, redirectOrigin: string): Promise<Result>;
@@ -154,6 +188,7 @@ export interface LeadsPort {
 }
 
 export interface ReviewInput {
+  locale: ReviewLocale;
   authorName: string;
   authorTag: string;
   quote: string;
@@ -186,12 +221,17 @@ export interface ReviewsPort {
   /** Marketing fields on an existing review. */
   updateMeta(
     id: string,
-    meta: { programme: string; audience: ReviewAudience | null; featured: boolean },
+    meta: {
+      locale: ReviewLocale;
+      programme: string;
+      audience: ReviewAudience | null;
+      featured: boolean;
+    },
   ): Promise<Result>;
   /** Permanent removal (moderators only — RLS enforces the permission). */
   delete(id: string): Promise<Result>;
-  /** Public site: approved + featured reviews, newest first (anonymous). */
-  listFeatured(): Promise<FeaturedReview[]>;
+  /** Public site: approved + featured reviews in one language, newest first (anonymous). */
+  listFeatured(locale: ReviewLocale): Promise<FeaturedReview[]>;
 }
 
 export interface PostSaveInput {
@@ -231,6 +271,13 @@ export interface PostsPort {
   addCategory(input: { slug: string; labelEn: string; labelUa: string }): Promise<Result>;
   /** Fails while any post still uses the category (FK restrict). */
   deleteCategory(slug: string): Promise<Result>;
+  /**
+   * Privileged housekeeping: scheduled posts whose moment has passed become
+   * "published". The public site already treats them as live (time-based
+   * ISR + the same filter), so this only keeps the admin's status, counters
+   * and "View on site" links truthful. Returns how many were flipped.
+   */
+  publishDue(): Promise<number>;
 }
 
 export interface FileStoragePort {

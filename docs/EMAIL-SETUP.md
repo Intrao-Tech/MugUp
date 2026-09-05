@@ -91,8 +91,8 @@ Resend path below.
 
 - Copy did not arrive: check the transport vars and `LEADS_NOTIFY_EMAIL`;
   for Resend see dashboard → Logs. The in-admin feed is independent — if the
-  event is missing THERE, check the member's subscriptions on the
-  Notifications page.
+  event is missing THERE, check which events the member's role receives
+  (Team → Roles) and that the member holds the matching permission.
 - Invite/reset did not arrive: with a transport configured the failure is
   reported right in the admin UI ("email could not be sent"); without one,
   check Mailpit locally or Supabase Auth logs on the hosted project.

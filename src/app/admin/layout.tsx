@@ -3,8 +3,16 @@ import { fontVariables } from "@/lib/fonts";
 import type { Metadata } from "next";
 import Link from "next/link";
 import "../globals.css";
+import { NavLink } from "@/components/NavLink";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import {
+  IDLE_TIMEOUT_DEFAULT_MINUTES,
+  IDLE_TIMEOUT_MIN_MINUTES,
+  SESSION_TIMEOUT_SETTING,
+} from "@/lib/admin-session";
 import { getCurrentProfile, hasPerm } from "@/lib/auth-guard";
+import { getData } from "@/lib/data";
+import { IdleGuard } from "./IdleGuard";
 import type { Permission } from "@/lib/permissions";
 import { signOut } from "./actions";
 
@@ -27,31 +35,54 @@ const NAV: { href: string; label: string; perm?: Permission }[] = [
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const profile = await getCurrentProfile();
+  // The idle guard (heartbeat + auto sign-out in the tab) needs the team's
+  // timeout; the middleware stays the authority — see src/lib/admin-session.ts.
+  let timeoutMinutes = IDLE_TIMEOUT_DEFAULT_MINUTES;
+  if (profile) {
+    const configured = Number(await (await getData()).settings.get(SESSION_TIMEOUT_SETTING));
+    if (Number.isFinite(configured) && configured >= IDLE_TIMEOUT_MIN_MINUTES) {
+      timeoutMinutes = configured;
+    }
+  }
   return (
-    <html lang="en" className={fontVariables}>
-      <body className="min-h-screen bg-neutral-50 text-neutral-900 antialiased">
+    // A scrollbar that appears (notices, expanding panels) must not shift the page.
+    <html lang="en" className={fontVariables} style={{ scrollbarGutter: "stable" }}>
+      <body className="min-h-screen bg-canvas text-body antialiased">
         <Suspense fallback={null}>
           <ScrollToTop />
         </Suspense>
-        <header className="border-b border-neutral-300 bg-white">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-            <Link href="/admin" className="mr-auto font-bold">
-              Mug.Up Admin
+        <header className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur supports-[backdrop-filter]:bg-canvas/80">
+          <div className="mx-auto flex min-h-16 max-w-5xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-2">
+            <Link href="/admin" className="mr-auto flex items-center gap-2 py-1">
+              <img
+                src="/images/logo-nav.png"
+                alt=""
+                width={640}
+                height={562}
+                className="h-11 w-auto"
+              />
+              <span className="font-display text-lg text-ink">Admin</span>
             </Link>
             {profile && (
               <>
-                <nav aria-label="Admin" className="flex flex-wrap gap-3 text-sm">
+                <nav aria-label="Admin" className="flex flex-wrap items-center gap-x-1 xl:gap-x-5">
                   {NAV.filter((item) => !item.perm || hasPerm(profile, item.perm)).map((item) => (
-                    <Link key={item.href} href={item.href} className="hover:underline">
+                    <NavLink key={item.href} href={item.href}>
                       {item.label}
-                    </Link>
+                    </NavLink>
                   ))}
                 </nav>
-                <Link href="/admin/account" className="text-sm text-neutral-600 hover:underline">
-                  Settings <span className="text-neutral-400">({profile.email})</span>
+                <Link
+                  href="/admin/account"
+                  className="ml-2 px-1 text-sm font-semibold text-muted transition-colors hover:text-ink xl:ml-6"
+                >
+                  Settings <span className="font-normal">({profile.email})</span>
                 </Link>
-                <form action={signOut}>
-                  <button type="submit" className="text-sm underline">
+                <form action={signOut} className="ml-2 xl:ml-4">
+                  <button
+                    type="submit"
+                    className="text-sm text-primary underline underline-offset-4 hover:text-primary-hover"
+                  >
                     Sign out
                   </button>
                 </form>
@@ -60,6 +91,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
         </header>
         <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        {profile && <IdleGuard timeoutMinutes={timeoutMinutes} />}
       </body>
     </html>
   );

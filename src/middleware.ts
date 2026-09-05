@@ -97,8 +97,17 @@ export async function middleware(request: NextRequest) {
   // /admin/welcome completes email invites client-side (tokens arrive in the
   // URL fragment, invisible to the server) — it must stay reachable signed out.
   const openPaths = ["/admin/login", "/admin/welcome"];
-  const { response, isAuthenticated, timedOut, mustChangePassword } =
-    await refreshAdminSession(request);
+  // Login/welcome never enforce the idle timeout: they are where a session
+  // is born, before any activity cookie exists.
+  const {
+    response,
+    isAuthenticated,
+    timedOut,
+    mustChangePassword,
+    mfaPending,
+    mfaRequired,
+    hasMfa,
+  } = await refreshAdminSession(request, { enforceIdle: !openPaths.includes(pathname) });
   if (timedOut) {
     // The redirect must carry the sign-out cookie deletions, or the login
     // page would still see a session and bounce straight back.
@@ -112,6 +121,15 @@ export async function middleware(request: NextRequest) {
   if (isAuthenticated && pathname === "/admin/login") {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
+  // Second factor: a member with an authenticator app sees nothing but the
+  // code page until this session has passed it (and never the code page
+  // once it has).
+  if (isAuthenticated && mfaPending && pathname !== "/admin/verify") {
+    return NextResponse.redirect(new URL("/admin/verify", request.url));
+  }
+  if (isAuthenticated && !mfaPending && pathname === "/admin/verify") {
+    return NextResponse.redirect(new URL("/admin", request.url));
+  }
   // Temporary-password accounts must set their own password before anything else.
   if (
     isAuthenticated &&
@@ -119,6 +137,11 @@ export async function middleware(request: NextRequest) {
     !["/admin/account", ...openPaths].includes(pathname)
   ) {
     return NextResponse.redirect(new URL("/admin/account?must-change=1", request.url));
+  }
+  // "Two-factor required for everyone": members without an authenticator
+  // app can only reach Settings, where enrolment lives.
+  if (isAuthenticated && mfaRequired && !hasMfa && pathname !== "/admin/account") {
+    return NextResponse.redirect(new URL("/admin/account?mfa=required", request.url));
   }
   return withNoindex(response);
 }

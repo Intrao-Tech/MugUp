@@ -29,7 +29,10 @@ export default async function HomePage({ params }: Props) {
   const { locale } = await params;
   const page = getHome(locale);
   const dict = getCommon(locale);
-  const [posts, featured] = await Promise.all([getPublicPosts(locale), getFeaturedReviews()]);
+  const [posts, featured] = await Promise.all([
+    getPublicPosts(locale),
+    getFeaturedReviews(locale),
+  ]);
 
   // Marketing-picked (approved + featured) reviews replace the static
   // testimonials; with none picked, the client-supplied quotes stay. The team
@@ -46,7 +49,11 @@ export default async function HomePage({ params }: Props) {
                 items: featured.map((review) => ({
                   quote: review.quote,
                   author: review.author_name,
-                  tag: review.author_tag || review.programme || undefined,
+                  // The client-supplied reviews use the programme as the
+                  // headline ("GCSE"), so do not repeat it as the tag.
+                  tag:
+                    review.author_tag ||
+                    (review.programme !== review.author_name ? review.programme : undefined),
                 })),
               }
             : block,

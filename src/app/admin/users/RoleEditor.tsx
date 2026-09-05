@@ -9,6 +9,7 @@ import {
 } from "@/lib/db-types";
 import { PERMISSION_LABELS, PERMISSIONS, type Permission } from "@/lib/permissions";
 import { deleteRole, saveRole } from "../actions";
+import { BTN_PRIMARY, CARD, INPUT } from "../ui";
 
 // The role panel: pick a role, edit EVERYTHING about it in one form —
 // permissions and the notifications the role receives. Saving re-applies the
@@ -50,7 +51,7 @@ function RoleForm({
   const deleteFormId = `delete-role-${role.slug}`;
 
   return (
-    <div className="border border-neutral-300 bg-white p-4">
+    <div className={`${CARD} p-4`}>
       {/* Sibling form for Delete — nested forms are invalid HTML; the button
           inside the edit form targets it via the form= attribute. */}
       <form action={deleteRole} id={deleteFormId}>
@@ -60,13 +61,13 @@ function RoleForm({
       <form action={saveRole} className="space-y-4">
         <input type="hidden" name="slug" value={role.slug} />
         <div>
-          <label htmlFor="role-edit-name" className="block text-sm font-medium">
+          <label htmlFor="role-edit-name" className="block text-sm font-bold text-ink">
             Role name
           </label>
           {role.builtIn ? (
             <>
-              <p id="role-edit-name" className="mt-1 font-medium">
-                {role.name} <span className="text-xs font-normal text-neutral-400">built-in</span>
+              <p id="role-edit-name" className="mt-1 font-bold text-ink">
+                {role.name} <span className="text-xs font-normal text-muted">built-in</span>
               </p>
               <input type="hidden" name="name" value={role.name} />
             </>
@@ -78,14 +79,14 @@ function RoleForm({
               onChange={(event) => setName(event.target.value)}
               required
               maxLength={60}
-              className="mt-1 w-full max-w-md border border-neutral-400 px-3 py-2"
+              className={`${INPUT} max-w-md`}
             />
           )}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <fieldset className="text-sm">
-            <legend className="font-medium">What this role can do</legend>
+            <legend className="font-bold text-ink">What this role can do</legend>
             {PERMISSIONS.map((perm) => (
               <label key={perm} className="mt-1 flex items-center gap-2">
                 <input
@@ -101,14 +102,14 @@ function RoleForm({
           </fieldset>
 
           <fieldset className="text-sm">
-            <legend className="font-medium">Notifications this role receives</legend>
+            <legend className="font-bold text-ink">Notifications this role receives</legend>
             {NOTIFICATION_EVENTS.map((event) => {
               const required = NOTIFICATION_EVENT_PERMISSION[event];
               const allowed = perms.includes(required);
               return (
                 <label
                   key={event}
-                  className={`mt-1 flex items-center gap-2 ${allowed ? "" : "text-neutral-400"}`}
+                  className={`mt-1 flex items-center gap-2 ${allowed ? "" : "text-muted"}`}
                 >
                   <input
                     type="checkbox"
@@ -129,10 +130,10 @@ function RoleForm({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button type="submit" className="border border-neutral-900 bg-neutral-900 px-4 py-2 font-medium text-white">
+          <button type="submit" className={BTN_PRIMARY}>
             Save role
           </button>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-muted">
             {role.memberCount > 0
               ? `Applies immediately to the ${role.memberCount} member${role.memberCount === 1 ? "" : "s"} with this role.`
               : "No members hold this role yet."}
@@ -166,10 +167,10 @@ export function RoleEditor({
             key={r.slug}
             type="button"
             onClick={() => setSelected(r.slug)}
-            className={`border px-3 py-1 text-sm ${
+            className={`rounded-sm border px-3 py-1 text-sm transition-colors ${
               r.slug === selected
-                ? "border-neutral-900 bg-neutral-900 text-white"
-                : "border-neutral-300 bg-white hover:border-neutral-900"
+                ? "border-ink bg-ink text-surface"
+                : "border-line bg-surface text-body hover:border-ink hover:text-ink"
             }`}
           >
             {r.builtIn ? r.name.split(" — ")[0] : r.name}

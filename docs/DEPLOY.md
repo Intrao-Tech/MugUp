@@ -98,28 +98,63 @@ working previews, use a Vercel *Preview*-scoped env set that omits
 ## Stage C — Supabase backend
 
 1. Create the client-owned Supabase project (**London / eu-west-2**).
-2. Apply the schema: `supabase/migrations/0001_init.sql`, via the dashboard
-   SQL editor or `supabase db push`. This creates the tables, the `has_perm()`
-   function, every RLS policy **and both storage buckets** (`lead-files`,
-   `post-images`) — no manual bucket creation needed.
+2. Apply the schema: `supabase db push` (preferred — it records the migration
+   history, which keeps automatic migrations working later), or paste
+   `supabase/migrations/*.sql` into the dashboard SQL editor. This creates the
+   tables, the `has_perm()` function, every RLS policy **and both storage
+   buckets** (`lead-files`, `post-images`) — no manual bucket creation needed.
 3. Add to Vercel (Settings → API in Supabase):
 
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=...
    SUPABASE_SERVICE_ROLE_KEY=...        # server-only, never expose
+   SUPABASE_DB_URL=...                  # optional — enables migrations on deploy
    ```
 
-   Mark `SUPABASE_SERVICE_ROLE_KEY` as **Sensitive**. It must never appear in
-   a `NEXT_PUBLIC_*` variable.
-4. First administrator: Supabase → Authentication → **Add user** (tick *Auto
-   confirm user*), then edit the email in `supabase/seed_admin.sql` and run it
-   against the project to grant the permission flags.
-5. Email (invites + notifications): follow `docs/EMAIL-SETUP.md` — Resend
-   API key + verified domain for enquiry/review notifications (recipients are
-   then configured on the admin **Notifications** page), and Supabase custom
-   SMTP + the `/admin/welcome` redirect URL for team invites. Without the
-   key, submissions still save — only the email step is skipped.
+   Mark `SUPABASE_SERVICE_ROLE_KEY` (and `SUPABASE_DB_URL` if set) as
+   **Sensitive**. Neither may ever appear in a `NEXT_PUBLIC_*` variable.
+
+### Migrations on deploy
+
+With `SUPABASE_DB_URL` set (Supabase dashboard → **Connect** → *Session
+pooler* URI, password filled in and percent-encoded — the pooler, because
+Vercel builds are IPv4-only), every **production** build runs
+`scripts/deploy-migrate.mjs` first: pending files from `supabase/migrations`
+are applied via `supabase db push` before `next build`. Preview builds never
+touch the database, and a failed migration fails the build — the previous
+deployment keeps serving. Without the variable nothing changes: migrations
+stay a manual step.
+
+One-time caveat: `db push` relies on the migration history table. If the
+schema was originally pasted into the SQL editor (so no history exists), mark
+the already-applied files once:
+
+```bash
+npx supabase migration list --db-url "$SUPABASE_DB_URL"
+```
+
+```bash
+npx supabase migration repair --status applied 0001 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 --db-url "$SUPABASE_DB_URL"
+```
+4. First administrator: `npm run seed:remote` with `.env.remote` pointing at
+   the project (creates the administrator ONLY — demo data never reaches a
+   hosted project unless `SEED_DEMO_DATA=1` is set on purpose). Manual
+   alternative: Supabase → Authentication → **Add user** (tick *Auto confirm
+   user*), then edit the email in `supabase/seed_admin.sql` and run it.
+5. Email (team invites, password resets, optional enquiry copies): one
+   app-owned channel — `SMTP_*` or `RESEND_API_KEY` + `MAIL_FROM` on Vercel,
+   see `docs/EMAIL-SETUP.md`. Notifications themselves are in-admin and need
+   no setup. Without a transport, submissions still save — only the email
+   step is skipped, and invites fall back to Supabase Auth's own letters
+   (`/admin/welcome` redirect URL).
+6. Two-factor authentication: Supabase → Authentication → **Multi-Factor**
+   → make sure *TOTP* (authenticator app) is enabled (it is by default).
+   Recommended for the client: every member turns it on in Settings, then an
+   administrator ticks "Require two-factor authentication for everyone".
+   Recovery when the ONLY administrator loses the phone: Supabase →
+   Authentication → Users → the user → delete the MFA factor; everyone else
+   is reset from Team in the admin panel.
 7. Redeploy and verify: forms accept submissions, `/admin` on the admin host
    reaches the login page, Insights posts published from admin appear on the
    public site (ISR + `revalidatePath`).
@@ -157,8 +192,8 @@ a login page).
 
 ### Then
 
-Apply the migration, add the first admin user (Stage C steps 2 and 4 above),
-redeploy, and verify:
+Apply the migrations, add the first admin user (Stage C steps 2 and 4 above —
+or set `SUPABASE_DB_URL` and let the build apply them), redeploy, and verify:
 
 - `mug-up.vercel.app/en` → public site, forms now **enabled**
 - `mug-up-admin.vercel.app` → redirects to `/admin`, shows the login page

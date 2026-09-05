@@ -11,8 +11,15 @@ import type {
   ReviewRow,
   RoleRow,
 } from "@/lib/db-types";
-import type { DataBackend, FeaturedReview, LeadStatsRow, Result } from "@/lib/data/ports";
+import type {
+  DataBackend,
+  FeaturedReview,
+  LeadStatsRow,
+  MfaLevel,
+  Result,
+} from "@/lib/data/ports";
 import { createAnonClient, createServiceClient, createUserClient } from "./clients";
+import { readAal } from "./jwt";
 import { LEAD_FILES_BUCKET, POST_IMAGES_BUCKET } from "./config";
 
 const PROFILE_COLUMNS =
@@ -20,6 +27,33 @@ const PROFILE_COLUMNS =
 
 function toResult(error: { message: string } | null): Result {
   return error ? { error: error.message } : {};
+}
+
+/**
+ * The auth server's view of the current session: user id, the active
+ * authenticator factor and the assurance level claimed by the access token
+ * (read only after getUser has validated that token).
+ */
+async function sessionFacts(client: SupabaseClient): Promise<{
+  userId: string;
+  level: MfaLevel;
+  factor: { id: string; enrolledAt: string } | null;
+} | null> {
+  const {
+    data: { user: authUser },
+  } = await client.auth.getUser();
+  if (!authUser) return null;
+  const {
+    data: { session },
+  } = await client.auth.getSession();
+  const verified = (authUser.factors ?? []).find(
+    (factor) => factor.factor_type === "totp" && factor.status === "verified",
+  );
+  return {
+    userId: authUser.id,
+    level: readAal(session?.access_token),
+    factor: verified ? { id: verified.id, enrolledAt: verified.created_at } : null,
+  };
 }
 
 async function countRows(
@@ -50,17 +84,18 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
   return {
     auth: {
       async getUserId() {
-        const {
-          data: { user: authUser },
-        } = await (await user()).auth.getUser();
-        return authUser?.id ?? null;
+        const state = await sessionFacts(await user());
+        // An enrolled member counts as signed in only once THIS session has
+        // passed the second factor (port contract).
+        if (!state || (state.factor && state.level !== "aal2")) return null;
+        return state.userId;
       },
       async signInWithPassword(email, password) {
         const { error } = await (await user()).auth.signInWithPassword({ email, password });
         return toResult(error);
       },
-      async signOut() {
-        await (await user()).auth.signOut();
+      async signOut(scope = "global") {
+        await (await user()).auth.signOut({ scope });
       },
       async updateOwnPassword(newPassword) {
         const client = await user();
@@ -89,6 +124,37 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           password,
         });
         return !error;
+      },
+      async getMfaState() {
+        const state = await sessionFacts(await user());
+        return state && { level: state.level, factor: state.factor };
+      },
+      async enrollTotp() {
+        const client = await user();
+        // Abandoned attempts pile up as unverified factors (and hold the
+        // friendly name) — clear them before starting again.
+        const { data: existing } = await client.auth.mfa.listFactors();
+        for (const factor of existing?.all ?? []) {
+          if (factor.status === "unverified") {
+            await client.auth.mfa.unenroll({ factorId: factor.id });
+          }
+        }
+        const { data, error } = await client.auth.mfa.enroll({
+          factorType: "totp",
+          friendlyName: "Authenticator app",
+          issuer: "Mug.Up Admin",
+        });
+        if (error || !data) return { error: error?.message ?? "Could not start enrolment." };
+        return { factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret };
+      },
+      async verifyTotp(factorId, code) {
+        // Success rewrites the session cookies with aal2 tokens.
+        const { error } = await (await user()).auth.mfa.challengeAndVerify({ factorId, code });
+        return toResult(error);
+      },
+      async unenrollTotp(factorId) {
+        const { error } = await (await user()).auth.mfa.unenroll({ factorId });
+        return toResult(error);
       },
     },
 
@@ -159,6 +225,23 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         // profiles(id) references auth.users on delete cascade.
         const { error } = await createServiceClient().auth.admin.deleteUser(userId);
         return toResult(error);
+      },
+      async hasMfa(userId) {
+        const { data } = await createServiceClient().auth.admin.mfa.listFactors({ userId });
+        return (data?.factors ?? []).some((factor) => factor.status === "verified");
+      },
+      async resetMfa(userId) {
+        const service = createServiceClient();
+        const { data, error } = await service.auth.admin.mfa.listFactors({ userId });
+        if (error) return { error: error.message };
+        for (const factor of data?.factors ?? []) {
+          const { error: deleteError } = await service.auth.admin.mfa.deleteFactor({
+            id: factor.id,
+            userId,
+          });
+          if (deleteError) return { error: deleteError.message };
+        }
+        return {};
       },
       // Fallback (no email transport): Supabase Auth emails a recovery link
       // landing on the welcome set-password page (Mailpit on the local stack).
@@ -305,8 +388,9 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         return (data ?? []) as ReviewRow[];
       },
       countByStatus: async (status) => countRows(await user(), "reviews", "status", status),
-      async add({ authorName, authorTag, quote, source, rating, programme, audience }) {
+      async add({ locale, authorName, authorTag, quote, source, rating, programme, audience }) {
         const { error } = await (await user()).from("reviews").insert({
+          locale,
           author_name: authorName,
           author_tag: authorTag,
           quote,
@@ -317,9 +401,10 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
         });
         return toResult(error);
       },
-      async submitPublic({ authorName, authorTag, quote, rating }) {
+      async submitPublic({ locale, authorName, authorTag, quote, rating }) {
         const service = createServiceClient();
         const { error } = await service.from("reviews").insert({
+          locale,
           author_name: authorName,
           author_tag: authorTag,
           quote,
@@ -336,10 +421,10 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
           .eq("id", id);
         return toResult(error);
       },
-      async updateMeta(id, { programme, audience, featured }) {
+      async updateMeta(id, { locale, programme, audience, featured }) {
         const { error } = await (await user())
           .from("reviews")
-          .update({ programme, audience, featured })
+          .update({ locale, programme, audience, featured })
           .eq("id", id);
         return toResult(error);
       },
@@ -349,10 +434,11 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
       },
       // Public read: cookie-less anon client keeps ISR pages static; RLS
       // exposes approved rows only.
-      async listFeatured() {
+      async listFeatured(locale) {
         const { data } = await createAnonClient()
           .from("reviews")
           .select("author_name, author_tag, quote, rating, programme, audience")
+          .eq("locale", locale)
           .eq("status", "approved")
           .eq("featured", true)
           .order("created_at", { ascending: false });
@@ -393,6 +479,15 @@ export async function createSupabaseBackend(): Promise<DataBackend> {
       async delete(id) {
         const { error } = await (await user()).from("posts").delete().eq("id", id);
         return toResult(error);
+      },
+      async publishDue() {
+        const { data } = await createServiceClient()
+          .from("posts")
+          .update({ status: "published" })
+          .eq("status", "scheduled")
+          .lte("published_at", new Date().toISOString())
+          .select("id");
+        return data?.length ?? 0;
       },
       // Public reads: cookie-less anon client keeps ISR pages static.
       // "Live" = published + scheduled posts whose time has passed (the RLS

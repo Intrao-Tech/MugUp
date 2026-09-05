@@ -157,8 +157,9 @@ logos use the `logos` block (ink-ruled tiles).
 
 - DO colour with semantic utilities only. DON'T use `neutral-*`, `gray-*`,
   `slate-*`, raw hex, `bg-[`/`text-[` arbitrary colours, `style=`,
-  `!important` in `src/components` or `src/app/[locale]`. (Admin panel is
-  out of scope for this rule and keeps its own utility styling.)
+  `!important` in `src/components` or `src/app/[locale]`. (The admin panel
+  follows the same tokens via its shared kit in `src/app/admin/ui.tsx`; its
+  only extra colours are the green/red feedback states.)
 - DO layout with `Container`/`Section`; DON'T hand-write `max-w-4xl px-4`.
 - DO CTAs with `Button`; DON'T style `<a>`/`<Link>` as buttons.
 - Social proof is an editorial **quote rail** (hairline rows, attribution
@@ -198,15 +199,15 @@ at 390 / 768 / 1280 / 1440 for `/en` and `/ua`.
   hand-styled secondary link on the Insights post page). They look right but
   still hand-write wrappers — when you next touch one of them, move it to
   `Section`/`Container`/`Button`; do not add new hand-written wrappers.
-- Admin panel: shares `globals.css`, so it now inherits the brand font and
-  the 17px base size; its colours/utilities are otherwise untouched.
+- Admin panel: fully migrated to the site tokens (Aug 2026). Shared control
+  styles (inputs, buttons, cards, headings, chips) live as exported constants
+  in `src/app/admin/ui.tsx` — compose those instead of hand-writing colour
+  classes in admin pages.
 
 - Team "carousel": implemented as CSS scroll-snap on small screens; add
   arrows only if the client asks (would need a small client component).
 - Real photography for hero / pathway cards once the client supplies assets
   (replace `ImagePlaceholder` calls; keep alt text = card title).
-- Admin panel keeps the skeleton styling; migrating it to these tokens is a
-  separate, optional pass.
 
 ## Editorial layouts (v2, client brief 25 Aug 2026)
 

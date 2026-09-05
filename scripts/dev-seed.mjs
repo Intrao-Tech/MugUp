@@ -7,7 +7,9 @@
 // Knobs (env):
 //   SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD  real administrator to create
 //                                           (instead of the @mugup.local trio)
-//   SEED_DEMO_DATA=0                        skip demo leads/reviews/posts
+//   SEED_DEMO_DATA                          demo leads/reviews/posts: on by
+//                                           default locally, OFF on a hosted
+//                                           project unless set to 1
 import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -37,7 +39,11 @@ if (adminEmail && adminPassword.length < 8) {
   console.error("SEED_ADMIN_PASSWORD must be at least 8 characters (upper + lower + digit).");
   process.exit(1);
 }
-const withDemoData = process.env.SEED_DEMO_DATA !== "0";
+// Demo content is a LOCAL convenience: on a hosted project it stays off
+// unless asked for explicitly (SEED_DEMO_DATA=1).
+const withDemoData = isLocal
+  ? process.env.SEED_DEMO_DATA !== "0"
+  : process.env.SEED_DEMO_DATA === "1";
 
 const service = createClient(url, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -46,6 +52,7 @@ const service = createClient(url, serviceKey, {
 const ALL_PERMISSIONS = [
   "leads.view", "leads.manage", "leads.export", "leads.pii",
   "posts.edit", "posts.publish", "reviews.moderate", "analytics.view", "users.manage",
+  "security.policy",
 ];
 
 const DEMO_PASSWORD = "admin123";
@@ -55,7 +62,7 @@ const USERS = adminEmail
   ? [{ email: adminEmail, password: adminPassword, name: process.env.SEED_ADMIN_NAME ?? "Administrator", role: "admin", permissions: ALL_PERMISSIONS }]
   : [
       { email: "admin@mugup.local", password: DEMO_PASSWORD, name: "Local Admin", role: "admin", permissions: ALL_PERMISSIONS },
-      { email: "manager@mugup.local", password: DEMO_PASSWORD, name: "Test Manager", role: "manager", permissions: ["leads.view", "leads.manage", "leads.export", "leads.pii", "analytics.view"] },
+      { email: "manager@mugup.local", password: DEMO_PASSWORD, name: "Test Manager", role: "manager", permissions: ["leads.view", "leads.manage", "leads.export", "leads.pii", "posts.edit", "posts.publish", "reviews.moderate", "analytics.view"] },
       { email: "editor@mugup.local", password: DEMO_PASSWORD, name: "Test Editor", role: "editor", permissions: ["posts.edit", "posts.publish", "reviews.moderate"] },
     ];
 
@@ -79,7 +86,17 @@ for (const user of USERS) {
       console.log(`~ ${user.email}: ${error.message}`);
       continue;
     }
-    console.log(`~ ${user.email}: already exists — refreshing role/permissions`);
+    // Re-running the seed makes the account MATCH the config, password
+    // included — otherwise a forgotten password could never be fixed by
+    // re-seeding, which is the whole point of a seed.
+    const { error: passwordError } = await service.auth.admin.updateUserById(userId, {
+      password: user.password,
+    });
+    console.log(
+      passwordError
+        ? `! ${user.email}: password not updated (${passwordError.message})`
+        : `~ ${user.email}: already exists — password and access refreshed`,
+    );
   }
   const { error: profileError } = await service
     .from("profiles")
@@ -180,12 +197,15 @@ if (withDemoData) {
       status: "approved",
       featured: true,
     },
-  ].map((review) => ({ status: "pending", featured: false, ...review }));
+  ].map((review) => ({ status: "pending", featured: false, locale: "en", ...review }));
+  // The client's own testimonials arrive by migration (0012, approved), so
+  // "already seeded" is judged by the moderation queue, not the whole table.
   const { count: reviewCount } = await service
     .from("reviews")
-    .select("id", { count: "exact", head: true });
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
   if (reviewCount) {
-    console.log(`~ reviews: ${reviewCount} already there — skipped`);
+    console.log(`~ reviews: ${reviewCount} pending already there — skipped`);
   } else {
     const { error: reviewError } = await service.from("reviews").insert(DEMO_REVIEWS);
     console.log(reviewError ? `! reviews: ${reviewError.message}` : `+ ${DEMO_REVIEWS.length} pending reviews`);

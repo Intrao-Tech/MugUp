@@ -1,13 +1,15 @@
 // Shown (via middleware rewrite) whenever Supabase env vars are missing.
+import { H1 } from "../ui";
+
 export default function SetupPage() {
   return (
     <div className="prose max-w-2xl">
-      <h1 className="text-2xl font-bold">Admin setup required</h1>
-      <p className="mt-4 text-neutral-700">
+      <h1 className={H1}>Admin setup required</h1>
+      <p className="mt-4 text-body">
         The admin panel needs a Supabase project. Once configured, this page
         disappears automatically.
       </p>
-      <ol className="mt-4 list-decimal space-y-2 pl-5 text-neutral-700">
+      <ol className="mt-4 list-decimal space-y-2 pl-5 text-body">
         <li>
           Create a Supabase project (region: <strong>London, eu-west-2</strong>).
         </li>
