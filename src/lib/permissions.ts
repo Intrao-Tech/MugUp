@@ -27,8 +27,18 @@ export type Role = string;
 export const ROLE_PRESETS: Record<BuiltInRole, Permission[]> = {
   // Full access, including team account management.
   admin: [...PERMISSIONS],
-  // Studio administrator: the enquiry pipeline end to end.
-  manager: ["leads.view", "leads.manage", "leads.export", "leads.pii", "analytics.view"],
+  // Studio administrator: the enquiry pipeline end to end, plus the
+  // editor's content duties (client request, 30 Aug 2026).
+  manager: [
+    "leads.view",
+    "leads.manage",
+    "leads.export",
+    "leads.pii",
+    "posts.edit",
+    "posts.publish",
+    "reviews.moderate",
+    "analytics.view",
+  ],
   // Content/marketing: Insights and review moderation; no access to leads
   // (they contain personal data — GDPR minimisation).
   editor: ["posts.edit", "posts.publish", "reviews.moderate"],
@@ -49,7 +59,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
 /** Plain-language summary of each built-in preset. */
 export const ROLE_DESCRIPTIONS: Record<BuiltInRole, string> = {
   admin: "Admin — full access to everything, including the team",
-  manager: "Manager — enquiries, personal data, exports and the dashboard",
+  manager: "Manager — enquiries, personal data, exports, the dashboard, articles and reviews",
   editor: "Editor — articles and reviews, no access to enquiries",
 };
 

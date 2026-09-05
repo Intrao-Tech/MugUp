@@ -3,6 +3,7 @@ import { fontVariables } from "@/lib/fonts";
 import type { Metadata } from "next";
 import Link from "next/link";
 import "../globals.css";
+import { NavLink } from "@/components/NavLink";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { getCurrentProfile, hasPerm } from "@/lib/auth-guard";
 import type { Permission } from "@/lib/permissions";
@@ -29,29 +30,42 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const profile = await getCurrentProfile();
   return (
     <html lang="en" className={fontVariables}>
-      <body className="min-h-screen bg-neutral-50 text-neutral-900 antialiased">
+      <body className="min-h-screen bg-canvas text-body antialiased">
         <Suspense fallback={null}>
           <ScrollToTop />
         </Suspense>
-        <header className="border-b border-neutral-300 bg-white">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-            <Link href="/admin" className="mr-auto font-bold">
-              Mug.Up Admin
+        <header className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur supports-[backdrop-filter]:bg-canvas/80">
+          <div className="mx-auto flex min-h-16 max-w-5xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-2">
+            <Link href="/admin" className="mr-auto flex items-center gap-2 py-1">
+              <img
+                src="/images/logo-nav.png"
+                alt=""
+                width={640}
+                height={562}
+                className="h-11 w-auto"
+              />
+              <span className="font-display text-lg text-ink">Admin</span>
             </Link>
             {profile && (
               <>
-                <nav aria-label="Admin" className="flex flex-wrap gap-3 text-sm">
+                <nav aria-label="Admin" className="flex flex-wrap items-center">
                   {NAV.filter((item) => !item.perm || hasPerm(profile, item.perm)).map((item) => (
-                    <Link key={item.href} href={item.href} className="hover:underline">
+                    <NavLink key={item.href} href={item.href}>
                       {item.label}
-                    </Link>
+                    </NavLink>
                   ))}
                 </nav>
-                <Link href="/admin/account" className="text-sm text-neutral-600 hover:underline">
-                  Settings <span className="text-neutral-400">({profile.email})</span>
+                <Link
+                  href="/admin/account"
+                  className="px-1 text-sm font-semibold text-muted transition-colors hover:text-ink"
+                >
+                  Settings <span className="font-normal">({profile.email})</span>
                 </Link>
                 <form action={signOut}>
-                  <button type="submit" className="text-sm underline">
+                  <button
+                    type="submit"
+                    className="text-sm text-primary underline underline-offset-4 hover:text-primary-hover"
+                  >
                     Sign out
                   </button>
                 </form>

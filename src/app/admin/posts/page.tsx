@@ -6,7 +6,7 @@ import { publicSiteOrigin } from "@/lib/site";
 import { isoToUkDisplay } from "@/lib/uk-time";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { addCategory, deleteCategory } from "../actions";
-import { buildQuery, FilterChip, Notice } from "../ui";
+import { BTN_SECONDARY, buildQuery, CARD, FilterChip, H1, H2, INPUT, Notice } from "../ui";
 
 export const dynamic = "force-dynamic";
 
@@ -41,8 +41,8 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Insights posts</h1>
-        <Link href="/admin/posts/new" className="border border-neutral-900 px-4 py-2 font-medium">
+        <h1 className={H1}>Insights posts</h1>
+        <Link href="/admin/posts/new" className={BTN_SECONDARY}>
           New post
         </Link>
       </div>
@@ -51,7 +51,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
       {params.error && ERRORS[params.error] && (
         <Notice tone="error">{ERRORS[params.error]}</Notice>
       )}
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-base text-body">
         Published posts appear on the public site within seconds; drafts are visible only here.
       </p>
 
@@ -65,33 +65,36 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
             active={statusFilter === s}
           />
         ))}
-        <span className="mx-2 text-neutral-300">|</span>
+        <span className="mx-2 text-line">|</span>
         <FilterChip label="All languages" href={chipHref({ lang: undefined })} active={!langFilter} />
         <FilterChip label="EN" href={chipHref({ lang: "en" })} active={langFilter === "en"} />
         <FilterChip label="UA" href={chipHref({ lang: "ua" })} active={langFilter === "ua"} />
       </div>
 
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full border-collapse bg-white text-sm">
+        <table className="w-full border-collapse bg-surface text-sm">
           <thead>
-            <tr className="border-b border-neutral-300 text-left">
-              <th className="p-2">Updated</th>
-              <th className="p-2">Lang</th>
-              <th className="p-2">Title</th>
-              <th className="p-2">Category</th>
-              <th className="p-2">Status</th>
+            <tr className="border-b border-line text-left">
+              <th className="p-2 text-eyebrow uppercase text-muted">Updated</th>
+              <th className="p-2 text-eyebrow uppercase text-muted">Lang</th>
+              <th className="p-2 text-eyebrow uppercase text-muted">Title</th>
+              <th className="p-2 text-eyebrow uppercase text-muted">Category</th>
+              <th className="p-2 text-eyebrow uppercase text-muted">Status</th>
               <th className="p-2" />
             </tr>
           </thead>
           <tbody>
             {posts.map((post) => (
-              <tr key={post.id} className="border-b border-neutral-200">
+              <tr key={post.id} className="border-b border-line">
                 <td className="p-2 whitespace-nowrap">
                   {new Date(post.updated_at).toLocaleDateString("en-GB")}
                 </td>
                 <td className="p-2 uppercase">{post.locale}</td>
                 <td className="p-2">
-                  <Link href={`/admin/posts/${post.id}`} className="font-medium underline">
+                  <Link
+                    href={`/admin/posts/${post.id}`}
+                    className="font-bold text-ink underline underline-offset-4 hover:text-primary"
+                  >
                     {post.title}
                   </Link>
                 </td>
@@ -99,7 +102,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
                 <td className="p-2 whitespace-nowrap">
                   {POST_STATUS_LABELS[post.status]}
                   {post.status === "scheduled" && post.published_at && (
-                    <span className="block text-xs text-neutral-500">
+                    <span className="block text-xs text-muted">
                       {isoToUkDisplay(post.published_at)}
                     </span>
                   )}
@@ -110,7 +113,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
                       href={`${publicSiteOrigin()}/${post.locale}/insights/${post.slug}`}
                       target="_blank"
                       rel="noopener"
-                      className="underline"
+                      className="underline underline-offset-4 hover:text-primary"
                     >
                       View on site
                     </a>
@@ -120,7 +123,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
             ))}
             {posts.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-4 text-neutral-500">
+                <td colSpan={6} className="p-4 text-muted">
                   No posts match this filter.
                 </td>
               </tr>
@@ -130,8 +133,8 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
       </div>
 
       <section className="mt-10 max-w-2xl">
-        <h2 className="text-xl font-semibold">Categories</h2>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h2 className={H2}>Categories</h2>
+        <p className="mt-1 text-sm text-muted">
           Categories group articles on the public Insights page. A category can only be removed
           while no posts use it.
         </p>
@@ -141,12 +144,12 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
             return (
               <li
                 key={cat.slug}
-                className="flex flex-wrap items-center gap-3 border border-neutral-300 bg-white px-3 py-2 text-sm"
+                className={`${CARD} flex flex-wrap items-center gap-3 px-3 py-2 text-sm`}
               >
-                <span className="font-medium">{cat.label_en}</span>
-                <span className="text-neutral-500">{cat.label_ua}</span>
-                <span className="text-xs text-neutral-400">/{cat.slug}</span>
-                <span className="ml-auto text-xs text-neutral-500">
+                <span className="font-bold text-ink">{cat.label_en}</span>
+                <span className="text-body">{cat.label_ua}</span>
+                <span className="text-xs text-muted">/{cat.slug}</span>
+                <span className="ml-auto text-xs text-muted">
                   {used} post{used === 1 ? "" : "s"}
                 </span>
                 <form action={deleteCategory}>
@@ -154,7 +157,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
                   <ConfirmSubmit
                     label="Remove"
                     confirmText={`Remove the category "${cat.label_en}"?`}
-                    className="border border-red-300 px-2 py-0.5 text-xs text-red-700 disabled:opacity-40"
+                    className="rounded-sm border border-red-300 bg-surface px-2 py-0.5 text-xs text-red-700 hover:border-red-700 disabled:opacity-40"
                   />
                 </form>
               </li>
@@ -166,19 +169,19 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
             name="label_en"
             required
             placeholder="Label in English"
-            className="border border-neutral-400 px-3 py-2 text-sm"
+            className={INPUT}
           />
           <input
             name="label_ua"
             required
             placeholder="Назва українською"
-            className="border border-neutral-400 px-3 py-2 text-sm"
+            className={INPUT}
           />
-          <button type="submit" className="border border-neutral-900 px-4 py-2 text-sm font-medium">
+          <button type="submit" className={`${BTN_SECONDARY} self-end`}>
             Add category
           </button>
         </form>
-        <p className="mt-1 text-xs text-neutral-500">
+        <p className="mt-1 text-xs text-muted">
           The URL name is generated from the English label automatically.
         </p>
       </section>

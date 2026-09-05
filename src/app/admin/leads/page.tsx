@@ -11,7 +11,7 @@ import {
 import { hasPerm, requireProfile } from "@/lib/auth-guard";
 import { getData } from "@/lib/data";
 import { updateLeadStatus } from "../actions";
-import { buildQuery, FilterChip, Notice } from "../ui";
+import { BTN_LINK, BTN_SECONDARY, buildQuery, CARD, FilterChip, H1, INPUT, Notice } from "../ui";
 
 export const dynamic = "force-dynamic";
 
@@ -58,18 +58,18 @@ export default async function LeadsPage({
   const chipHref = (overrides: Record<string, string | undefined>) =>
     `/admin/leads${buildQuery(params, overrides)}`;
 
-  const filterLabel = "w-12 shrink-0 pt-0.5 text-xs font-semibold uppercase tracking-wide text-neutral-400";
+  const filterLabel = "w-12 shrink-0 pt-0.5 text-eyebrow uppercase text-muted";
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Enquiries</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <h1 className={H1}>Enquiries</h1>
+      <p className="mt-1 text-base text-body">
         Everything visitors submit through the site lands here. Click a name to manage the
         enquiry — owner, next action, notes and files.
       </p>
       {params.error && <Notice tone="error">Could not save the change — try again.</Notice>}
 
-      <div className="mt-4 space-y-2 border border-neutral-300 bg-white p-3 text-sm">
+      <div className={`mt-4 space-y-2 ${CARD} p-3 text-sm`}>
         <div className="flex flex-wrap items-start gap-2">
           <span className={filterLabel}>Status</span>
           <span className="flex flex-wrap gap-1.5">
@@ -105,8 +105,8 @@ export default async function LeadsPage({
             <FilterChip label="Oldest first" href={chipHref({ sort: "oldest" })} active={sort === "oldest"} />
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-2 border-t border-neutral-200 pt-2">
-          <form action="/admin/leads" method="get" className="flex min-w-64 flex-1 gap-2">
+        <div className="flex flex-wrap items-center gap-2 border-t border-line pt-2">
+          <form action="/admin/leads" method="get" className="flex min-w-64 flex-1 items-center gap-2">
             {status && <input type="hidden" name="status" value={status} />}
             {form && <input type="hidden" name="form" value={form} />}
             {sort === "oldest" && <input type="hidden" name="sort" value="oldest" />}
@@ -115,13 +115,13 @@ export default async function LeadsPage({
               name="q"
               defaultValue={search ?? ""}
               placeholder="Search by name or email…"
-              className="w-full max-w-xs border border-neutral-400 px-3 py-1.5"
+              className={`${INPUT} max-w-xs`}
             />
-            <button type="submit" className="border border-neutral-900 px-4 py-1.5">
+            <button type="submit" className={BTN_SECONDARY}>
               Search
             </button>
             {search && (
-              <Link href={chipHref({ q: undefined })} className="self-center underline">
+              <Link href={chipHref({ q: undefined })} className={`self-center ${BTN_LINK}`}>
                 Clear
               </Link>
             )}
@@ -130,26 +130,26 @@ export default async function LeadsPage({
             <span className="ml-auto">
               <a
                 href={`/admin/leads/export${buildQuery(params, {})}`}
-                className="border border-neutral-900 px-4 py-1.5 font-medium"
+                className={BTN_SECONDARY}
               >
                 Export CSV
               </a>
-              <span className="ml-2 text-neutral-500">exports the current filter</span>
+              <span className="ml-2 text-muted">exports the current filter</span>
             </span>
           )}
         </div>
       </div>
 
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full border-collapse bg-white text-sm">
+        <table className="w-full border-collapse bg-surface text-sm">
           <thead>
-            <tr className="border-b border-neutral-300 text-left">
-              <th className="p-2">Date</th>
-              <th className="p-2">Enquiry</th>
-              <th className="p-2">Source</th>
-              <th className="p-2">Owner</th>
-              <th className="p-2">Next action</th>
-              <th className="p-2">Status</th>
+            <tr className="border-b border-line text-left">
+              <th className="p-2 text-eyebrow uppercase text-muted">Date</th>
+              <th className="p-2 text-eyebrow uppercase text-muted">Enquiry</th>
+              <th className="p-2 text-eyebrow uppercase text-muted">Source</th>
+              <th className="p-2 text-eyebrow uppercase text-muted">Owner</th>
+              <th className="p-2 text-eyebrow uppercase text-muted">Next action</th>
+              <th className="p-2 text-eyebrow uppercase text-muted">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -159,18 +159,21 @@ export default async function LeadsPage({
                 lead.next_action_date <= today &&
                 !["enrolled", "closed", "lost"].includes(lead.status);
               return (
-                <tr key={lead.id} className="border-b border-neutral-200 align-top">
+                <tr key={lead.id} className="border-b border-line align-top">
                   <td className="p-2 whitespace-nowrap">
                     {new Date(lead.created_at).toLocaleDateString("en-GB")}
-                    <span className="block text-xs text-neutral-500">
+                    <span className="block text-xs text-muted">
                       {LEAD_FORM_LABELS[lead.form]}
                     </span>
                   </td>
                   <td className="p-2">
-                    <Link href={`/admin/leads/${lead.id}`} className="font-medium underline">
+                    <Link
+                      href={`/admin/leads/${lead.id}`}
+                      className="font-bold text-primary underline underline-offset-4 hover:text-primary-hover"
+                    >
                       {lead.full_name}
                     </Link>
-                    <span className="block text-xs text-neutral-500">
+                    <span className="block text-xs text-muted">
                       {[lead.pathway_interest ?? lead.subject, lead.programme]
                         .filter(Boolean)
                         .join(" · ") || "—"}
@@ -185,7 +188,7 @@ export default async function LeadsPage({
                     {lead.next_action_date && (
                       <span
                         className={`block text-xs ${
-                          overdue ? "font-medium text-red-700" : "text-neutral-500"
+                          overdue ? "font-bold text-red-700" : "text-muted"
                         }`}
                       >
                         due {new Date(lead.next_action_date).toLocaleDateString("en-GB")}
@@ -196,14 +199,14 @@ export default async function LeadsPage({
                     {canManage ? (
                       <form action={updateLeadStatus} className="flex items-center gap-1">
                         <input type="hidden" name="id" value={lead.id} />
-                        <select name="status" defaultValue={lead.status} className="border border-neutral-300 p-1">
+                        <select name="status" defaultValue={lead.status} className={INPUT}>
                           {LEAD_STATUSES.map((s) => (
                             <option key={s} value={s}>
                               {LEAD_STATUS_LABELS[s]}
                             </option>
                           ))}
                         </select>
-                        <button type="submit" className="underline">
+                        <button type="submit" className={BTN_LINK}>
                           Save
                         </button>
                       </form>
@@ -216,7 +219,7 @@ export default async function LeadsPage({
             })}
             {leads.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-4 text-neutral-500">
+                <td colSpan={6} className="p-4 text-muted">
                   No enquiries match this filter.
                 </td>
               </tr>

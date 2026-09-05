@@ -55,7 +55,7 @@ const USERS = adminEmail
   ? [{ email: adminEmail, password: adminPassword, name: process.env.SEED_ADMIN_NAME ?? "Administrator", role: "admin", permissions: ALL_PERMISSIONS }]
   : [
       { email: "admin@mugup.local", password: DEMO_PASSWORD, name: "Local Admin", role: "admin", permissions: ALL_PERMISSIONS },
-      { email: "manager@mugup.local", password: DEMO_PASSWORD, name: "Test Manager", role: "manager", permissions: ["leads.view", "leads.manage", "leads.export", "leads.pii", "analytics.view"] },
+      { email: "manager@mugup.local", password: DEMO_PASSWORD, name: "Test Manager", role: "manager", permissions: ["leads.view", "leads.manage", "leads.export", "leads.pii", "posts.edit", "posts.publish", "reviews.moderate", "analytics.view"] },
       { email: "editor@mugup.local", password: DEMO_PASSWORD, name: "Test Editor", role: "editor", permissions: ["posts.edit", "posts.publish", "reviews.moderate"] },
     ];
 

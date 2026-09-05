@@ -1,5 +1,5 @@
 import { signIn } from "../actions";
-import { Notice } from "../ui";
+import { BTN_PRIMARY, H1, INPUT, Notice } from "../ui";
 
 export default async function LoginPage({
   searchParams,
@@ -9,7 +9,7 @@ export default async function LoginPage({
   const { error } = await searchParams;
   return (
     <div className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-bold">Sign in</h1>
+      <h1 className={H1}>Sign in</h1>
       {error && (
         <Notice tone="error">
           {error === "invalid"
@@ -23,7 +23,7 @@ export default async function LoginPage({
       )}
       <form action={signIn} className="mt-6 space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium">
+          <label htmlFor="email" className="block text-sm font-bold text-ink">
             Email
           </label>
           <input
@@ -32,11 +32,11 @@ export default async function LoginPage({
             type="email"
             required
             autoComplete="username"
-            className="mt-1 w-full border border-neutral-400 px-3 py-2"
+            className={INPUT}
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium">
+          <label htmlFor="password" className="block text-sm font-bold text-ink">
             Password
           </label>
           <input
@@ -45,10 +45,10 @@ export default async function LoginPage({
             type="password"
             required
             autoComplete="current-password"
-            className="mt-1 w-full border border-neutral-400 px-3 py-2"
+            className={INPUT}
           />
         </div>
-        <button type="submit" className="border border-neutral-900 px-5 py-2 font-medium">
+        <button type="submit" className={BTN_PRIMARY}>
           Sign in
         </button>
       </form>

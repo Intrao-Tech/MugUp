@@ -35,9 +35,9 @@ export function HeroImageField({
     <div className="space-y-2">
       <input type="hidden" name="hero_image_url" value={url} />
       {url ? (
-        <img src={url} alt={initialAlt} className="max-h-40 border border-neutral-200" />
+        <img src={url} alt={initialAlt} className="max-h-40 border border-line" />
       ) : (
-        <p className="text-sm text-neutral-500">No featured image yet.</p>
+        <p className="text-sm text-muted">No featured image yet.</p>
       )}
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <input
@@ -47,9 +47,13 @@ export function HeroImageField({
           onChange={(event) => handleFile(event.target.files?.[0])}
           disabled={uploading}
         />
-        {uploading && <span className="text-neutral-500">Uploading…</span>}
+        {uploading && <span className="text-muted">Uploading…</span>}
         {url && (
-          <button type="button" onClick={() => setUrl("")} className="underline">
+          <button
+            type="button"
+            onClick={() => setUrl("")}
+            className="text-primary underline underline-offset-4 hover:text-primary-hover"
+          >
             Remove image
           </button>
         )}
@@ -60,7 +64,7 @@ export function HeroImageField({
         name="hero_image_alt"
         defaultValue={initialAlt}
         placeholder="Image description (alt text — required when an image is set)"
-        className="w-full border border-neutral-300 px-2 py-1 text-sm"
+        className="w-full rounded-lg border border-ink-300 bg-surface px-2 py-1 text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30"
       />
     </div>
   );

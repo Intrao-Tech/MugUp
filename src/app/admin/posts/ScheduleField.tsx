@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { savePostSchedule } from "../actions";
+import { BTN_SECONDARY } from "../ui";
 
 // Client-side guard for the Schedule button: pressing it with an empty (or
 // past) date used to round-trip to the server, whose error redirect threw
@@ -32,7 +33,7 @@ export function ScheduleField({ initialValue }: { initialValue: string }) {
     <div>
       <div className="flex items-end gap-2">
         <div>
-          <label htmlFor="publish_at" className="block text-xs font-medium text-neutral-600">
+          <label htmlFor="publish_at" className="block text-xs font-bold text-body">
             Go live at (UK time)
           </label>
           <input
@@ -42,7 +43,7 @@ export function ScheduleField({ initialValue }: { initialValue: string }) {
             type="datetime-local"
             defaultValue={initialValue}
             onChange={() => setError(null)}
-            className="mt-1 border border-neutral-400 px-2 py-1.5 text-sm"
+            className="mt-1 rounded-lg border border-ink-300 bg-surface px-2 py-1.5 text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30"
           />
         </div>
         <button
@@ -62,7 +63,7 @@ export function ScheduleField({ initialValue }: { initialValue: string }) {
             }
             setError(null);
           }}
-          className="border border-neutral-900 px-4 py-2"
+          className={BTN_SECONDARY}
         >
           Schedule
         </button>

@@ -261,3 +261,21 @@ page-by-page in `docs/HANDOFF-ADMIN-CRM.md`.
    the admin role cannot lose "Manage users"; self-lockout guarded. The
    Notifications page is now a pure feed (config lives in Team → Roles);
    creating a role moved into a collapsible "+ Create a new role".
+
+## Client feedback round 2 (30 Aug, Telegram, Natalia)
+
+Admin panel approved ("все гарно"), two requests:
+
+1. **Manager gets the editor's capabilities**: the manager built-in role now
+   also carries posts.edit, posts.publish, reviews.moderate (preset in
+   `permissions.ts` + migration 0011 updates the `roles` row, UNIONs the
+   flags onto existing manager profiles, and restores the review_new
+   notification default that 0010 had removed for lack of the permission).
+   **Implemented.**
+2. **Lost reason field in Enquiries** — already shipped in the 11 Aug round
+   (item 2 above, commit `0e80292`): selecting the "Lost" status reveals a
+   required reason select (Price / Timing / No suitable programme /
+   No response / Chose another provider / Location / Not ready yet / Other)
+   plus a note, required for "Other". The client reviewed a build that
+   predates it or didn't switch a status to Lost. **No code change; show /
+   redeploy.**

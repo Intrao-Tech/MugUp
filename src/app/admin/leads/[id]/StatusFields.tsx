@@ -9,6 +9,7 @@ import {
   type LeadStatus,
   type LostReason,
 } from "@/lib/db-types";
+import { INPUT } from "../../ui";
 
 // Status picker with contextual fields: the Lost reason/note inputs exist
 // only while "Lost" is selected — for every other status they are neither
@@ -25,7 +26,7 @@ export function StatusFields({
 }) {
   const [current, setCurrent] = useState<LeadStatus>(status);
   const [reason, setReason] = useState<string>(lostReason ?? "");
-  const inputCls = "border border-neutral-300 p-2";
+  const inputCls = INPUT;
 
   return (
     <div className="space-y-3">
@@ -69,7 +70,7 @@ export function StatusFields({
           }
           required={reason === "other"}
           defaultValue={lostReasonNote}
-          className="w-full border border-neutral-300 p-2"
+          className={INPUT}
         />
       )}
     </div>
