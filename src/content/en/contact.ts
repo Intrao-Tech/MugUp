@@ -89,7 +89,7 @@ export const page: FormPage = {
       {
         name: "consent",
         label:
-          "I consent to Mug.Up Language Studio storing and processing the information provided in this form in order to respond to my enquiry, in line with the Privacy Policy.",
+          "I consent to Mug.Up Language Studio storing and processing my personal data in accordance with the Privacy Policy. I also agree to receive relevant information about Mug.Up programmes, services, events and special offers.",
         type: "checkbox",
         required: true,
       },

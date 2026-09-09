@@ -20,7 +20,7 @@ export const common: CommonDict = {
         links: [
           { label: "Mug.Up Britain", href: "/pathways/british-education" },
           { label: "Mug.Up Global Integration", href: "/pathways/global-integration" },
-          { label: "Languages", href: "https://mugup.com.ua" },
+          { label: "Languages", href: "/pathways/global-integration#explore-languages-destinations" },
         ],
       },
       {

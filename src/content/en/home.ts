@@ -34,8 +34,8 @@ export const page: Page = {
         },
         {
           type: "cta",
-          title: "Start with a Personal Assessment",
-          body: "Receive tailored recommendations and a clear pathway based on your goals and aspirations.",
+          title: "Start with a Personal Expert Guidance",
+          body: "Tell us about your goals and aspirations. Our team will help you explore the most suitable learning options and recommend the right next step.",
           cta: { label: "Get Expert Guidance", href: "/book-assessment" },
         },
       ],
@@ -108,10 +108,10 @@ export const page: Page = {
         {
           type: "stats",
           stats: [
-            { value: "15+", label: "Years of Educational Experience" },
-            { value: "250+", label: "Supported learners" },
-            { value: "60%", label: "of Students Study with Us for 12+ Months" },
-            { value: "82%", label: "of students achieved or exceeded their predicted GCSE grades" },
+            { value: "15+", label: "Years of Experience in Education" },
+            { value: "250+", label: "Learners Supported" },
+            { value: "60%", label: "of Students Stay with Us for 12+ Months" },
+            { value: "82%", label: "of Students Achieved or Exceeded Their Predicted GCSE Grades" },
           ],
         },
         {

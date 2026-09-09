@@ -122,6 +122,10 @@ export const page: Page = {
           type: "steps",
           steps: [
             {
+              title: "Фахова консультація",
+              body: "Ми з’ясовуємо ваші цілі, прагнення й навчальні потреби та радимо найкращий наступний крок.",
+            },
+            {
               title: "Оцінювання",
               body: "Ми з’ясовуємо ваш поточний рівень мови, цілі, країну призначення та комунікаційні потреби.",
             },
@@ -141,7 +145,7 @@ export const page: Page = {
         },
         {
           type: "buttons",
-          ctas: [{ label: "Записатися на мовне оцінювання", href: "/book-assessment" }],
+          ctas: [{ label: "Отримати консультацію", href: "/book-assessment" }],
         },
       ],
     },
@@ -267,6 +271,7 @@ export const page: Page = {
             {
               title: "International Baccalaureate (IB)",
               eyebrow: "Вік 3–19",
+              photoKey: "row:international-baccalaureate",
               body: "Персоналізована академічна підтримка для учнів, які навчаються за програмами International Baccalaureate — від ранніх років до підготовки до університету.",
               items: ["PYP", "MYP", "Diploma Programme", "Career-related Programme"],
             },

@@ -262,19 +262,30 @@ export function IconList({ items, columns = 3 }: { items: string[]; columns?: 2 
   );
 }
 
+/**
+ * Column gutters keyed off the COLUMN, not the child index: `first:`/`last:`
+ * only match the first/last card, so a grid that wraps used to indent the
+ * first card of every later row and draw a stray divider (client, 9 Sep 2026).
+ */
+const ICON_ROW_COLS: Record<number, string> = {
+  3: "lg:grid-cols-3 lg:[&>li:nth-child(3n+1)]:border-l-0 lg:[&>li:nth-child(3n+1)]:pl-0 lg:[&>li:nth-child(3n)]:pr-0",
+  4: "lg:grid-cols-4 lg:[&>li:nth-child(4n+1)]:border-l-0 lg:[&>li:nth-child(4n+1)]:pl-0 lg:[&>li:nth-child(4n)]:pr-0",
+  5: "lg:grid-cols-5 lg:[&>li:nth-child(5n+1)]:border-l-0 lg:[&>li:nth-child(5n+1)]:pl-0 lg:[&>li:nth-child(5n)]:pr-0",
+};
+
 /** Cards → icon above, title, text below, separated by vertical hairlines. */
-export function IconRow({ cards, columns }: { cards: CardData[]; columns?: 4 | 5 }) {
-  const n = columns ?? (cards.length === 5 ? 5 : 4);
+export function IconRow({ cards, columns }: { cards: CardData[]; columns?: 3 | 4 | 5 }) {
+  const n = columns ?? (cards.length === 3 ? 3 : cards.length === 5 ? 5 : 4);
   return (
     <ul
       className={cx(
         "grid gap-y-8 sm:grid-cols-2",
-        n === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4",
-        "lg:divide-x lg:divide-line",
+        "lg:[&>li]:border-l lg:[&>li]:border-line lg:[&>li]:px-6",
+        ICON_ROW_COLS[n],
       )}
     >
       {cards.map((card, i) => (
-        <li key={card.title} className="lg:px-6 lg:first:pl-0 lg:last:pr-0">
+        <li key={card.title}>
           <ListIcon index={i} size={32} className="text-brand" />
           <h3 className="text-h3 mt-4 text-ink">{card.title}</h3>
           {card.body && <p className="mt-2 text-sm">{card.body}</p>}
@@ -288,6 +299,31 @@ export function IconRow({ cards, columns }: { cards: CardData[]; columns?: 4 | 5
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Cards → 01/02/03 + icon + title + text, no boxes. */
+export function NumberedRow({ cards }: { cards: CardData[] }) {
+  return (
+    <ol role="list" className="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+      {cards.map((card, i) => (
+        <li key={card.title} className="border-t-2 border-ink pt-5">
+          <p className="flex items-center gap-3">
+            <span aria-hidden="true" className="font-display text-h2 leading-none tabular-nums text-accent">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <span
+              aria-hidden="true"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-brand text-brand"
+            >
+              <ListIcon index={i} size={20} />
+            </span>
+          </p>
+          <h3 className="text-h3 mt-4 text-ink">{card.title}</h3>
+          {card.body && <p className="mt-2 text-base">{card.body}</p>}
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -310,7 +346,11 @@ export function CatalogueRows({ cards, locale }: { cards: CardData[]; locale: Lo
   return (
     <ul className="divide-y divide-ink border-y border-ink">
       {cards.map((card) => {
-        const img = card.href ? photoFor(`row:${card.href}`) : undefined;
+        const img = card.photoKey
+          ? photoFor(card.photoKey)
+          : card.href
+            ? photoFor(`row:${card.href}`)
+            : undefined;
         return (
         <li key={card.title} className="grid gap-4 py-7 md:grid-cols-12 md:gap-8">
           <div className={img ? "md:col-span-4" : "md:col-span-5"}>
@@ -363,13 +403,24 @@ export function CatalogueRows({ cards, locale }: { cards: CardData[]; locale: Lo
 }
 
 /** Plain 2×2 grid of titled paragraphs (no boxes). */
-export function GridTwo({ cards }: { cards: CardData[] }) {
+export function GridTwo({ cards, locale }: { cards: CardData[]; locale: Locale }) {
   return (
     <ul className="grid gap-x-12 gap-y-10 sm:grid-cols-2">
       {cards.map((card, i) => (
         <li key={card.title} className="border-t-2 border-ink pt-5">
           <ListIcon index={i} size={32} className="text-brand" />
-          <h3 className="text-h3 mt-4 text-ink">{card.title}</h3>
+          <h3 className="text-h3 mt-4 text-ink">
+            {card.href ? (
+              <Link
+                href={localeHref(locale, card.href)}
+                className="decoration-brand decoration-2 underline-offset-4 hover:underline"
+              >
+                {card.title}
+              </Link>
+            ) : (
+              card.title
+            )}
+          </h3>
           {card.body && <p className="mt-2 text-base">{card.body}</p>}
           {card.items && (
             <ul className="mt-3 space-y-1.5 text-sm">
@@ -380,6 +431,19 @@ export function GridTwo({ cards }: { cards: CardData[] }) {
                 </li>
               ))}
             </ul>
+          )}
+          {card.href && (
+            <p className="mt-4">
+              <Button
+                href={localeHref(locale, card.href)}
+                variant="ghost"
+                size="sm"
+                className="justify-start text-left"
+              >
+                {card.linkLabel ?? card.title}
+                <IconArrowRight size={18} className="shrink-0" />
+              </Button>
+            </p>
           )}
         </li>
       ))}
@@ -394,7 +458,7 @@ export function TypoStats({ stats }: { stats: { value: string; label: string }[]
   return (
     <dl className="grid gap-8 border-y border-ink py-8 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-line">
       {stats.map((s) => (
-        <div key={s.label} className="flex flex-col-reverse gap-3 lg:px-6 lg:first:pl-0 lg:last:pr-0">
+        <div key={s.label} className="flex flex-col-reverse justify-end gap-3 lg:px-6 lg:first:pl-0 lg:last:pr-0">
           <dt className="max-w-[16rem] text-sm font-semibold text-muted">{s.label}</dt>
           <dd className="font-display text-stat text-ink">{s.value}</dd>
         </div>

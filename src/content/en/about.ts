@@ -153,9 +153,12 @@ export const page: Page = {
     {
       id: "our-educators",
       title: "Our Educators",
-      intro:
-        "Expertise That Makes a Difference. Behind every successful learner is a dedicated educator. Our team combines British-qualified teachers, native English-speaking tutors, academic specialists, and international education professionals who share a commitment to high-quality teaching and meaningful outcomes.",
+      intro: "Expertise That Makes a Difference.",
       blocks: [
+        {
+          type: "paragraph",
+          text: "Behind every successful learner is a dedicated educator. Our team combines British-qualified teachers, native English-speaking tutors, academic specialists, and international education professionals who share a commitment to high-quality teaching and meaningful outcomes.",
+        },
         {
           type: "list",
           items: [
@@ -237,6 +240,21 @@ export const page: Page = {
               credentials:
                 "Qualified Further Education English Lecturer | CELTA Qualified | PGCE in Progress",
               bio: "Djennè specialises in GCSE English, Functional Skills English and ESOL, working with children, young people and adults. She holds a First Class BA (Hons) in Childhood and Youth Studies with Psychology and has experience supporting learners with SEND, GCSE resits and English as an additional language. Her teaching combines academic progress with confidence-building through engaging, personalised lessons.",
+            },
+            {
+              name: "Martha Kent",
+              photo: "/images/team/martha.jpg",
+              role: "English Language & Literature Teacher",
+              credentials:
+                "CELTA (Grade A) | Bachelor of Arts (BA) | English & Literature Specialist | IELTS & GCSE",
+              bio: "Martha specialises in English Language, English Literature, KS3, GCSE, IELTS and ESL. She is an experienced tutor, teacher, former SEND Teaching Assistant and youth worker who is passionate about helping students aged 6–17 as well as adult learners and creates personalised lessons that help students build confidence and succeed. Martha is fluent in Spanish.",
+            },
+            {
+              name: "Joe O’Keeffe",
+              photo: "/images/team/joe.jpg",
+              role: "Primary English & SATs Teacher",
+              credentials: "TEFL Qualified | Bachelor’s Degree in Public Health Sciences",
+              bio: "A qualified TEFL teacher with extensive experience teaching English to international students, Joe brings valuable insight into language learning and cross-cultural communication. He works primarily with primary school pupils, supporting their English development and helping them prepare for SATs, with a strong focus on the core literacy skills needed for academic success. Joe holds a Bachelor’s degree in Public Health Sciences and has achieved B1 level in French. His teaching style is friendly, supportive and engaging, helping pupils build confidence, strengthen their English skills and make steady progress towards their academic goals.",
             },
           ],
         },

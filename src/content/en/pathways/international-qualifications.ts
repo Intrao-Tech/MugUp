@@ -36,6 +36,61 @@ export const page: Page = {
       ],
     },
     {
+      id: "who-it-is-for",
+      title: "Who Is It For?",
+      blocks: [
+        {
+          type: "cards",
+          cards: [
+            {
+              title: "University & College Applicants",
+              body: "Evidence the English level required for study in the UK or abroad.",
+            },
+            {
+              title: "Professionals",
+              body: "Meet the language requirements of employers, regulators and professional bodies.",
+            },
+            {
+              title: "Visa & Settlement Applicants",
+              body: "Sit a UKVI-approved SELT for visa, settlement and citizenship applications.",
+            },
+            {
+              title: "Families Relocating",
+              body: "Show the English level asked for when moving to a new country.",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "how-it-works",
+      title: "How It Works",
+      intro: "From choosing the right test to exam day.",
+      blocks: [
+        {
+          type: "steps",
+          steps: [
+            {
+              title: "Expert Guidance",
+              body: "We discuss your goal — study, work, migration or mobility — and identify the test that meets the requirement.",
+            },
+            {
+              title: "Assessment",
+              body: "Where it helps, a short assessment establishes your current level and a realistic target score.",
+            },
+            {
+              title: "Preparation",
+              body: "Structured preparation with experienced tutors, exam strategies, mock tests and personalised feedback.",
+            },
+            {
+              title: "Exam Day",
+              body: "We help you register with the right exam board and prepare for the format you will face.",
+            },
+          ],
+        },
+      ],
+    },
+    {
       id: "start-cta",
       blocks: [
         {

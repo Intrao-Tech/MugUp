@@ -28,7 +28,7 @@ export const page: ProgrammePage = {
   ],
   sections: [
     {
-      id: "what-you-will-learn",
+      id: "how-we-support",
       title: "How We Support Students",
       blocks: [
         {
