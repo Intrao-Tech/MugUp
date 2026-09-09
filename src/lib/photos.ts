@@ -51,9 +51,11 @@ export const PHOTOS: Record<string, Photo> = {
     alt: { en: "A parent helping a teenager with homework at the kitchen table", ua: "Мама допомагає підлітку з домашнім завданням за столом" },
   },
   "split:supporting-families": {
-    src: `${P}/families.webp`,
-    alt: { en: "A family walking across a bridge in London", ua: "Родина йде мостом у Лондоні" },
-    position: "50% 40%",
+    src: `${P}/family-home.webp`,
+    alt: {
+      en: "Parents and three children smiling together among moving boxes in their new home",
+      ua: "Батьки й троє дітей усміхаються серед коробок у новій оселі",
+    },
   },
   "hero:/pathways/british-education/sats-preparation": {
     src: `${P}/sats.webp`,
@@ -107,6 +109,13 @@ export const PHOTOS: Record<string, Photo> = {
     src: `${P}/exam-laptop.webp`,
     alt: { en: "A candidate taking a computer-based English test", ua: "Кандидатка складає комп'ютерний тест з англійської" },
   },
+  "hero:/pathways/global-integration/qualifications": {
+    src: `${P}/language-tests.webp`,
+    alt: {
+      en: "Adult learners studying with laptops and notes in a modern library",
+      ua: "Дорослі учні навчаються з ноутбуками й нотатками в сучасній бібліотеці",
+    },
+  },
   "hero:/pathways/global-integration/boarding-schools": {
     src: `${P}/boarding.webp`,
     alt: { en: "A historic college building in Oxford", ua: "Історичний корпус коледжу в Оксфорді" },
@@ -115,6 +124,20 @@ export const PHOTOS: Record<string, Photo> = {
   insights: {
     src: `${P}/insights.webp`,
     alt: { en: "An open notebook and pen on a wooden desk", ua: "Розгорнутий зошит і ручка на дерев'яному столі" },
+  },
+  "row:international-baccalaureate": {
+    src: `${P}/international-school.webp`,
+    alt: {
+      en: "International school students working together on the stairs of a modern school building",
+      ua: "Учні міжнародної школи разом працюють на сходах сучасної шкільної будівлі",
+    },
+  },
+  "row:/pathways/british-education": {
+    src: `${P}/uk-street.webp`,
+    alt: {
+      en: "People walking along Regent Street in London on a bright afternoon",
+      ua: "Люди прогулюються Ріджент-стріт у Лондоні сонячного дня",
+    },
   },
   "hero:/pathways/global-integration/spanish": {
     src: `${P}/spain.webp`,
@@ -143,7 +166,6 @@ export const PHOTOS: Record<string, Photo> = {
 };
 
 // Catalogue-row photos (client, 28 Aug: country rows sit with a photo).
-PHOTOS["row:/pathways/british-education"] = PHOTOS["split:supporting-families"];
 PHOTOS["row:/pathways/global-integration/spanish"] = PHOTOS["hero:/pathways/global-integration/spanish"];
 PHOTOS["row:/pathways/global-integration/french"] = PHOTOS["hero:/pathways/global-integration/french"];
 PHOTOS["row:/pathways/global-integration/german"] = PHOTOS["hero:/pathways/global-integration/german"];

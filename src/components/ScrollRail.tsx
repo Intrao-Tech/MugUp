@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { cx } from "@/lib/cx";
 import { IconArrowRight } from "@/components/ui/icons";
 
 /**
@@ -17,12 +18,19 @@ export function ScrollRail({
   label,
   locale = "en",
   className,
+  flush = false,
   children,
 }: {
   /** Accessible name for the scroll region. */
   label: string;
   locale?: string;
   className?: string;
+  /**
+   * From lg up, sit flush inside the container instead of bleeding into the
+   * gutters. Slides sized to the container then end exactly at its edge, so no
+   * partial slide shows clipped text (client, 9 Sep 2026).
+   */
+  flush?: boolean;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLUListElement>(null);
@@ -62,7 +70,10 @@ export function ScrollRail({
       <ul
         ref={ref}
         aria-label={label}
-        className="-mx-4 flex snap-x snap-mandatory items-start gap-5 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className={cx(
+          "-mx-4 flex snap-x snap-mandatory items-start gap-5 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          flush ? "lg:mx-0 lg:px-0" : "lg:-mx-8 lg:px-8",
+        )}
       >
         {children}
       </ul>

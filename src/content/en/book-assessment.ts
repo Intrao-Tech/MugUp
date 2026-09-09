@@ -3,9 +3,9 @@ import type { FormPage } from "@/content/types";
 // Copy source: client doc "BOOK_YOUR_ASSESSMENT.docx" (verbatim where provided).
 export const page: FormPage = {
   meta: {
-    title: "Book an Assessment | Mug.Up",
+    title: "Get Expert Guidance | Mug.Up",
     description:
-      "Book a free personalised assessment at Mug.Up Language Studio. Discuss your goals, review your level and leave with a clear learning pathway — no obligation.",
+      "Talk to Mug.Up Language Studio about your goals. Free expert guidance, an optional assessment and a clear learning pathway — with no obligation to enrol.",
   },
   hero: {
     eyebrow: "Start with the Right Guidance",
@@ -18,40 +18,6 @@ export const page: FormPage = {
     ],
   },
   sections: [
-    {
-      id: "why-assessment-matters",
-      title: "Why an Assessment Matters",
-      intro: "A personalised approach delivers better results.",
-      blocks: [
-        {
-          type: "paragraph",
-          text: "We don't believe in one-size-fits-all programmes. Every assessment is designed to help us understand your individual needs before recommending the most appropriate learning pathway.",
-        },
-        {
-          type: "paragraph",
-          text: "Our goal isn't simply to place you on a course—it's to help you achieve meaningful, long-term success.",
-        },
-      ],
-    },
-    {
-      id: "what-it-includes",
-      title: "What Your Assessment Includes",
-      intro: "Every assessment is personalised and may include:",
-      blocks: [
-        {
-          type: "list",
-          items: [
-            "Discussion of your goals and future plans",
-            "Review of your current language or academic level",
-            "Identification of strengths and areas for development",
-            "Personalised programme recommendations",
-            "Suggested learning pathway",
-            "Opportunity to ask questions",
-            "Clear next steps",
-          ],
-        },
-      ],
-    },
     {
       id: "who-it-is-for",
       title: "Who Is It For?",
@@ -84,24 +50,9 @@ export const page: FormPage = {
       ],
     },
     {
-      id: "why-choose",
-      title: "Why Families and Learners Choose Mug.Up Assessments",
-      blocks: [
-        {
-          type: "list",
-          items: [
-            "Personalised guidance – Recommendations tailored to your goals.",
-            "Experienced educators – Advice from specialists in UK education and language learning.",
-            "Clear next steps – Leave with a structured plan, not just a course recommendation.",
-            "No obligation to enrol – Take the time to make the decision that's right for you.",
-          ],
-        },
-      ],
-    },
-    {
       id: "how-it-works",
       title: "How It Works",
-      intro: "Your Journey in Four Simple Steps",
+      intro: "Your Journey in Five Simple Steps",
       blocks: [
         {
           type: "steps",
@@ -113,6 +64,10 @@ export const page: FormPage = {
             {
               title: "Meet with Our Team",
               body: "One of our experienced educators will discuss your goals, experience, and learning needs.",
+            },
+            {
+              title: "Complete Your Assessment",
+              body: "Identify your current level, strengths and areas for development.",
             },
             {
               title: "Receive Your Personalised Plan",
@@ -134,29 +89,34 @@ export const page: FormPage = {
           type: "faq",
           items: [
             {
+              question: "Is Expert Guidance free?",
+              answer:
+                "Yes. Your initial conversation with our team is free and there is no obligation to enrol. It gives us an opportunity to understand your goals and recommend the most suitable next step.",
+            },
+            {
+              question: "What happens during the Expert Guidance call?",
+              answer:
+                "We'll discuss your goals, current needs, previous learning experience and what you would like to achieve. Our team will explain the options available and advise you on the most appropriate next step.",
+            },
+            {
+              question: "Will I need an assessment?",
+              answer:
+                "Not always. An assessment may be recommended where we need a clearer understanding of your current language or academic level before creating your personalised learning plan.",
+            },
+            {
               question: "How much does the assessment cost?",
               answer:
-                "The assessment is offered on separate terms — we will confirm the details when you book. It comes with no obligation to enrol on any programme.",
+                "The assessment costs £15 and is paid in advance. If you continue learning with Mug.Up, the full £15 will be credited towards your first booking.",
             },
             {
-              question: "How long does the assessment take?",
+              question: "What happens after the assessment?",
               answer:
-                "Most assessments take around 30–45 minutes, depending on your goals and the level review involved.",
+                "We'll use the results alongside your goals and learning needs to recommend the most suitable programme, level, format and learning priorities.",
             },
             {
-              question: "Is the assessment online or in person?",
+              question: "Do I have to enrol after receiving my recommendations?",
               answer:
-                "Whichever suits you best — we offer assessments online or in person at our learning centre in Bedford.",
-            },
-            {
-              question: "Do I need to bring or prepare anything?",
-              answer:
-                "No preparation is required. If you have recent school reports, exam results, or previous certificates, they can help us build a fuller picture, but they are entirely optional.",
-            },
-            {
-              question: "Am I committing to a course by booking?",
-              answer:
-                "Not at all. After the assessment you receive personalised recommendations and clear next steps — the decision about what to do next is always yours.",
+                "No. There is no obligation to enrol. You can review our recommendations and decide whether you would like to continue learning with Mug.Up.",
             },
           ],
         },
@@ -224,7 +184,7 @@ export const page: FormPage = {
       {
         name: "consent",
         label:
-          "I consent to Mug.Up Language Studio storing and processing the information provided in this form in order to respond to my enquiry, in line with the Privacy Policy.",
+          "I consent to Mug.Up Language Studio storing and processing my personal data in accordance with the Privacy Policy. I also agree to receive relevant information about Mug.Up programmes, services, events and special offers.",
         type: "checkbox",
         required: true,
       },

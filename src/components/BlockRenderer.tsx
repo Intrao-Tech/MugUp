@@ -16,6 +16,7 @@ import {
   IconRow,
   JourneyTrack,
   ListIcon,
+  NumberedRow,
   PathwayPanels,
   PathwayTrack,
   SplitPhoto,
@@ -264,11 +265,11 @@ export function BlockView({
       // per slide in a scroll rail — arrows appear only when there is more
       // than fits (client, 21 Aug 2026).
       return (
-        <ScrollRail label="Reviews" locale={locale}>
+        <ScrollRail label="Reviews" locale={locale} flush>
           {block.items.map((t) => (
             <li
               key={t.author + t.quote.slice(0, 24)}
-              className="w-[88%] shrink-0 snap-start self-start border-t-2 border-ink pt-6 sm:w-[34rem] lg:w-[38rem]"
+              className="w-full shrink-0 snap-start self-start border-t-2 border-ink pt-6 lg:w-[calc((100%-1.25rem)/2)]"
             >
               <figure>
                 <blockquote className="text-quote text-ink [hanging-punctuation:first]">
@@ -378,6 +379,7 @@ type Layout =
   | "goal-row" // cards → one horizontal strip of big words
   | "rows" // cards → catalogue rows
   | "grid-2" // cards → open 2×2
+  | "numbered-row" // cards → 01/02/03 + icon + title + text
   | "statement" // lead as a huge graphic + text columns + chips
   | "word-stack" // LEARN. ADAPT. GROW. ACHIEVE. + compact points
   | "founder" // photo | story, video below
@@ -404,6 +406,10 @@ const LAYOUTS: Record<string, Layout> = {
   partnerships: "partners",
   "educational-journey": "journey",
   "uk-qualifications": "grid-2",
+  "how-we-support": "numbered-row",
+  "what-we-cover": "grid-2",
+  "why-choose": "icon-row",
+  "beyond-admission": "icon-row",
   "start-with-your-goal": "goal-row",
   "explore-languages-destinations": "rows",
   "why-mugup-global": "icon-row",
@@ -541,8 +547,15 @@ function Body({ section, locale, layout }: { section: SectionData; locale: Local
           <Flow section={section} locale={locale} skip={new Set(["cards"])} />
         </>
       );
+    case "numbered-row":
+      return (
+        <>
+          {paragraphs.length > 0 && <Prose blocks={paragraphs} className="mb-10 max-w-3xl" />}
+          {cards ? <NumberedRow cards={cards.cards} /> : <Flow section={section} locale={locale} />}
+        </>
+      );
     case "grid-2":
-      return cards ? <GridTwo cards={cards.cards} /> : <Flow section={section} locale={locale} />;
+      return cards ? <GridTwo cards={cards.cards} locale={locale} /> : <Flow section={section} locale={locale} />;
     case "statement": {
       // Reference (28 Aug): statement + numbered principles left, text right.
       const lead = blockOf(blocks, "lead");

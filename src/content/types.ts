@@ -40,6 +40,8 @@ export interface Card {
   items?: string[];
   /** Path under /public, or "placeholder" for the grey X square. */
   image?: string;
+  /** Key in the photo registry (src/lib/photos.ts) for rows without an href. */
+  photoKey?: string;
   href?: string;
   linkLabel?: string;
 }

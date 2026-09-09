@@ -13,7 +13,7 @@ Registry: `src/lib/photos.ts`.
 | british | https://www.pexels.com/photo/7395448/ (cottonbro studio) |
 | global | https://unsplash.com/photos/5V6KbvRcnV8 |
 | for-parents | https://www.pexels.com/photo/36812778/ (Vitaly Gariev) |
-| families | https://unsplash.com/photos/1lRzLFwc--o |
+| family-home | https://www.pexels.com/photo/8730064/ (Kampus Production) |
 | sats | https://www.pexels.com/photo/33168487/ (Quí Trần) |
 | eleven-plus | https://www.pexels.com/photo/5303553/ (Tima Miroshnichenko) |
 | secondary | https://www.pexels.com/photo/8199674/ (Yan Krukau) |
@@ -25,6 +25,9 @@ Registry: `src/lib/photos.ts`.
 | exam-pair | https://www.pexels.com/photo/6684047/ (Andy Barbour) |
 | exam-laptop | https://www.pexels.com/photo/5940709/ |
 | boarding | https://www.pexels.com/photo/37978078/ (Amine Kübranur Çakıroğlu) |
+| uk-street | https://www.pexels.com/photo/813362/ (f4photography) |
+| international-school | https://www.pexels.com/photo/8457301/ (Norma Mortenson) |
+| language-tests | https://www.pexels.com/photo/9159076/ (Mikhail Nilov) |
 | insights | https://unsplash.com/photos/6e7F96dBlAA |
 | spain | https://unsplash.com/photos/C1MOo1bVI9Q |
 | france | https://unsplash.com/photos/JXmWNjM-weg (Tanya Barrow) |

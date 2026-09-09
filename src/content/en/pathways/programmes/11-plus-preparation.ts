@@ -8,7 +8,7 @@ export const page: ProgrammePage = {
   cardBlurb:
     "Our personalised preparation develops the reasoning skills, academic confidence, and subject knowledge children need to perform at their best and thrive in selective education.",
   atAGlance: [
-    { label: "Age", value: "9–11" },
+    { label: "Age", value: "8–10" },
     { label: "School Years", value: "Year 4–5" },
     { label: "Format", value: "Online & In Person" },
     { label: "Assessment", value: "Included" },

@@ -127,6 +127,10 @@ export const page: Page = {
           type: "steps",
           steps: [
             {
+              title: "Expert Guidance",
+              body: "We explore your goals, aspirations and learning needs and recommend the best next step.",
+            },
+            {
               title: "Assessment",
               body: "We explore your current language level, goals, destination and communication needs.",
             },
@@ -146,7 +150,7 @@ export const page: Page = {
         },
         {
           type: "buttons",
-          ctas: [{ label: "Book Your Language Assessment", href: "/book-assessment" }],
+          ctas: [{ label: "Get Expert Guidance", href: "/book-assessment" }],
         },
       ],
     },
@@ -272,6 +276,7 @@ export const page: Page = {
             {
               title: "International Baccalaureate (IB)",
               eyebrow: "Ages 3–19",
+              photoKey: "row:international-baccalaureate",
               body: "Personalised academic support for learners studying within the International Baccalaureate continuum, from the early years through to university preparation.",
               items: ["PYP", "MYP", "Diploma Programme", "Career-related Programme"],
             },
