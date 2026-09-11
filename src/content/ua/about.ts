@@ -147,7 +147,15 @@ export const page: Page = {
           type: "paragraph",
           text: "Я щиро вірю, що потенціал є в кожному. Іноді потрібні лише слушна підтримка, сприятливе середовище та людина, яка в тебе вірить.",
         },
-        { type: "image", alt: "Відео засновниці" },
+        {
+          type: "video",
+          src: "/videos/founder-story.mp4",
+          poster: "/videos/founder-story-poster.webp",
+          alt: "Ievgeniia Angerchik про те, чому вона заснувала Mug.Up",
+          // Файл лише англійською (вшиті субтитри) — попереджаємо про це в підписі,
+          // доки клієнт не надасть українську версію.
+          caption: "Ievgeniia про те, чому заснувала Mug.Up — 1 хв, англійською.",
+        },
       ],
     },
     {

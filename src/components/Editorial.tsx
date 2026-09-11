@@ -545,6 +545,39 @@ export function SplitPhoto({
   );
 }
 
+/**
+ * Self-hosted video in the study-card frame. Native controls on purpose:
+ * keyboard, captions menu and fullscreen come free, and it stays a server
+ * component. Nothing preloads but the metadata — the poster carries the
+ * first impression, the 13 MB file only downloads on play.
+ */
+export function VideoFigure({
+  src,
+  alt,
+  poster,
+  caption,
+}: {
+  src: string;
+  alt: string;
+  poster?: string;
+  caption?: string;
+}) {
+  return (
+    <figure>
+      <video
+        src={src}
+        poster={poster}
+        controls
+        preload="metadata"
+        playsInline
+        aria-label={alt}
+        className="aspect-[4/3] w-full rounded-card border border-ink bg-ink object-cover"
+      />
+      {caption && <figcaption className="mt-3 text-sm text-muted">{caption}</figcaption>}
+    </figure>
+  );
+}
+
 /** Founder video stand-in: 16:9 ruled paper with a play mark. */
 export function VideoPlaceholder({ alt }: { alt: string }) {
   return (
