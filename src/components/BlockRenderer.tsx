@@ -24,6 +24,7 @@ import {
   TeamRail,
   TrustStrip,
   TypoStats,
+  VideoFigure,
   VideoPlaceholder,
 } from "@/components/Editorial";
 import { Button } from "@/components/ui/Button";
@@ -328,6 +329,8 @@ export function BlockView({
       ) : (
         <ImagePlaceholder alt={block.alt} />
       );
+    case "video":
+      return <VideoFigure src={block.src} alt={block.alt} poster={block.poster} caption={block.caption} />;
     case "buttons":
       return (
         <p className="flex flex-wrap gap-3">
@@ -612,7 +615,8 @@ function Body({ section, locale, layout }: { section: SectionData; locale: Local
       );
     }
     case "founder": {
-      const video = blockOf(blocks, "image");
+      const video = blockOf(blocks, "video");
+      const videoStandIn = blockOf(blocks, "image");
       const ps = blocks.filter((b) => b.type === "paragraph");
       return (
         <div className="grid gap-10 lg:grid-cols-12">
@@ -626,10 +630,16 @@ function Body({ section, locale, layout }: { section: SectionData; locale: Local
           </div>
           <div className="lg:col-span-8">
             <Prose blocks={ps} className="max-w-2xl" />
-            {video && (
+            {video ? (
               <div className="mt-8">
-                <VideoPlaceholder alt={video.alt} />
+                <VideoFigure src={video.src} alt={video.alt} poster={video.poster} caption={video.caption} />
               </div>
+            ) : (
+              videoStandIn && (
+                <div className="mt-8">
+                  <VideoPlaceholder alt={videoStandIn.alt} />
+                </div>
+              )
             )}
           </div>
         </div>

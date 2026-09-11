@@ -66,6 +66,13 @@ export type Block =
   | { type: "faq"; items: { question: string; answer: string }[] }
   | { type: "team"; members: TeamMember[] }
   | { type: "image"; alt: string; src?: string }
+  /**
+   * Self-hosted video (client-supplied file under /public/videos, never
+   * hotlinked). `alt` names it for screen readers; `caption` is the visible
+   * line under the player — use it to say what language the audio is in when
+   * the file itself is not localised.
+   */
+  | { type: "video"; src: string; alt: string; poster?: string; caption?: string }
   | { type: "logos"; items: { src: string; alt: string; href?: string; caption?: string }[] }
   | { type: "cta"; title: string; body?: string; note?: string; cta: Cta }
   | { type: "buttons"; ctas: Cta[] };

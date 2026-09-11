@@ -147,7 +147,13 @@ export const page: Page = {
           type: "paragraph",
           text: "I firmly believe that every learner has potential. Sometimes all they need is the right support, the right environment, and someone who believes in them.",
         },
-        { type: "image", alt: "Founder video" },
+        {
+          type: "video",
+          src: "/videos/founder-story.mp4",
+          poster: "/videos/founder-story-poster.webp",
+          alt: "Ievgeniia Angerchik on why she founded Mug.Up",
+          caption: "Ievgeniia on why she founded Mug.Up — 1 min.",
+        },
       ],
     },
     {
