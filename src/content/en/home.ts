@@ -266,7 +266,7 @@ export const page: Page = {
               name: "Ally Zomkowski",
               role: "Academic Coordinator",
               bio: "Qualified British teacher with PGCE and CELTA qualifications. Specialist in IELTS preparation, GCSE programmes, Business English, Workplace English, and UK integration support.",
-              photo: "/images/team/ally.png",
+              photo: "/images/team/ally.jpg",
             },
             {
               name: "Tetiana Krytsun",

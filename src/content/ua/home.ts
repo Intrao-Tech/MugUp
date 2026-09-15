@@ -271,7 +271,7 @@ export const page: Page = {
               name: "Ally Zomkowski",
               role: "Академічна координаторка",
               bio: "Дипломована британська вчителька з кваліфікаціями PGCE та CELTA. Фахівчиня з підготовки до IELTS, програм GCSE, ділової англійської, англійської для роботи та підтримки інтеграції у Великій Британії.",
-              photo: "/images/team/ally.png",
+              photo: "/images/team/ally.jpg",
             },
             {
               name: "Tetiana Krytsun",

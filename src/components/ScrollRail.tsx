@@ -54,10 +54,25 @@ export function ScrollRail({
     };
   }, []);
 
+  // Step to an exact slide edge rather than a fixed distance: iOS Safari does
+  // not re-snap after a programmatic smooth scroll, so a blind scrollBy left
+  // slides half-cut (client, 15 Sep 2026). Moves up to ~a viewport of slides.
   const scrollBy = (dir: 1 | -1) => {
     const el = ref.current;
     if (!el) return;
-    el.scrollBy({ left: dir * Math.round(el.clientWidth * 0.85), behavior: "smooth" });
+    const pad = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0;
+    const origin = el.getBoundingClientRect().left - el.scrollLeft + pad;
+    const max = el.scrollWidth - el.clientWidth;
+    const stops = Array.from(el.children, (li) =>
+      Math.min(max, Math.max(0, Math.round(li.getBoundingClientRect().left - origin))),
+    );
+    const at = el.scrollLeft;
+    const reach = el.clientWidth * 0.85;
+    const target =
+      dir === 1
+        ? (stops.filter((s) => s > at + 4 && s <= at + reach).pop() ?? stops.find((s) => s > at + 4))
+        : (stops.find((s) => s < at - 4 && s >= at - reach) ?? stops.filter((s) => s < at - 4).pop());
+    if (target !== undefined) el.scrollTo({ left: target, behavior: "smooth" });
   };
 
   const arrow =
@@ -71,8 +86,11 @@ export function ScrollRail({
         ref={ref}
         aria-label={label}
         className={cx(
-          "-mx-4 flex snap-x snap-mandatory items-start gap-5 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-          flush ? "lg:mx-0 lg:px-0" : "lg:-mx-8 lg:px-8",
+          // scroll-padding mirrors the bleed padding so slides snap to the text
+          // column, not the screen edge (client, 15 Sep 2026: first card and
+          // review text sat flush against the left edge on mobile).
+          "-mx-4 flex snap-x snap-mandatory scroll-px-4 items-start gap-5 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:scroll-px-6 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          flush ? "lg:mx-0 lg:scroll-px-0 lg:px-0" : "lg:-mx-8 lg:scroll-px-8 lg:px-8",
         )}
       >
         {children}

@@ -193,7 +193,7 @@ export const page: Page = {
               name: "Ally Zomkowski",
               role: "Academic Coordinator",
               bio: "A qualified British teacher with PGCE and CELTA and almost 11 years of teaching experience with students from around the world. Experienced in GCSE and A-Level English, IELTS preparation, Business English, Workplace English and English for visa purposes. Passionate about languages, literature and cultural exchange, with a strong belief that learning English goes beyond qualifications — helping students build confidence, access new opportunities and connect across cultures.",
-              photo: "/images/team/ally.png",
+              photo: "/images/team/ally.jpg",
             },
             {
               name: "Tetiana Krytsun",
