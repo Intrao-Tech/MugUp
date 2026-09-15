@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
 import type { Locale } from "@/content/types";
-import { LANGUAGE_SLUGS } from "@/content/types";
 import { getProgrammes } from "@/content";
 import { getPublishedSlugSets } from "@/lib/insights";
 import { programmePath } from "@/lib/links";
@@ -19,7 +18,8 @@ const STATIC_PATHS = [
   "/pathways/global-integration/qualifications",
   "/pathways/global-integration/boarding-schools",
   ...getProgrammes("en").map((p) => programmePath(p.group, p.slug)),
-  ...LANGUAGE_SLUGS.map((slug) => `/pathways/global-integration/${slug}`),
+  // Language pages (/pathways/global-integration/<language>) are left out:
+  // not linked from the site in this release (client, 15 Sep 2026).
   "/insights",
   "/book-assessment",
   "/contact",
