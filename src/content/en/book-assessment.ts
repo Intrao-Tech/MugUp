@@ -106,7 +106,7 @@ export const page: FormPage = {
             {
               question: "How much does the assessment cost?",
               answer:
-                "The assessment costs £15 and is paid in advance. If you continue learning with Mug.Up, the full £15 will be credited towards your first booking.",
+                "The assessment fee is £15 per subject and is paid in advance. If you continue learning with Mug.Up, the full assessment fee will be credited towards your first booking.",
             },
             {
               question: "What happens after the assessment?",
