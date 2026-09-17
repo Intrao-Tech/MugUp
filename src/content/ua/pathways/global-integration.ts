@@ -65,8 +65,6 @@ export const page: Page = {
                 "Англійська для спеціальних цілей: Бухгалтерія та фінанси • Охорона здоров’я • Освіта • Готельно-ресторанна сфера • Право • Обслуговування клієнтів • IT",
                 "Кваліфікації: IELTS Academic • IELTS General Training • IELTS for UKVI • LanguageCert • Cambridge English Qualifications • ESOL Skills for Life • Functional Skills English",
               ],
-              href: "/pathways/british-education",
-              linkLabel: "Переглянути англійську та британські програми",
             },
             {
               title: "Іспанія · Іспанська",

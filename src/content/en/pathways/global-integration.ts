@@ -2,8 +2,9 @@ import type { Page } from "@/content/types";
 
 // Copy source: client doc "Global integration updated v2" (docs/global-integration-updated-v2.docx),
 // verbatim. Replaces the Stage 1 hero-only landing.
-// Language cards link to /pathways/global-integration/<slug> sub-pages
-// (global-integration-languages.ts); the UK card links to British Education.
+// Country–language cards carry no links (client, 15–17.09.26: the Global
+// pathway is about adults and integration, not the language sub-pages or
+// British Education).
 // "Explore Our Integration Network" goes to the network stub page;
 // "Become an Integration Partner" and "Discuss an Organisational Programme"
 // point to /contact (its Subject select covers Partnership) until dedicated
@@ -70,8 +71,6 @@ export const page: Page = {
                 "English for Specific Purposes: Accounting & Finance • Healthcare • Education • Hospitality • Law • Customer Service • IT",
                 "Qualifications: IELTS Academic • IELTS General Training • IELTS for UKVI • LanguageCert • Cambridge English Qualifications • ESOL Skills for Life • Functional Skills English",
               ],
-              href: "/pathways/british-education",
-              linkLabel: "Explore English & UK Pathways",
             },
             {
               title: "Spain · Spanish",
